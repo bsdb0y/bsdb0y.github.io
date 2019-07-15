@@ -231,10 +231,10 @@ chgproccnt(uid_t uid, int diff)
 	<p align="center">chgproccnt()
 </font>
 
-	<li><p>uidinfo structure maintains every uid resource consumption counts, including the process count and socket buffer space usage.
-	<li><p>uid_find function looks up and returns the uidinfo structure for uid. If no uidinfo structure exists for uid, a new structure will be allocated and initialized.
-<p>Then, it increments the ui_proccnt , that is, number of processes by diff and then returns count.
-<p>After, that, it is checks for the non-privileged uid and also that the number of process is greater than the soft limit of resources, that is, 9223372036854775807, from what I have found in gdb.
+<li><p><span><i>uidinfo</i></span> structure maintains every uid resource consumption counts, including the process count and socket buffer space usage.
+	<li><p><span><i>uid_find</i></span> function looks up and returns the <span><i>uidinfo</i></span> structure for uid. If no uidinfo structure exists for <span><i>uid</i></span>, a new structure will be allocated and initialized.
+<p>Then, it increments the <span><i>ui_proccnt</i></span> , that is, number of processes by diff and then returns count.
+<p>After, that, it is checks for the non-privileged "uid" and also that the number of process is greater than the soft limit of resources, that is, <span><i>9223372036854775807</i></span>, from what I have found in gdb.
 <p>Have a look in the below screen-shot for the proper view of values:
 
 <figure>
@@ -242,23 +242,114 @@ chgproccnt(uid_t uid, int diff)
   <figcaption>Fig.2 (ddd) gdb output for resource limit</figcaption>
 </figure>
 <p>If non-privileged is allowed and the count is increased by the maximum resource limit, it will decrease the count via chgproccnt() by passing -1 as diff parameter and also decrease the number of processes and threads.
-<li><p>Next, the uvm_uarea_alloc() function allocates a thread's ‘uarea’, the memory where its kernel stack and PCB are stored.
-<p>Now, it checks if the uaddr variable doesn’t contain any thread’s address, if it is zero, then it decrements the count of the number of process and thread.
+<li><p>Next, the <span><i>uvm_uarea_alloc()</i></span> function allocates a thread's ‘uarea’, the memory where its kernel stack and PCB are stored.
+<p>Now, it checks if the "uaddr" variable doesn’t contain any thread’s address, if it is zero, then it decrements the count of the number of process and thread.
 <p>Now, there are the some important functions:
-<p>→ thread_new(struct proc *parent, vaddr_t uaddr)
-<p>→ process_new(struct proc *p, struct process *parent, int flags)
+<p><span><i>→ thread_new(struct proc *parent, vaddr_t uaddr)</i></span>
+<p>→ process_new(struct proc *p, struct process *parent, int flags)</i></span>
+<pre><code>
+/*
+ * Allocate and initialize a thread (proc) structure, given the parent thread.
+ */
+struct proc *
+thread_new(struct proc *parent, vaddr_t uaddr)
+{
+	struct proc *p; 
 
-thread_new(curp, uaddr)
-<p>Here, in the thread_new function, we will get our user-space process, that is, in our case “ls”. The process gets retrieved from the pool of process, that is, proc_pool via pool_get() function.
-<p>Then, we set the state of the thread to be SIDL , which means that the process/thread is being created by fork . We then setp →p_flag = 0.
-<p>Now, they are zeroing the section of proc . See, the below code snippet from sys/proc.h
+	p = pool_get(&proc_pool, PR_WAITOK);
+	p->p_stat = SIDL;			/* protect against others */
+	p->p_flag = 0;
+	p->p_limit = NULL;
 
-code snippet for members that will be zeroed upon creation in fork, via memset
+	/*
+	 * Make a proc table entry for the new process.
+	 * Start by zeroing the section of proc that is zero-initialized,
+	 * then copy the section that is copied directly from the parent.
+	 */
+	memset(&p->p_startzero, 0,
+	    (caddr_t)&p->p_endzero - (caddr_t)&p->p_startzero);
+	memcpy(&p->p_startcopy, &parent->p_startcopy,
+	    (caddr_t)&p->p_endcopy - (caddr_t)&p->p_startcopy);
+	crhold(p->p_ucred);
+	p->p_addr = (struct user *)uaddr;
+
+	/*
+	 * Initialize the timeouts.
+	 */
+	timeout_set(&p->p_sleep_to, endtsleep, p);
+
+	/*
+	 * set priority of child to be that of parent
+	 * XXX should move p_estcpu into the region of struct proc which gets
+	 * copied.
+	 */
+	scheduler_fork_hook(parent, p);
+
+#ifdef WITNESS
+	p->p_sleeplocks = NULL;
+#endif
+
+#if NKCOV > 0
+	p->p_kd = NULL;
+#endif
+
+	return p;
+}
+</pre></code>
+<font size="2">
+<p align="center">thread_new(curp, uaddr)
+</font>
+<p>Here, in the <span><i>thread_new</i></span> function, we will get our user-space process, that is, in our case “ls”. The process gets retrieved from the pool of process, that is, proc_pool via <span><i>pool_get()</i></span> function.
+<p>Then, we set the state of the thread to be SIDL , which means that the process/thread is being created by fork . We then set <span><i>p→p_flag = 0</i></span>
+<p>Now, they are zeroing the section of "proc" . See, the below code snippet from "sys/proc.h"
+<pre><code>
+/* The following fields are all zeroed upon creation in fork. */
+#define	p_startzero	p_dupfd
+	int	p_dupfd;	 /* Sideways return value from filedescopen. XXX */
+
+	long 	p_thrslpid;	/* for thrsleep syscall */
+
+	/* scheduling */
+	u_int	p_estcpu;		/* [s] Time averaged val of p_cpticks */
+	int	p_cpticks;	 /* Ticks of cpu time. */
+	const volatile void *p_wchan;	/* [s] Sleep address. */
+	struct	timeout p_sleep_to;/* timeout for tsleep() */
+	const char *p_wmesg;		/* [s] Reason for sleep. */
+	fixpt_t	p_pctcpu;		/* [s] %cpu for this thread */
+	u_int	p_slptime;		/* [s] Time since last blocked. */
+	u_int	p_uticks;		/* Statclock hits in user mode. */
+	u_int	p_sticks;		/* Statclock hits in system mode. */
+	u_int	p_iticks;		/* Statclock hits processing intr. */
+	struct	cpu_info * volatile p_cpu; /* [s] CPU we're running on. */
+
+	struct	rusage p_ru;		/* Statistics */
+	struct	tusage p_tu;		/* accumulated times. */
+	struct	timespec p_rtime;	/* Real time. */
+
+	int	 p_siglist;		/* Signals arrived but not delivered. */
+
+/* End area that is zeroed on creation. */
+</pre></code>
 <p>In above code snippet, all the variables will be zeroed via memset upon creation in the fork.
-<p>Then, they are copying the section from parent→p_startcopy to p→p_startcopyvia memcpy. Have a look below in the screen-shot to know which of the field members will be copied.
+<p>Then, they are copying the section from <span><i>parent→p_startcopy</i></span> to <span><i>p→p_startcopy</i></span> via memcpy. Have a look below in the screen-shot to know which of the field members will be copied.
+<pre><code>
+#define	p_startcopy	p_sigmask
+	sigset_t p_sigmask;	/* Current signal mask. */
 
-code snippet for the members those will be copied upon in fork
-<li><p>The, crhold(p->p_ucred) means it will increment the reference count in struct ucred structure, that is, p->p_ucred->cr_ref++ .
+	u_char	p_priority;	/* [s] Process priority. */
+	u_char	p_usrpri;	/* [s] User-prio based on p_estcpu & ps_nice. */
+	int	p_pledge_syscall;	/* Cache of current syscall */
+
+	struct	ucred *p_ucred;		/* cached credentials */
+	struct	sigaltstack p_sigstk;	/* sp & on stack state variable */
+
+	u_long	p_prof_addr;	/* tmp storage for profiling addr until AST */
+	u_long	p_prof_ticks;	/* tmp storage for profiling ticks until AST */
+
+/* End area that is copied on creation. */
+#define	p_endcopy	p_addr
+</pre></code>
+<li><p>The, <span><i>crhold(p->p_ucred)</i></span> means it will increment the reference count in "struct ucred" structure, that is,<span><i>p->p_ucred->cr_ref++</i></span>
 <li><p>Now, typecast the thread’s addr, that is, (struct user *)uaddr and save it in kernel’s virtual addr of u-area.
 <li><p>Now, it will initialize the timeout.
 <p>dummy function to show the timeout_set function working.
@@ -275,8 +366,8 @@ timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 }
 </pre>
 </code>
-<p>scheduler_fork_hook(parent, p): It is a macro which will update the p_estcpu of child from parent’s p_estcpu.
-<p>p_estcpu holds an estimate of the amount of CPU that the process has used recently
+<p>scheduler_fork_hook(parent, p): It is a macro which will update the "p_estcpu" of child from parent’s p_estcpu.
+<p>"p_estcpu" holds an estimate of the amount of CPU that the process has used recently
 <pre><code>/* Inherit the parent’s scheduler history */
 #define scheduler_fork_hook(parent, child) do {    \
  (child)->p_estcpu = (parent)->p_estcpu;           \
@@ -285,21 +376,91 @@ timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 <p>Then, return the newly created thread p .
 <p>Now, another important function is process_new() which will create the process in a similar fashion to what we have seen above in the thread_new func.
 <li><span><i><p>process_new(struct proc *p, struct process *parent, int flags)</i></span>
+<pre><code>
+/*
+ * Allocate and initialize a new process.
+ */
+struct process *
+process_new(struct proc *p, struct process *parent, int flags)
+{
+	struct process *pr;
 
-process_new(p,curpr,flags)
+	pr = pool_get(&process_pool, PR_WAITOK);
+
+	/*
+	 * Make a process structure for the new process.
+	 * Start by zeroing the section of proc that is zero-initialized,
+	 * then copy the section that is copied directly from the parent.
+	 */
+	memset(&pr->ps_startzero, 0,
+	    (caddr_t)&pr->ps_endzero - (caddr_t)&pr->ps_startzero);
+	memcpy(&pr->ps_startcopy, &parent->ps_startcopy,
+	    (caddr_t)&pr->ps_endcopy - (caddr_t)&pr->ps_startcopy);
+
+	process_initialize(pr, p);
+	pr->ps_pid = allocpid();
+	lim_fork(parent, pr);
+
+	/* post-copy fixups */
+	pr->ps_pptr = parent;
+
+	/* bump references to the text vnode (for sysctl) */
+	pr->ps_textvp = parent->ps_textvp;
+	if (pr->ps_textvp)
+		vref(pr->ps_textvp);
+
+	/* copy unveil if unveil is active */
+	unveil_copy(parent, pr);
+
+	pr->ps_flags = parent->ps_flags &
+	    (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE | PS_EXECPLEDGE | PS_WXNEEDED);
+	if (parent->ps_session->s_ttyvp != NULL)
+		pr->ps_flags |= parent->ps_flags & PS_CONTROLT;
+...
+...
+}
+</pre></code>
 <p>In above code snippet, the same thing is happening again like select process from process_pool via pool_get then zeroing using memset and copying using memcpy.
-<p>So, for the detailed explanation, please go through the thread_new() function first.
+<p>So, for the detailed explanation, please go through the <span><i>thread_new()<i><span> function first.
 <p>Next is initialization of process using process_initialize function.
+<pre><code>
+/*
+ * Initialize common bits of a process structure, given the initial thread.
+ */
+void
+process_initialize(struct process *pr, struct proc *p)
+{
+	/* initialize the thread links */
+	pr->ps_mainproc = p;
+	TAILQ_INIT(&pr->ps_threads);
+	TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
+	pr->ps_refcnt = 1;
+	p->p_p = pr;
 
-process_initialize(pr, p)
-<p><span><i>ps_mainproc</i></span> : It is the original and main thread in the process. It’s only special for the handling of p_xstat and some signal and ptrace behaviours that need to be fixed.
-<p>→Copy initial thread, that is, p to pr->mainproc .
-<p>→Initialize the queue with referenced by head. Here, head is pr→ps_threads. Then, Insert elm at the TAIL of the queue. Here, elm is p .
-<p>→set the number of references to 1, that is, pr->ps_refcnt = 1
+	/* give the process the same creds as the initial thread */
+	pr->ps_ucred = p->p_ucred;
+	crhold(pr->ps_ucred);
+	KASSERT(p->p_ucred->cr_ref >= 2);	/* new thread and new process */
+
+	LIST_INIT(&pr->ps_children);
+	LIST_INIT(&pr->ps_ftlist);
+	LIST_INIT(&pr->ps_kqlist);
+	LIST_INIT(&pr->ps_sigiolst);
+
+	mtx_init(&pr->ps_mtx, IPL_MPFLOOR);
+
+	timeout_set(&pr->ps_realit_to, realitexpire, pr);
+	timeout_set(&pr->ps_rucheck_to, rucheck, pr);
+}
+</pre></code>
+<p><span><i>ps_mainproc</i></span> : It is the original and main thread in the process. It’s only special for the handling of "p_xstat" and some signal and ptrace behaviours that need to be fixed.
+<p>→Copy initial thread, that is, p to <span><i>pr->mainproc</i></span>
+<p>→Initialize the queue with referenced by head. Here, head is "pr→ps_threads". Then, Insert "elm" at the TAIL of the queue. Here, elm is p .
+<p>→set the number of references to 1, that is, "pr->ps_refcnt = 1"
 <p>→copy the process pr to the process of initial thread.
 <p>→set the same creds for process as the initial thread.
 <p>→condition check for the new thread and the new process via KASSERT.
-<p>→Initialize the List referenced by head. Here, head is pr->ps_children
+<p>→Initialize the List referenced by head. Here, head is "pr->ps_children"
 <p>→Again, initialize timeout. (for detail, see thead_new)
 <p>Now, after the process initialization, pid allocation takes place.
 <span><i>ps→ps_pid = allocpid();</i></span> <span><i>allocpid()</i></span> returns unused pid
@@ -308,7 +469,50 @@ process_initialize(pr, p)
 <li><span><i><p>prfind(pid_t pid) : Locate a process by number</i></span>
 <li><span><i><p>pgfind(pid_t pgid) : Locate a process group by number</i></span>
 <li><span><i><p>zombiefind(pid_t pid :Locate a zombie process by number</i></span>
+<pre><code>
+/*
+ * Checks for current use of a pid, either as a pid or pgid.
+ */
+pid_t oldpids[128];
+int
+ispidtaken(pid_t pid)
+{
+	uint32_t i;
 
+	for (i = 0; i < nitems(oldpids); i++)
+		if (pid == oldpids[i])
+			return (1);
+
+	if (prfind(pid) != NULL)
+		return (1);
+	if (pgfind(pid) != NULL)
+		return (1);
+	if (zombiefind(pid) != NULL)
+		return (1);
+	return (0);
+}
+
+/* Find an unused pid */
+pid_t
+allocpid(void)
+{
+	static pid_t lastpid;
+	pid_t pid;
+
+	if (!randompid) {
+		/* only used early on for system processes */
+		pid = ++lastpid;
+	} else {
+		/* Find an unused pid satisfying lastpid < pid <= PID_MAX */
+		do {
+			pid = arc4random_uniform(PID_MAX - lastpid) + 1 +
+			    lastpid;
+		} while (ispidtaken(pid));
+	}
+
+	return pid;
+}
+</pre></code>
 code snippet for allocpid and ispidtaken
 <p>Now, store the pointer to parent process in pr→ps_pptr .
 <p>Increment the number of references count in process limit structure, that is, struct plimit .
@@ -325,9 +529,47 @@ pr →ps_flags = parent →ps_flags & (0x10 | 0x20 | 0x100000 | 0x400000 | 0x200
 if (vnode of controlling terminal != NULL)
         pr→ps_flags |= parent→ps_flags & PS_CONTROLT;
 </pre></code>
-process_new continued…
+<p>process_new continued…
+<pre><code>
+/*
+	 * Duplicate sub-structures as needed.
+	 * Increase reference counts on shared objects.
+	 */
+	if (flags & FORK_SHAREFILES)
+		pr->ps_fd = fdshare(parent);
+	else
+		pr->ps_fd = fdcopy(parent);
+	if (flags & FORK_SIGHAND)
+		pr->ps_sigacts = sigactsshare(parent);
+	else
+		pr->ps_sigacts = sigactsinit(parent);
+	if (flags & FORK_SHAREVM)
+		pr->ps_vmspace = uvmspace_share(parent);
+	else
+		pr->ps_vmspace = uvmspace_fork(parent);
 
-process_new continued…
+	if (parent->ps_flags & PS_PROFIL)
+		startprofclock(pr);
+	if (flags & FORK_PTRACE)
+		pr->ps_flags |= parent->ps_flags & PS_TRACED;
+	if (flags & FORK_NOZOMBIE)
+		pr->ps_flags |= PS_NOZOMBIE;
+	if (flags & FORK_SYSTEM)
+		pr->ps_flags |= PS_SYSTEM;
+
+	/* mark as embryo to protect against others */
+	pr->ps_flags |= PS_EMBRYO;
+
+	/* Force visibility of all of the above changes */
+	membar_producer();
+
+	/* it's sufficiently inited to be globally visible */
+	LIST_INSERT_HEAD(&allprocess, pr, ps_list);
+
+	return pr;
+}
+
+</pre></code>
 Checks:
 <pre><code>
 * if child_able_to_share_file_descriptor_table_with_parent:
@@ -351,7 +593,7 @@ Checks:
 * if check_signals_stat_swaping:
          pr->ps_flags |= PS_SYSTEM
 </pre></code>
-<p>update the pr→ps_flags with PS_EMBRYO by ORing it, that is, 
+<p>update the "pr→ps_flags" with "PS_EMBRYO" by ORing it, that is, 
 pr→ps_flags |= PS_EMBRYO /* New process, not yet fledged */
 membar_producer() → Force visibility of all of the above changes.
 <p>— All stores preceding the memory barrier will reach global visibility before any stores after the memory barrier reach global visibility.
@@ -359,12 +601,70 @@ membar_producer() → Force visibility of all of the above changes.
 <p>Now, Insert the new elm, that is, pr at the head of the list. Here, head is allprocess .
 <li><p>return pr
 <p>fork1() continued…
+<pre><code>
+...
+...
 
-fork1() continued…
+	p->p_fd		= pr->ps_fd;
+	p->p_vmspace	= pr->ps_vmspace;
+	if (pr->ps_flags & PS_SYSTEM)
+		atomic_setbits_int(&p->p_flag, P_SYSTEM);
+
+	if (flags & FORK_PPWAIT) {
+		atomic_setbits_int(&pr->ps_flags, PS_PPWAIT);
+		atomic_setbits_int(&curpr->ps_flags, PS_ISPWAIT);
+	}
+
+#ifdef KTRACE
+	/*
+	 * Copy traceflag and tracefile if enabled.
+	 * If not inherited, these were zeroed above.
+	 */
+	if (curpr->ps_traceflag & KTRFAC_INHERIT)
+		ktrsettrace(pr, curpr->ps_traceflag, curpr->ps_tracevp,
+		    curpr->ps_tracecred);
+#endif
+
+	/*
+	 * Finish creating the child thread.  cpu_fork() will copy
+	 * and update the pcb and make the child ready to run.  If
+	 * this is a normal user fork, the child will exit directly
+	 * to user mode via child_return() on its first time slice
+	 * and will not return here.  If this is a kernel thread,
+	 * the specified entry point will be executed.
+	 */
+	cpu_fork(curp, p, NULL, NULL, func, arg ? arg : p);
+
+	vm = pr->ps_vmspace;
+
+	if (flags & FORK_FORK) {
+		forkstat.cntfork++;
+		forkstat.sizfork += vm->vm_dsize + vm->vm_ssize;
+	} else if (flags & FORK_VFORK) {
+		forkstat.cntvfork++;
+		forkstat.sizvfork += vm->vm_dsize + vm->vm_ssize;
+	} else {
+		forkstat.cntkthread++;
+	}
+
+	if (pr->ps_flags & PS_TRACED && flags & FORK_FORK)
+		newptstat = malloc(sizeof(*newptstat), M_SUBPROC, M_WAITOK);
+
+	p->p_tid = alloctid();
+
+	LIST_INSERT_HEAD(&allproc, p, p_list);
+	LIST_INSERT_HEAD(TIDHASH(p->p_tid), p, p_hash);
+	LIST_INSERT_HEAD(PIDHASH(pr->ps_pid), pr, ps_hash);
+	LIST_INSERT_AFTER(curpr, pr, ps_pglist);
+	LIST_INSERT_HEAD(&curpr->ps_children, pr, ps_sibling);
+</pre></code>
 <p>Substructures 
 p→p_fd and p→p_vmspace directly copy of pr→ps_fd and pr→ps_vmspace.
-
-substructures
+<pre><code>
+/* substructures: */
+struct filedesc *p_fd;		/* copy of p_p->ps_fd */
+struct vmspace *p_vmspace;	/* copy of p_p->ps_vmspace */			
+</pre></code>
 checks,
 <p>** if (process_has_no_signals_stats_or_swapping) then atomically set bits.
 <p><span><i>atomic_setbits_int(pr →ps_flags, PS_SYSTEM);</i></span>
@@ -413,9 +713,59 @@ This is also the same calling <span><i>arc4random</i></span> directly and using 
 * insert the new element pr after the curpr element
 * insert the new element pr at the head of the children process  list
 </i></span>
-fork1() continued…
+<pre><code>
+	if (pr->ps_flags & PS_TRACED) {
+		pr->ps_oppid = curpr->ps_pid;
+		if (pr->ps_pptr != curpr->ps_pptr)
+			proc_reparent(pr, curpr->ps_pptr);
 
-fork1 continued…
+		/*
+		 * Set ptrace status.
+		 */
+		if (newptstat != NULL) {
+			pr->ps_ptstat = newptstat;
+			newptstat = NULL;
+			curpr->ps_ptstat->pe_report_event = PTRACE_FORK;
+			pr->ps_ptstat->pe_report_event = PTRACE_FORK;
+			curpr->ps_ptstat->pe_other_pid = pr->ps_pid;
+			pr->ps_ptstat->pe_other_pid = curpr->ps_pid;
+		}
+	}
+
+	/*
+	 * For new processes, set accounting bits and mark as complete.
+	 */
+	getnanotime(&pr->ps_start);
+	pr->ps_acflag = AFORK;
+	atomic_clearbits_int(&pr->ps_flags, PS_EMBRYO);
+
+	if ((flags & FORK_IDLE) == 0)
+		fork_thread_start(p, curp, flags);
+	else
+		p->p_cpu = arg;
+
+	free(newptstat, M_SUBPROC, sizeof(*newptstat));
+
+	/*
+	 * Notify any interested parties about the new process.
+	 */
+	KNOTE(&curpr->ps_klist, NOTE_FORK | pr->ps_pid);
+
+	/*
+	 * Update stats now that we know the fork was successful.
+	 */
+	uvmexp.forks++;
+	if (flags & FORK_PPWAIT)
+		uvmexp.forks_ppwait++;
+	if (flags & FORK_SHAREVM)
+		uvmexp.forks_sharevm++;
+
+	/*
+	 * Pass a pointer to the new process to the caller.
+	 */
+	if (rnewprocp != NULL)
+		*rnewprocp = p;
+</pre></code>
 <p>Again,
 <pre><code>
 If (isProcessPTRACED())
@@ -459,7 +809,34 @@ if (flags & FORK_SHAREVM)
 if (rnewprocp != NULL)
         *rnewprocp = p;
 </pre></code>
-fork1 continued…
+<pre><code>
+/*
+	 * Preserve synchronization semantics of vfork.  If waiting for
+	 * child to exec or exit, set PS_PPWAIT on child and PS_ISPWAIT
+	 * on ourselves, and sleep on our process for the latter flag
+	 * to go away.
+	 * XXX Need to stop other rthreads in the parent
+	 */
+	if (flags & FORK_PPWAIT)
+		while (curpr->ps_flags & PS_ISPWAIT)
+			tsleep(curpr, PWAIT, "ppwait", 0);
+
+	/*
+	 * If we're tracing the child, alert the parent too.
+	 */
+	if ((flags & FORK_PTRACE) && (curpr->ps_flags & PS_TRACED))
+		psignal(curp, SIGTRAP);
+
+	/*
+	 * Return child pid to parent process
+	 */
+	if (retval != NULL) {
+		retval[0] = pr->ps_pid;
+		retval[1] = 0;
+	}
+	return (0);
+}
+</pre></code>
 <li><p>setting the PPWAIT on child and the PS_ISPWAIT on ourselves, that is, the parent and then go to the sleep on our process via tsleep .
 <li><p>Check, If the child is started with tracing enables && the current process is being traced then alert the parent by using SIGTRAP signal.
 <li><p>Now, return the child pid to the parent process.
@@ -471,13 +848,13 @@ fork1 continued…
 <b>References:</b>
 <ul>
 <li><p><a href="https://github.com/openbsd/src/tree/master/sys" target="_blank">OpenBSD Source Codes</a> 
-<li><p><a href="https://atmnis.com/~proger/openkyiv/openkyiv2009_proger_sys.pdf" target="_blank">OpenBSD kernel Internals — The Hitchhiker’s Guide</a> |
-<li><p><a href="https://man.openbsd.org/" target="_blank">OpenBSD manual pages</a> |
-<li><p><a href="http://blog.pr4tt.com/2016/02/02/BSD-virtual-memory/" target="_blank">BSD Virtual Memory</a> |
-<li><p><a href="http://netbsd.gw.com/cgi-bin/man-cgi?++NetBSD-current" target="_blank">NetBSD manual pages</a> |
-<li><p><a href="https://www.freebsd.org/cgi/man.cgi?" target="_blank">FreeBSD manual pages</a> |
-<li><p><a href="http://shop.oreilly.com/product/9780596005658.do" target="_blank">Understanding The Linux Kernel</a> |
-<li><p><a href="https://bookgenerate.com/dl.php?id=0672329468" target="_blank">Linux Kernel Development - Robert Love</a> |
+<li><p><a href="https://atmnis.com/~proger/openkyiv/openkyiv2009_proger_sys.pdf" target="_blank">OpenBSD kernel Internals — The Hitchhiker’s Guide</a>
+<li><p><a href="https://man.openbsd.org/" target="_blank">OpenBSD manual pages</a>
+<li><p><a href="http://blog.pr4tt.com/2016/02/02/BSD-virtual-memory/" target="_blank">BSD Virtual Memory</a>
+<li><p><a href="http://netbsd.gw.com/cgi-bin/man-cgi?++NetBSD-current" target="_blank">NetBSD manual pages</a>
+<li><p><a href="https://www.freebsd.org/cgi/man.cgi?" target="_blank">FreeBSD manual pages</a>
+<li><p><a href="http://shop.oreilly.com/product/9780596005658.do" target="_blank">Understanding The Linux Kernel</a>
+<li><p><a href="https://bookgenerate.com/dl.php?id=0672329468" target="_blank">Linux Kernel Development - Robert Love</a>
 <li><p>Google :)
 
 <p>I have tried to cover most of what I have learned. In case I have forgotten or missed something, please feel free to update me.
