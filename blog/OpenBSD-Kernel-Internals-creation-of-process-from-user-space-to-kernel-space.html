@@ -34,14 +34,14 @@
 <p>I know this time it is a little late, but I am also busy with some other professional things.
 <p>This time let’s discuss about the process creation in OpenBSD operating system from user-space level to kernel space.
 <p>We will take an example of the user-space process that will be launched from the Command Line Interface (console), for example, “ls”, and then what happens in kernel-space as a result of it.
-<p>I will divide this series into 3 parts, like creation, execution, exit, because the creation of process itself took some amount of time for me to learn, and analyzing or tracking from user-space to kernel-space had to be done line by line.
+<p>I will divide this series into 3 parts, like <span><i>creation</i></span>, <span><i>execution</i></span>, <span><i>exit</i></span>, because the creation of process itself took some amount of time for me to learn, and analyzing or tracking from user-space to kernel-space had to be done line by line.
 <p>I have used gdb to debug the process and analyze it line by line.
 <p>Now, I will not waste your time too much.
 <p>Let’s dive into the user-space to kernel-space and learn and see the beauty of puffer.
 <p>I have divided the full process and functions that are used in the kernel into the points, so, I think it will be easy to read and learn.
 <p>Now, suppose you have launched "ls" command from CLI (xterm):
 <p>Here, the parent process is "ksh", that is, default shell in OpenBSD which invokes "ls" command or any other command.
-<p>Every process is created by sys_fork() , that is, fork system call which is indirectly (internally) calls fork1()
+<p>Every process is created by <span><i>sys_fork()</i></span> , that is, fork system call which is indirectly (internally) calls fork1()
 
 <p>fork1 — kernel developer’s manual
 <pre>
@@ -52,10 +52,10 @@ int
 fork1(struct proc *p1, int flags, void (*func)(void *), void *arg, register_t *retval, struct proc **rnewprocp);
 </code>
 </pre>
-<p>fork1() creates a new process out of p1, which should be the current thread. This function is used primarily to implement the fork(2) and vfork(2) system calls, as well as the kthread_create(9) function.
+<p>fork1() creates a new process out of p1, which should be the current thread. This function is used primarily to implement the <a href="https://man.openbsd.org/fork.2">fork(2</a> and <a href="https://man.openbsd.org/vfork.2">vfork(2</a> system calls, as well as the <a href="https://man.openbsd.org/kthread_create.9">kthread_create(9)</a> function.
 <p>Life cycle of a process (in brief):
 <p><span><i>“ls” → fork(2) → sys_fork() → fork1() → sys_execve() → sys_exit() → exit1()</i></span>
-<h3>Under the hood working of fork1()</h3>
+<h3>Under the hood working of <span><i>fork1()</i></span></h3>
 <p>After “ls” from user-space it goes to fork() (libc) then from there to sys_fork().
 
 <p>sys_fork()
@@ -73,10 +73,10 @@ sys_fork(struct proc *p, void *v, register_t *retval)
 }
 </pre>
 </code>
-<p>FORK_FORK: It is a macro which defines that the call is done by the fork(2) system call. Used only for statistics.
+<p><span><i>FORK_FORK</i></span>: It is a macro which defines that the call is done by the fork(2) system call. Used only for statistics.
 <p><span><i>#define FORK_FORK 0x00000001</i></span>
 <ul>
-	<li><p>So, the value of flags variable is set to 1 , because the call is done by fork(2)</li>
+	<li><p>So, the value of "flags" variable is set to 1 , because the call is done by fork(2)</li>
 	<li><p>check for PTRACING then update the flags with PTRACE_FORK else leave it and return to the fork1()</li>
 <p>Now, fork1()<br>
 
