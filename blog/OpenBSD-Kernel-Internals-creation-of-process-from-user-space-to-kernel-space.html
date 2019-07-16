@@ -37,7 +37,7 @@
 <p>I will divide this series into 3 parts, like <span><i>creation</i></span>, <span><i>execution</i></span>, <span><i>exit</i></span>, because the creation of process itself took some amount of time for me to learn, and analyzing or tracking from user-space to kernel-space had to be done line by line.
 <p>I have used gdb to debug the process and analyze it line by line.
 <p>Now, I will not waste your time too much.
-<p>Let’s dive into the user-space to kernel-space and learn and see the beauty of puffer.
+<h4>Let’s dive into the user-space to kernel-space and learn and see the beauty of puffer</h4>
 <p>I have divided the full process and functions that are used in the kernel into the points, so, I think it will be easy to read and learn.
 <p>Now, suppose you have launched "ls" command from CLI (xterm):
 <p>Here, the parent process is "ksh", that is, default shell in OpenBSD which invokes "ls" command or any other command.
@@ -366,8 +366,8 @@ timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 }
 </pre>
 </code>
-<p>scheduler_fork_hook(parent, p): It is a macro which will update the "p_estcpu" of child from parent’s p_estcpu.
-<p>"p_estcpu" holds an estimate of the amount of CPU that the process has used recently
+<p>scheduler_fork_hook(parent, p): It is a macro which will update the <span><i>p_estcpu</i></span> of child from parent’s p_estcpu.
+<p><span><i>p_estcpu</i></span> holds an estimate of the amount of CPU that the process has used recently
 <pre><code>/* Inherit the parent’s scheduler history */
 #define scheduler_fork_hook(parent, child) do {    \
  (child)->p_estcpu = (parent)->p_estcpu;           \
@@ -421,7 +421,7 @@ process_new(struct proc *p, struct process *parent, int flags)
 }
 </pre></code>
 <p>In above code snippet, the same thing is happening again like select process from process_pool via pool_get then zeroing using memset and copying using memcpy.
-<p>So, for the detailed explanation, please go through the <span><i>thread_new()<i><span> function first.
+<p>So, for the detailed explanation, please go through the <span><i>thread_new()</i></span> function first.
 <p>Next is initialization of process using process_initialize function.
 <pre><code>
 /*
@@ -455,20 +455,20 @@ process_initialize(struct process *pr, struct proc *p)
 </pre></code>
 <p><span><i>ps_mainproc</i></span> : It is the original and main thread in the process. It’s only special for the handling of "p_xstat" and some signal and ptrace behaviours that need to be fixed.
 <p>→Copy initial thread, that is, p to <span><i>pr->mainproc</i></span>
-<p>→Initialize the queue with referenced by head. Here, head is "pr→ps_threads". Then, Insert "elm" at the TAIL of the queue. Here, elm is p .
-<p>→set the number of references to 1, that is, "pr->ps_refcnt = 1"
+<p>→Initialize the queue with referenced by head. Here, head is <span><i>pr→ps_threads</i></span>. Then, Insert "elm" at the TAIL of the queue. Here, elm is p .
+<p>→set the number of references to 1, that is, <span><i>pr->ps_refcnt = 1</i></span>
 <p>→copy the process pr to the process of initial thread.
 <p>→set the same creds for process as the initial thread.
 <p>→condition check for the new thread and the new process via KASSERT.
-<p>→Initialize the List referenced by head. Here, head is "pr->ps_children"
+<p>→Initialize the List referenced by head. Here, head is <span><i>pr->ps_children</i></span>
 <p>→Again, initialize timeout. (for detail, see thead_new)
 <p>Now, after the process initialization, pid allocation takes place.
 <span><i>ps→ps_pid = allocpid();</i></span> <span><i>allocpid()</i></span> returns unused pid
 <p><span><i>allocpid()</i></span> internally calls the <span><i>arc4random_uniform()</i></span> which again calls the arc4random() then via <span><i>arc4random()</i></span> a fully randomized number is returned which is used as pid.
 <p>Then, for the availability of pid, or in other words, for unused pid, it verifies that whether the new pid is already taken or not by any process. It verifies this one by one in the process, process groups, and zombie process by using function <span><i>ispidtaken(pid_t pid)</i></span> which internally calls these functions:
-<li><span><i><p>prfind(pid_t pid) : Locate a process by number</i></span>
-<li><span><i><p>pgfind(pid_t pgid) : Locate a process group by number</i></span>
-<li><span><i><p>zombiefind(pid_t pid :Locate a zombie process by number</i></span>
+<li><p>prfind(pid_t pid) : Locate a process by number
+<li><p>pgfind(pid_t pgid) : Locate a process group by number
+<li><p>zombiefind(pid_t pid :Locate a zombie process by number
 <pre><code>
 /*
  * Checks for current use of a pid, either as a pid or pgid.
@@ -513,10 +513,13 @@ allocpid(void)
 	return pid;
 }
 </pre></code>
-code snippet for allocpid and ispidtaken
-<p>Now, store the pointer to parent process in pr→ps_pptr .
+<font size="2">
+<p align="center">code snippet for allocpid and ispidtaken
+</font>
+
+<p>Now, store the pointer to parent process in <span><i>pr→ps_pptr</i></span>
 <p>Increment the number of references count in process limit structure, that is, struct plimit .
-<p>Store the vnode of executable of parent into pr→ps_textvp ,that is, pr→ps_textvp = parent→ps_textvp; .
+<p>Store the vnode of executable of parent into <span><i>pr→ps_textvp</i></span> ,that is,<span><i>pr→ps_textvp = parent→ps_textvp;</i></span>
 <pre><code>
 if (pr→ps_textvp)
         vref(pr→ps_textvp); /* vref --> vnode reference */
@@ -570,7 +573,7 @@ if (vnode of controlling terminal != NULL)
 }
 
 </pre></code>
-Checks:
+<p>Checks:
 <pre><code>
 * if child_able_to_share_file_descriptor_table_with_parent:
          pr->ps_fd = fdshare(parent)      /* share the table */
@@ -593,9 +596,9 @@ Checks:
 * if check_signals_stat_swaping:
          pr->ps_flags |= PS_SYSTEM
 </pre></code>
-<p>update the "pr→ps_flags" with "PS_EMBRYO" by ORing it, that is, 
-pr→ps_flags |= PS_EMBRYO /* New process, not yet fledged */
-membar_producer() → Force visibility of all of the above changes.
+<p>update the <span><i>pr→ps_flags</i></span> with <span><i>PS_EMBRYO</i></span> by ORing it, that is, 
+<span><i>pr→ps_flags |= PS_EMBRYO /* New process, not yet fledged */</i></span>
+<p><span><i>membar_producer()</i></span> → Force visibility of all of the above changes.
 <p>— All stores preceding the memory barrier will reach global visibility before any stores after the memory barrier reach global visibility.
 <p>In short, I think it is used to forcefully make visible changes globally.
 <p>Now, Insert the new elm, that is, pr at the head of the list. Here, head is allprocess .
@@ -658,8 +661,7 @@ membar_producer() → Force visibility of all of the above changes.
 	LIST_INSERT_AFTER(curpr, pr, ps_pglist);
 	LIST_INSERT_HEAD(&curpr->ps_children, pr, ps_sibling);
 </pre></code>
-<p>Substructures 
-p→p_fd and p→p_vmspace directly copy of pr→ps_fd and pr→ps_vmspace.
+<p>Substructures <span><i>p→p_fd</i></span> and <span><i>p→p_vmspace</i></span> directly copy of <span><i>pr→ps_fd</i></span> and <span><i>pr→ps_vmspace</i></span>
 <pre><code>
 /* substructures: */
 struct filedesc *p_fd;		/* copy of p_p->ps_fd */
@@ -678,25 +680,26 @@ atomic_setbits_int(pr →ps_flags, PS_ISPWAIT);</i></span>
 cpu_fork(curp, p, NULL, NULL, func, arg ?arg: p)
 </pre></code>
 <p>— To create or Update PCB and make child ready to RUN.
-<span><i>
+<pre><code>
 /*
  * Finish creating the child thread. cpu_fork() will copy
  * and update the pcb and make the child ready to run. The
  * child will exit directly to user mode via child_return()
  * on its first time slice and will not return here.
  */
-</i></span>
-<p>Address space, 
+</pre></code>
+<p>Address space,
+<br></br>
 <span><i>vm = pr→ps_vmspace</i></span>
-<span><i>
-if (call is done by fork syscall); then
+<pre><code>
+<b>if</b> (call is done by fork syscall); then
 increment the number of fork() system calls.
 update the vm_pages affected by fork() syscall with addition of data page and stack page. 
-else if (call is done by vfork() syscall); then
+<b>else if</b> (call is done by vfork() syscall); then
 do as same as if it was fork syscall but for vfork system call. (see above if {for fork})
-else
+<b>else</b>
 increment the number of kernel threads created.
-</i></span>
+</pre></code>
 <p>Check,
 <pre><code>
 If (process is being traced && created by fork system call);then
@@ -704,15 +707,15 @@ If (process is being traced && created by fork system call);then
 The malloc() function allocates the uninitialized memory in the kernel address space for an object whose size is specified by size, that is, here, sizeof(*newptstat). And, <span><i>struct ptrace_state *newptstat</i></span>
 }
 </pre></code>
-allocate thread ID, that is, <span><i>p→p_tid = alloctid();</i></span> 
-This is also the same calling <span><i>arc4random</i></span> directly and using <span><i>tfind</i></span> function for finding the thread ID by number
-<span><i>
+<p>allocate thread ID, that is, <span><i>p→p_tid = alloctid();</i></span> 
+<p>This is also the same calling <span><i>arc4random</i></span> directly and using <span><i>tfind</i></span> function for finding the thread ID by number
+<pre><code>
 * inserts the new element p at the head	of the allprocess list
 * insert the new element p at the head of the thread hash list
 * insert the new element pr at the head of the process hash list
 * insert the new element pr after the curpr element
 * insert the new element pr at the head of the children process  list
-</i></span>
+</pre></code>
 <pre><code>
 	if (pr->ps_flags & PS_TRACED) {
 		pr->ps_oppid = curpr->ps_pid;
@@ -797,7 +800,7 @@ pr->ps_ptstat->pe_other_pid = curpr->ps_pid;
 <p>Freeing the memory or kernel virtual address that is allocated by malloc for newptstat via free .
 <p>Notify any interested parties about the new process via KNOTE .
 <p>Now, update the stats counter for successfully forked.
-uvmexp.forks++; /* -->For forks */
+<pre><code>uvmexp.forks++; /* -->For forks */ </pre></code>
 <pre><code>
 if (flags & FORK_PPWAIT)
         uvmexp.forks_ppwait++; /* --> counter for forks where parent waits */
@@ -841,9 +844,9 @@ if (rnewprocp != NULL)
 <li><p>Check, If the child is started with tracing enables && the current process is being traced then alert the parent by using SIGTRAP signal.
 <li><p>Now, return the child pid to the parent process.
 <li><p><span><i>return (0)</i></span>
-<p>Then, finally, I have seen in the debugger that after the fork1, it jumps to sys/arch/amd64/amd64/trap.c file for system call handling and for the setting frame.
-<p>Some of the machine independent (MI) functions defined in sys/sys/syscall_mi.h file, like, mi_syscall(), mi_syscall_return() and mi_child_return().
-<p>Then, after handling the system calls from trap.c then, control pass to the sys_execve system call, which I will explain later (in the second part) and also I will explain more about the trap.c code in upcoming posts. It has already become a long post.
+<p>Then finally, I have seen in the debugger that after the fork1, it jumps to <span><i>sys/arch/amd64/amd64/trap.c</i></span> file for system call handling and for the setting frame.
+<p>Some of the machine independent (MI) functions defined in <span><i>sys/sys/syscall_mi.h</i></span> file, like, <span><i>mi_syscall()</i></span>, <span><i>mi_syscall_return()</i></span> and <span><i>mi_child_return()</i></span>.
+<p>Then, after handling the system calls from "trap.c", control pass to the sys_execve system call, which I will explain later (in the second part) and also I will explain more about the trap.c code in upcoming posts. It has already become a long post.
 </ul>
 <b>References:</b>
 <ul>
