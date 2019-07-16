@@ -37,7 +37,7 @@
 <p>I will divide this series into 3 parts, like <span><i>creation</i></span>, <span><i>execution</i></span>, <span><i>exit</i></span>, because the creation of process itself took some amount of time for me to learn, and analyzing or tracking from user-space to kernel-space had to be done line by line.
 <p>I have used gdb to debug the process and analyze it line by line.
 <p>Now, I will not waste your time too much.
-<h4>Let’s dive into the user-space to kernel-space and learn and see the beauty of puffer</h4>
+<h3>Let’s dive into the user-space to kernel-space and learn and see the beauty of puffer</h3>
 <p>I have divided the full process and functions that are used in the kernel into the points, so, I think it will be easy to read and learn.
 <p>Now, suppose you have launched "ls" command from CLI (xterm):
 <p>Here, the parent process is "ksh", that is, default shell in OpenBSD which invokes "ls" command or any other command.
@@ -55,7 +55,7 @@ fork1(struct proc *p1, int flags, void (*func)(void *), void *arg, register_t *r
 <p>fork1() creates a new process out of p1, which should be the current thread. This function is used primarily to implement the <a href="https://man.openbsd.org/fork.2">fork(2</a> and <a href="https://man.openbsd.org/vfork.2">vfork(2</a> system calls, as well as the <a href="https://man.openbsd.org/kthread_create.9">kthread_create(9)</a> function.
 <p>Life cycle of a process (in brief):
 <p><span><i>“ls” → fork(2) → sys_fork() → fork1() → sys_execve() → sys_exit() → exit1()</i></span>
-<h3>Under the hood working of <span><i>fork1()</i></span></h3>
+<h4>Under the hood working of <span><i>fork1()</i></span></h4>
 <p>After “ls” from user-space it goes to fork() (libc) then from there to sys_fork().
 
 <p>sys_fork()
@@ -864,3 +864,13 @@ if (rnewprocp != NULL)
 <p>If I have explained something wrongly or incorrectly then please feel free to update or correct me, I am also a learner and beginner so that may happen. :)
 
 <b><p><span><i>Happy Kernel Hacking :D<i><span><b>
+
+<center>
+<font size="+1">
+<a href="https://www.facebook.com/sharer.php?s=100&p[url]=https%3A%2F%2Fbsdb0y.github.io%2Fblog%2FOpenBSD-Kernel-Internals-creation-of-process-from-user-space-to-kernel-space.html">Share on Facebook</a> |
+<a href="https://twitter.com/share?url=https%3A%2F%2Fbsdb0y.github.io%2Fblog%2FOpenBSD-Kernel-Internals-creation-of-process-from-user-space-to-kernel-space.html&hashtags=openbsd%2C%20pledge%2C%20security%2C%20C%2C%20kernel">Share on Twitter</a> |
+<a href="http://www.linkedin.com/shareArticle?url=https%3A%2F%2Fbsdb0y.github.io%2Fblog%2FOpenBSD-Kernel-Internals-creation-of-process-from-user-space-to-kernel-space.html">Share on LinkedIn</a>
+</font>
+</center>
+</body>
+</html>
