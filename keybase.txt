@@ -1,0 +1,56 @@
+==================================================================
+https://keybase.io/bsdboy_
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://bsdb0y.github.io
+  * I am bsdboy_ (https://keybase.io/bsdboy_) on keybase.
+  * I have a public key ASCNck2AGis9JYs1kHdqrYlsGH1ZDkKgPpfCekbs2sJ9Two
+
+To do so, I am signing this object:
+
+{
+  "body": {
+    "key": {
+      "eldest_kid": "01208d724d801a2b3d258b3590776aad896c187d590e42a03e97c27a46ecdac27d4f0a",
+      "host": "keybase.io",
+      "kid": "01208d724d801a2b3d258b3590776aad896c187d590e42a03e97c27a46ecdac27d4f0a",
+      "uid": "5a1f296a2c2d78750d9b3351de250119",
+      "username": "bsdboy_"
+    },
+    "merkle_root": {
+      "ctime": 1565415827,
+      "hash": "8733e73107ec00df2f36750380737b8c930f4bed473c1ae303b0a91c5863153e654c7ef9e7bff30745a90887ecf104a91419406fc2756f4662dd85c7e535e7c5",
+      "hash_meta": "a6f9903f904b7af5f92c4650d6682639d3ef745e14ad8f97dbc38d6899165381",
+      "seqno": 5983529
+    },
+    "service": {
+      "entropy": "DaDJKTvp6u1DxUzaFgWcZB01",
+      "hostname": "bsdb0y.github.io",
+      "protocol": "https:"
+    },
+    "type": "web_service_binding",
+    "version": 2
+  },
+  "client": {
+    "name": "keybase.io go client",
+    "version": "4.2.0"
+  },
+  "ctime": 1565415904,
+  "expire_in": 504576000,
+  "prev": "ff019a4e85fd09b0f239ba10ccd5db9b12609b9bdb18365e84a42aa1217444b2",
+  "seqno": 12,
+  "tag": "signature"
+}
+
+which yields the signature:
+
+hKRib2R5hqhkZXRhY2hlZMOpaGFzaF90eXBlCqNrZXnEIwEgjXJNgBorPSWLNZB3aq2JbBh9WQ5CoD6XwnpG7NrCfU8Kp3BheWxvYWTESpcCDMQg/wGaToX9CbDyOboQzNXbmxJgm5vbGDZehKQqoSF0RLLEIEWNt7esXwW/+n8Yq8IrMdv5yqiQC2HRa06aa9h3Gm1PAgHCo3NpZ8RAtDuaYCabvHOuvQTm+Fdd8C0ZzC+/WOWcDxr+c16uQHKuJcgkd7Rzzi1dZqhWbwjxBkNpt2Y4FODUaR5KqK2lAqhzaWdfdHlwZSCkaGFzaIKkdHlwZQildmFsdWXEIJbO34QUs7o52lxGl42WeJ8q0yOc/Nh5zlTIzt2jHX4co3RhZ80CAqd2ZXJzaW9uAQ==
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/bsdboy_
+
+==================================================================
