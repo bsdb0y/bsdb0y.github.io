@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Deep dive into OpenBSD malloc(3) internals</title>
+</head>
+<body>
+    <header>
+    <a href="/" style="color:#444444;text-decoration:none;"><h2>#BSDBOY</h2></a>
+    </header>
+<font size="+1">
+<a href="/pages/books.html">Books</a> |
+<a href="https://marc.info/?a=149745405500002&r=1&w=2" target="_blank">Mailing List (marc.info)</a> |
+<a href="https://twitter.com/_neerajpal" target="_blank">Twitter</a> |
+<a href="https://github.com/neerajpal09" target="_blank">Github</a> |
+<a href="https://stackexchange.com/users/6592094/neeraj-pal?tab=accounts" target="_blank">StackExchange</a> |
+<a href="https://www.linkedin.com/in/neerajpal09/" target="_blank">LinkedIn</a> |
+<a href="/pages/about.html">About Me</a>
+<h2></h2>
+</font>
+
+    <h1 class="post-title">
+	[Part -1] Deep dive into the OpenBSD malloc(3) internals 
+    </h1>
+
+<figure>
+  <img src="/images/blogpost_images/5_/debug_with_gdb.png" alt="debug_with_gdb" style="width:100%">
+  <figcaption>Fig.1 malloc debugging with gdb</figcaption>
+</figure>
+
+<p>Hi there,</p>
+
+<p>It's been a very long time I haven't written after my last blog about pledge and kernel internals.
+So, this time I have picked one of my time from my wishlist to learn and share, that is, OpenBSD <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a>
+
+<p>I will try to keep it as 3 part series due to lengthy content and this series will be mostly focussed on user-space code of <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a>
+
+<p>First of all, I would like to thanks to <b><i><a href="https://twitter.com/ottom6k">Otto Moerbeek</a></i></b>, <b><i><a href="https://twitter.com/canadianbryan">Bryan Steel</a></i></b> and <b><i>Fabien Romano</i></b> for helping me to understand the <a href="https://man.openbsd.org/malloc.3">malloc(3)</a> internals and cleared all my queries.
+
+<p>So, we should start now... :) 
+
+<p>I have used the following sample code to start my journey with the OpenBSD 6.6-stable <a href="https://man.openbsd.org/malloc.3">malloc(3)</a>
+<pre>
+<code>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+int
+main(int argc, char **argv) {
+	char *buff1 = NULL;
+	buff1 = (char *)malloc(8);
+	strcpy(buff1, argv[1]);
+	free(buff1);
+	return 0;
+}
+</code>
+</pre>
+<p>Compiled the libc with debug symbols and switched off the optimization by compiling it with clang option "-O0 -g".
+
+<h5><p>Followed the below steps to compile the libc with debug symbols</h5>
+<pre>
+<code>
+<p>1. cd $openbsd_src_directory
+<p>2. cd lib/libc
+<p>3. CFLAGS="-g -O0" CXXFLAGS="-g -O0" make obj
+<p>4. CFLAGS="-g -O0" CXXFLAGS="-g -O0" make -j4 
+</ul>
+</pre>
+</code>
+<p>I haven't installed it and used gdb-style debugging approach for code reading instead of debugging with printf style debugging.
+
+<p>For printf style debugging, one can use <a href="https://man.openbsd.org/dprintf.3">dprintf(3)</a> or <a href="https://man.openbsd.org/write.2">write(2)</a> calls to print anything but keep in mind that after installation of libc with printf statements it will dump lots of information for each and every binary, so installation step is no use for <a href="https://man.openbsd.org/malloc.3">malloc(3)</a>debugging.
+
+<p>I would say one can either compile and use LD_PRELOAD to load the compiled libc and use debugger or one can compile with printf statements then use the same LD_PRELOAD for that specific sample code.
+
+<p> So, just after the <a href="https://man.openbsd.org/malloc.3">malloc(3)</a> from the sample code, it directly jumps to function malloc(size_t size) from file <span><i>/usr/src/lib/libc/stdlib/malloc.c:1278</i></span>
+<pre>
+<code>
+1277 void *
+1278 malloc(size_t size)
+1279 {
+1280         void *r;
+1281         struct dir_info *d;
+1282         int saved_errno = errno;
+1283
+1284         PROLOGUE(getpool(), "malloc")
+1285         r = omalloc(d, size, 0, CALLER);
+1286         EPILOGUE()
+1287         return r;
+1288 }
+</pre>
+</code>
+<font size="2">
+	<p align="center">code snippet #00
+</font>
+<p> As explained by the developer <b><i><a href="https://twitter.com/ottom6k">Otto Moerbeek</a></i></b> in the <b><i><a href="https://twitter.com/ottom6k/status/1236170000312012800">tweet on twitter</a></i></b> that <b><i>struct dir_info</i></b> contains all the meta information malloc needs to keep track of what page regions have been allocated, which pages regions are in the free-cache and for pages of chunks which chunks are free and which are allocated.
+
+<p> So, as per the code given above, one can see after some basic initialization-declaration, there is some macro PROLOGUE and EPILOGUE. It means the same like how it sounds, usually these two means,
+
+<h5><p>prologue:</p></h5>
+	<p>Function prologue. In assembly language programming, the function prologue is a few lines of code at the beginning of a function, which prepare the stack and registers for use within the function. Here, instead of preparing the stack and registers, it initializes some other necessary malloc requirements that we will see later.
+https://en.wikipedia.org/wiki/Function_prologue#Prologue
+<h5><p>epilogue:</p></h5>
+	<p>Function epilogue reverses the actions of the function prologue and returns control to the calling function.
+https://en.wikipedia.org/wiki/Function_prologue#Epilogue
+<p>PROLGOUE macro looks like given below:
+<pre>
+<code>
+1256 #define PROLOGUE(p, fn)                 \
+1257         d = (p);                        \
+1258         if (d == NULL) {                \
+1259                 _malloc_init(0);        \
+1260                 d = (p);                \
+1261         }                               \
+1262         _MALLOC_LOCK(d->mutex);         \
+1263         d->func = fn;                   \
+1264         if (d->active++) {              \
+1265                 malloc_recurse(d);      \
+1266                 return NULL;            \
+1267         }                               \
+</pre>
+</code>
+<font size="2">
+	<p align="center">code snippet #01
+</font>
+<p>As from the [code snippet #00], we can see that  <b><i>p</i></b> is <b><i>getpool()</i></b> and <b><i>fn</i></b> is callee function, that is, <b><i>"malloc"</i></b>
+<p> As from the [code snippet 01], we can see that it first calls <b><i>getpool()</i></b> function and the code for <b><i>getpool()</i></b> given below
+<pre>
+<code>
+270 static inline struct dir_info *
+271 getpool(void)
+272 {
+273         if (!mopts.malloc_mt)
+274                 return mopts.malloc_pool[1];
+275         else    /* first one reserved for special pool */
+276                 return mopts.malloc_pool[1 + TIB_GET()->tib_tid %
+277                     (mopts.malloc_mutexes - 1)];
+278 }
+</pre>
+</code>
+<font size="2">
+	<p align="center">code snippet #02
+</font>
+<p> In the [code snippet #02] we can see that first it checks whether it has multi-threads or single-threads. And, in our case it is single threaded binary, so after <b><i>if</i></b> it returns <b><i>mopts.malloc_pool[1]</i></b> which is <b><i>NULL</i></b>.
+<p>Now, after that from the [code snippet #01] it checks whether <b><i>d</i></b> is <b><i>NULL</i></b> or not. In our case it is <b><i>NULL</i></b> as at first it will always be <b><i>NULL</i></b> after that it calls <b><i>_malloc_init(0)</i></b> but when <b><i>d</i></b> is <b><i>not NULL</i></b> then it assigns <b><i>fn</i></b> to <b><i>d->func</i></b> then check and increment the <b><i>d->active</i></b> then calls <b><i>malloc_recurse(d)</i></b> and returns <b><i>NULL</i></b> but for our situation it is not the flow.
+<p>Code for <b><i>_malloc_init(0)</i></b> given below
+<pre>
+<code>
+1207 void
+1208 _malloc_init(int from_rthreads)
+1209 {
+1210         u_int i, nmutexes;
+1211         struct dir_info *d;
+1212 
+1213         _MALLOC_LOCK(1);
+1214         if (!from_rthreads && mopts.malloc_pool[1]) {
+1215                 _MALLOC_UNLOCK(1);
+1216                 return;
+1217         }
+1218         if (!mopts.malloc_canary)
+1219                 omalloc_init();
+1220 
+1221         nmutexes = from_rthreads ? mopts.malloc_mutexes : 2;
+1222         if (((uintptr_t)&malloc_readonly & MALLOC_PAGEMASK) == 0)
+1223                 mprotect(&malloc_readonly, sizeof(malloc_readonly),
+1224                     PROT_READ | PROT_WRITE);
+1225         for (i = 0; i < nmutexes; i++) {
+1226                 if (mopts.malloc_pool[i])
+1227                         continue;
+1228                 if (i == 0) {
+1229                         omalloc_poolinit(&d, MAP_CONCEAL);
+1230                         d->malloc_junk = 2;
+1231                         d->malloc_cache = 0;
+1232                 } else {
+1233                         omalloc_poolinit(&d, 0);
+1234                         d->malloc_junk = mopts.def_malloc_junk;
+1235                         d->malloc_cache = mopts.def_malloc_cache;
+1236                 }
+1237                 d->mutex = i;
+1238                 mopts.malloc_pool[i] = d;
+1239         }
+1240 
+1241         if (from_rthreads)
+1242                 mopts.malloc_mt = 1;
+1243         else
+1244                 mopts.internal_funcs = 1;
+1245 
+1246         /*
+1247          * Options have been set and will never be reset.
+1248          * Prevent further tampering with them.
+1249          */
+1250         if (((uintptr_t)&malloc_readonly & MALLOC_PAGEMASK) == 0)
+1251                 mprotect(&malloc_readonly, sizeof(malloc_readonly), PROT_READ);
+1252         _MALLOC_UNLOCK(1);
+1253 }
+</pre>
+</code>
+<font size="2">
+	<p align="center">code snippet #03
+</font>
+<p> In the [code snippet #03], we can see that first it does some MALLOC_LOCKing and checks for the <b><i>from_rthreads</i></b> and also for <b><i>mopts.malloc_pool[1]</i></b> as an outcome it is not <b><i>true</i></b> due to <b><i>mopts.malloc_pool[1]</i></b> which is <b><i>NULL</i></b>
+<p> Then, after that it checks for <b><i>mopts.malloc_canary</i></b> and it wil be always 0 first time due to structure initialized to zero (0) and then it calls function <b><i>omalloc_init()</i></b> and code for the same given below
+<pre>
+<code>
+405	static void
+406	omalloc_init(void)
+407	{
+408		char *p, *q, b[16];
+409		int i, j, mib[2];
+410		size_t sb;
+411
+412		/*
+413		 * Default options
+414		 */
+415		mopts.malloc_mutexes = 8;
+416		mopts.def_malloc_junk = 1;
+417		mopts.def_malloc_cache = MALLOC_DEFAULT_CACHE;
+418
+419		for (i = 0; i < 3; i++) {
+420			switch (i) {
+421			case 0:
+422				mib[0] = CTL_VM;
+423				mib[1] = VM_MALLOC_CONF;
+424				sb = sizeof(b);
+425				j = sysctl(mib, 2, b, &sb, NULL, 0);
+426				if (j != 0)
+427					continue;
+428				p = b;
+429				break;
+430			case 1:
+431				if (issetugid() == 0)
+432					p = getenv("MALLOC_OPTIONS");
+433				else
+434					continue;
+435				break;
+436			case 2:
+437				p = malloc_options;
+438				break;
+439			default:
+440				p = NULL;
+441			}
+442
+443			for (; p != NULL && *p != '\0'; p++) {
+444				switch (*p) {
+445				case 'S':
+446					for (q = "CFGJ"; *q != '\0'; q++)
+447						omalloc_parseopt(*q);
+448					mopts.def_malloc_cache = 0;
+449					break;
+450				case 's':
+451					for (q = "cfgj"; *q != '\0'; q++)
+452						omalloc_parseopt(*q);
+453					mopts.def_malloc_cache = MALLOC_DEFAULT_CACHE;
+454					break;
+455				default:
+456					omalloc_parseopt(*p);
+457					break;
+458				}
+459			}
+460		}
+461
+462	#ifdef MALLOC_STATS
+463		if (mopts.malloc_stats && (atexit(malloc_exit) == -1)) {
+464			dprintf(STDERR_FILENO, "malloc() warning: atexit(2) failed."
+465			    " Will not be able to dump stats on exit\n");
+466		}
+467	#endif /* MALLOC_STATS */
+468
+469		while ((mopts.malloc_canary = arc4random()) == 0)
+470			;
+471	}
+</pre>
+</code>
+<font size="2">
+	<p align="center">code snippet #04
+</font>
+<p>OpenBSD malloc(3) has lots of feature and they are configurable using <i>systcl(8)</i>, environment variable <i>MALLOC_OPTIONS</i> and compile-time option <i>malloc_options</i> 
+<p>So, let's suppose one want to use the canary option then one has to set the option using systcl(8), like I have used it from the command: <b><i>systcl vm.malloc_conf=C</i></b>
+<p><b><i>omalloc_init()</i></b> does the following things:
+<ul>
+	<li><p>initializes some variables of <b><i>malloc_readonly</i></b> structure to default values like <b><i>mopts.malloc_mutexes</i></b> is the default number of mutexes, <b><i>mopts.def_malloc_junk</i></b> is the default number of junk filling and <b><i>mopts.def_malloc_cache</i></b> is the default number of free page cache</li>
+	<li><p>then, it checks one by one for all 3 ways that is mentioned above for setting a malloc option. In our case, I have used systcl(8) option, so for sysctl it goes to <i>case 0:</i> and get the value to <i>char b[16]</i> and then it assigns to pointer to character variable <i>p</i> then after looping for other two it goes for extracting the value that is there in <i>p</i></li>
+	<li><p>first it checks for the malloc option <b><i>S</i></b> which enables all the security auditing features of OpenBSD <a href="https://man.openbsd.org/malloc.3">malloc(3)</a></li>
+	<ul>
+		<li>if it is there then it calls <b><i>omalloc_parseopt(*q);</i></b> function then after that it sets <b><i>mopts.def_malloc_cache</i></b> to <b><i>0</i></b> or to <b><i>MALLOC_DEFAULT_CACHE</i></b>, depends on whether it is <b><i>S</i></b> or <b><i>s</i></b></li>
+		<li>if it is not there, then it simply calls the function <b><i>omalloc_parseopt(*p);</i></b></li>
+	</ul>
+</ul>
+<p> function <b><i>omalloc_parseopt(char opt)</i></b> extracts the character and in our case it is <b><i>C</i></b> for malloc canary, so after parsing, it goes to <b><i>case 'C'</i></b> and sets <b><i>mopts.chunk_canaries</i></b> to <b><i>1</i></b>, it does the same for other characters and sets or enables/initializes their variables. Code for the same function given below: 
+<pre>
+<code>
+322	static void
+323	omalloc_parseopt(char opt)
+324	{
+325		switch (opt) {
+326		case '+':
+327			mopts.malloc_mutexes <<= 1;
+328			if (mopts.malloc_mutexes > _MALLOC_MUTEXES)
+329				mopts.malloc_mutexes = _MALLOC_MUTEXES;
+330			break;
+331		case '-':
+332			mopts.malloc_mutexes >>= 1;
+333			if (mopts.malloc_mutexes < 2)
+334				mopts.malloc_mutexes = 2;
+335			break;
+336		case '>':
+337			mopts.def_malloc_cache <<= 1;
+338			if (mopts.def_malloc_cache > MALLOC_MAXCACHE)
+339				mopts.def_malloc_cache = MALLOC_MAXCACHE;
+340			break;
+341		case '<':
+342			mopts.def_malloc_cache >>= 1;
+343			break;
+344		case 'c':
+345			mopts.chunk_canaries = 0;
+346			break;
+347		case 'C':
+348			mopts.chunk_canaries = 1;
+349			break;
+350	#ifdef MALLOC_STATS
+351		case 'd':
+352			mopts.malloc_stats = 0;
+353			break;
+354		case 'D':
+355			mopts.malloc_stats = 1;
+356			break;
+357	#endif /* MALLOC_STATS */
+358		case 'f':
+359			mopts.malloc_freecheck = 0;
+360			mopts.malloc_freeunmap = 0;
+361			break;
+362		case 'F':
+363			mopts.malloc_freecheck = 1;
+364			mopts.malloc_freeunmap = 1;
+365			break;
+366		case 'g':
+367			mopts.malloc_guard = 0;
+368			break;
+369		case 'G':
+370			mopts.malloc_guard = MALLOC_PAGESIZE;
+371			break;
+372		case 'j':
+373			if (mopts.def_malloc_junk > 0)
+374				mopts.def_malloc_junk--;
+375			break;
+376		case 'J':
+377			if (mopts.def_malloc_junk < 2)
+378				mopts.def_malloc_junk++;
+379			break;
+380		case 'r':
+381			mopts.malloc_realloc = 0;
+382			break;
+383		case 'R':
+384			mopts.malloc_realloc = 1;
+385			break;
+386		case 'u':
+387			mopts.malloc_freeunmap = 0;
+388			break;
+389		case 'U':
+390			mopts.malloc_freeunmap = 1;
+391			break;
+392		case 'x':
+393			mopts.malloc_xmalloc = 0;
+394			break;
+395		case 'X':
+396			mopts.malloc_xmalloc = 1;
+397			break;
+398		default:
+399			dprintf(STDERR_FILENO, "malloc() warning: "
+400	                    "unknown char in MALLOC_OPTIONS\n");
+401			break;
+402		}
+403	}
+</pre>
+</code>
+<font size="2">
+	<p align="center">code snippet #05
+</font>
+<p> There are some <b><i>ifdef MALLOC_STATS</i></b> in the entire source, which means it dumps extra malloc stats information whenever requires. So, as from the [code snippet #04], after completing <b><i>omalloc_parseopt(char opt)</i></b>, there is some MALLOC_STATS condition then after them, a random cookie assigns to <b><i>mopts.malloc_canary</i></b> using <b><i>arc4random()</i></b> 
+</body>
+</html>
+
