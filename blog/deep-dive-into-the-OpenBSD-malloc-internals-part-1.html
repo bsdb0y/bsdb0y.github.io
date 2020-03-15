@@ -622,7 +622,7 @@ chunk_info_list[11]
 </code>
 </pre>
 <p>So, as from the PROLOGUE code, we can see that we have completed the <b><i>malloc_init(0)</i></b>.Now, if we remember correctly, here p refers to the function <b><i>getpool()</i></b>, calls getpool() function again and this time also due to single-threaded program, it returns <b><i>mopts.malloc_pool[1]</i></b>, which has the regular pool, not MAP_CONCEALED one, return the same to <b>d</b> then malloc_lock and assigns fn to <b><i>d->fn</i></b>, here fn means "malloc". It checks and incremented the <b><i>d->active</i></b> and doesn't go inside the if code-flow due to 0 value of <b>d->active</b>
-<p>As one can from the [code snippet #00], I have pasted it again below
+<p>As one can see from the [code snippet #00], I have pasted it again below
 <pre>
 <code>
 1277 void *
