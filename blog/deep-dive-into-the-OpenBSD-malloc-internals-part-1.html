@@ -21,7 +21,7 @@
 </font>
 
     <h1 class="post-title">
-	[Part -1] Deep dive into the OpenBSD malloc(3) internals 
+	    Tale of OpenBSD secure memory allocator internals -  malloc(3) <font size=5> [Part - 1] </font> 
     </h1>
 
 <figure>
@@ -31,10 +31,10 @@
 
 <p>Hi there,</p>
 
-<p>It's been a very long time I haven't written after my last blog about pledge and kernel internals.
-So, this time I have picked one of my time from my wishlist to learn and share, that is, OpenBSD <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a>
+<p>It's been a very long time I haven't written anything after my last OpenBSD blogs about pledge and kernel internals.
+<p>So, again I started reading OpenBSD source codes with debugger after reducing my sleep timings and managing to get some time after professional life. This time I have picked one of my favourite item from my wishlist to learn and share, that is, OpenBSD <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a>, secure allocator
 
-<p>I will try to keep it as 3 part series due to lengthy content and this series will be mostly focussed on user-space code of <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a>
+<p>I will try to keep it as <b><i>n</i></b> part series due to lengthy content and this series will be mostly focussed on user-space code of <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a>
 
 <p>First of all, I would like to thanks to <b><i><a href="https://twitter.com/ottom6k">Otto Moerbeek</a></i></b>, <b><i><a href="https://twitter.com/canadianbryan">Bryan Steel</a></i></b> and <b><i>Fabien Romano</i></b> for helping me to understand the <a href="https://man.openbsd.org/malloc.3">malloc(3)</a> internals and cleared all my queries.
 
@@ -95,17 +95,17 @@ main(int argc, char **argv) {
 <font size="2">
 	<p align="center">code snippet #00
 </font>
-<p> As explained by the developer <b><i><a href="https://twitter.com/ottom6k">Otto Moerbeek</a></i></b> in the <b><i><a href="https://twitter.com/ottom6k/status/1236170000312012800">tweet on twitter</a></i></b> that <b><i>struct dir_info</i></b> contains all the meta information malloc needs to keep track of what page regions have been allocated, which pages regions are in the free-cache and for pages of chunks which chunks are free and which are allocated.
+<p> As explained by the developer <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b> in the <b><i><a href="https://twitter.com/ottom6k/status/1236170000312012800">tweet on twitter</a></i></b> that <b><i>struct dir_info</i></b> contains all the meta information malloc needs to keep track of what page regions have been allocated, which pages regions are in the free-cache and for pages of chunks which chunks are free and which are allocated.
 
 <p> So, as per the code given above, one can see after some basic initialization-declaration, there is some macro PROLOGUE and EPILOGUE. It means the same like how it sounds, usually these two means,
 
 <h5><p>prologue:</p></h5>
-	<p>Function prologue. In assembly language programming, the function prologue is a few lines of code at the beginning of a function, which prepare the stack and registers for use within the function. Here, instead of preparing the stack and registers, it initializes some other necessary malloc requirements that we will see later.
-https://en.wikipedia.org/wiki/Function_prologue#Prologue
+<p><a href="https:/en.wikipedia.org/wiki/Function_prologue#Prologue">Function prologue</a>. In assembly language programming, the function prologue is a few lines of code at the beginning of a function, which prepare the stack and registers for use within the function. Here, instead of preparing the stack and registers, it initializes some other necessary malloc requirements that we will see later.
+
 <h5><p>epilogue:</p></h5>
-	<p>Function epilogue reverses the actions of the function prologue and returns control to the calling function.
-https://en.wikipedia.org/wiki/Function_prologue#Epilogue
-<p>PROLGOUE macro looks like given below:
+<p><a href="https://en.wikipedia.org/wiki/Function_prologue#Epilogue">Function epilogue</a> reverses the actions of the function prologue and returns control to the calling function.
+
+<p>PROLGOUE macro given below:
 <pre>
 <code>
 1256 #define PROLOGUE(p, fn)                 \
@@ -379,6 +379,230 @@ https://en.wikipedia.org/wiki/Function_prologue#Epilogue
 	<p align="center">code snippet #05
 </font>
 <p> There are some <b><i>ifdef MALLOC_STATS</i></b> in the entire source, which means it dumps extra malloc stats information whenever requires. So, as from the [code snippet #04], after completing <b><i>omalloc_parseopt(char opt)</i></b>, there is some MALLOC_STATS condition then after them, a random cookie assigns to <b><i>mopts.malloc_canary</i></b> using <b><i>arc4random()</i></b> 
+<p>After the completion of <b><i>omalloc_init()</i></b>, coming again to [code snippet #03], there a variable named <b><i>nmutexes</i></b> which sets bydefault to <b><i>2</i></b> for single-threaded programs, we have already seen the initalization of <b><i>mopts.malloc_mutexes</i></b> default to <b><i>8</i></b> for multi-threaded programs in the function <b><i>omalloc_init()</i></b>. Here, for single-threaded, the value of variable <b><i>from_rthread</i></b> is <b><i>0</i></b> 
+<p>Then, it is checking for <b><i>MALLOC_PAGEMASK</i></b> bit for <b><i>malloc_readonly</i></b> address or simply we can say that it is checking the last 12 bits of the <b><i>malloc_readonly</i></b> structure address and all 12 bits must be <b><i>0</i></b> to apply perm bit <b><i>PROT_READ</i></b> and <b><i>PROT_WRITE</i></b>. I would also say it is also checking for even address 
+<p>After that, there is a loop till the <b><i>nmutexes</i></b> which is 2 for our case, single-threaded. For single-threaded programs, it maintains two malloc dir_info pools as indicates from the variable <b><i>nmutexes</i></b>. One for <b><i>MAP_CONCEALED</i></b> memory (#0) and one for regular (#1).
+For multi-threaded porgram more pools are created. This is to avoid contention, accesses to diffrent pools can run concurently [ref. <a href="https://marc.info/?l=openbsd-tech&m=154521318606876&w=2"> related to multi-pools - mailing list</a>]
+<p><b><i>omalloc_poolinit(&d, MAP_CONCEAL);</i></b> when <b><i>if i == 0</i></b> for MAP_CONCEALED memory and <b><i>else</i></b>, <b><i>omalloc_poolinit(&d, 0);</i></b> for regular memory pools. 
+<p>omalloc_poolinit()</i></b> code given below:
+<pre>
+<code>
+473 static void
+474 omalloc_poolinit(struct dir_info **dp, int mmap_flag)
+475 {
+476         char *p;
+477         size_t d_avail, regioninfo_size;
+478         struct dir_info *d;
+479         int i, j;
+480
+481         /*
+482          * Allocate dir_info with a guard page on either side. Also
+483          * randomise offset inside the page at which the dir_info
+484          * lies (subject to alignment by 1 << MALLOC_MINSHIFT)
+485          */
+486         if ((p = MMAPNONE(DIR_INFO_RSZ + (MALLOC_PAGESIZE * 2), mmap_flag)) ==
+487             MAP_FAILED)
+488                 wrterror(NULL, "malloc init mmap failed");
+489         mprotect(p + MALLOC_PAGESIZE, DIR_INFO_RSZ, PROT_READ | PROT_WRITE);
+490         d_avail = (DIR_INFO_RSZ - sizeof(*d)) >> MALLOC_MINSHIFT;
+491         d = (struct dir_info *)(p + MALLOC_PAGESIZE +
+492             (arc4random_uniform(d_avail) << MALLOC_MINSHIFT));
+493
+494         rbytes_init(d);
+495         d->regions_free = d->regions_total = MALLOC_INITIAL_REGIONS;
+496         regioninfo_size = d->regions_total * sizeof(struct region_info);
+497         d->r = MMAP(regioninfo_size, mmap_flag);
+498         if (d->r == MAP_FAILED) {
+499                 d->regions_total = 0;
+500                 wrterror(NULL, "malloc init mmap failed");
+501         }
+502         for (i = 0; i <= MALLOC_MAXSHIFT; i++) {
+503                 LIST_INIT(&d->chunk_info_list[i]);
+504                 for (j = 0; j < MALLOC_CHUNK_LISTS; j++)
+505                         LIST_INIT(&d->chunk_dir[i][j]);
+506         }
+507         STATS_ADD(d->malloc_used, regioninfo_size + 3 * MALLOC_PAGESIZE);
+508         d->mmap_flag = mmap_flag;
+509         d->malloc_junk = mopts.def_malloc_junk;
+510         d->malloc_cache = mopts.def_malloc_cache;
+511         d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
+512         d->canary2 = ~d->canary1;
+513
+514         *dp = d;
+515 }
+</pre>
+</code>
+<font size="2">
+	<p align="center">code snippet #06
+</font>
+<p><b><i>omalloc_poolinit(struct dir_inf **dp, int mmap_flag)</i></b> does the following things:
+<ul>
+	<li><p>After some basic variable declarations, first it maps page into memory using mmap(2) in MMAPNONE(sz, f) where sz is the size and f is the flag</li>
+<pre>
+<code>
+96 #define MMAPNONE(sz,f)  mmap(NULL, (sz), PROT_NONE, \
+97     MAP_ANON | MAP_PRIVATE | (f), -1, 0)
+</pre>
+</code>
+<font size="2">
+	<p align="center">MMAPNONE(sz, f)
+</font>
+	<li><p>So, as from the above macro defination, we can see that the first parameter of mmap(2), that is, addr is <b><i>NULL</i></b></li>
+<pre>
+<code>
+     The mmap() function causes the contents of fd, starting at offset, to be
+     mapped in memory at the given addr.  The mapping will extend at least len
+     bytes, subject to page alignment restrictions.
+
+     The addr argument describes the address where the system should place the
+     mapping.  If the MAP_FIXED flag is specified, the allocation will happen
+     at the specified address, replacing any previously established mappings
+     in its range.  Otherwise, the mapping will be placed at the available
+     spot at addr; failing that it will be placed "close by".  If addr is NULL
+     the system can pick any address.  Except for MAP_FIXED mappings, the
+     system will never replace existing mappings.
+
+     The len argument describes the minimum amount of bytes the mapping will
+     span.  Since mmap() maps pages into memory, len may be rounded up to hit
+     a page boundary.  If len is 0, the mapping will fail with EINVAL.
+</pre>
+</code>
+<font size="2">
+	<p align="center"><a href="https://man.openbsd.org/mmap.2">mmap(2)</a> man page
+</font>
+	<li><p>So below are the figures that I got it from gdb during debugging through execution</li>
+<pre>
+<code>
+sz = DIR_INFO_RSZ + (MALLOC_PAGESIZE * 2)
+where DIR_INFO_RSZ = ((sizeof(struct dir_info) + MALLOC_PAGEMASK) & ~MALLOC_PAGEMASK)
+MALLOC_PAGEMASK = 4095 bytes
+MALLOC_PAGESIZE = 4096 bytes
+So, DIR_INFO_RSZ becomes (4284 + 4095) & ~4095 = 8192 bytes
+and sz becomes 8192 + (4096 * 2) = 16384 bytes
+and, f = MMAP_CONCEAL; which means it prevents from leaking the information and also it excludes the mapping from core dumps
+</code>
+</pre>
+<font size="2">
+	<p align="center">page calculations
+</font>
+	<li><p>So, as from the above page mapping calculations, DIR_INFO_RSZ indicates that to store the <b><i>dir_info</i></b> structure we need <b><i>2 pages</i></b> and allocate <b><i> 4 pages PROT_NONE</i></b> using MMAPNONE with flag as "MAP_CONCEAL", which can be seen in [code snippet #06]</li>
+	<li><p>Then, making two middle pages R/W which can be seen from the macro value of DIR_INFO_RSZ, 2 pages</li>
+	<li><p>then, calculate the <b><i>d_avail</i></b> to randomise offset inside the page at which the <b><i>dir_info</i></b> lies (subject to alignment by 1 << MALLOC_MINSHIFT)</li>
+<pre>
+<code>
+d_avail = (8192 - 4824) >> 4 = 3368 >> 4 = 210
+</pre>
+</code>
+	<li><p> the d_avail is 210, now calculate offset, d </li>
+<pre>
+<code>
+d = (struct dir_info *)(p + MALLOC_PAGESIZE + (arc4random_uniform(d_avail) << MALLOC_MINSHIFT));
+</code>
+</pre>
+	<li><p>So, as mentioned by the developer <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b> in the <a href="https://marc.info/?l=openbsd-tech&m=158408023212237&w=2">mailing list</a> that the <b><i>dir_info</i></b> structure ends up on an aligned address somewhere in the middle pages on an offset between 0 and (210<<4) = 0..3360, counting from the start of the two middle pages.So, it becomes like d = [p + MALLOC_PAGESIZE + (0..3360)], where (0..3360) is the offset value from 0 to 3360 max</li>
+	<li><p>As from the code, in my opinion, it looks like there is no guard page bydefault on the both the sides, however, it is there only one side but after discussing with the developer <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b>. He said that <b><i>dir_info</i></b> is special and having a guard page on both sides for regular allocation can be done, but would waste more pages. He mentioned to note that <b>allocations are already spread throughout the address space, so it is very likely that an allocation is surrounded by unmapped pages</b>. So, finally he mentioned that there will be guard page on each side
+	<li><p>then it initializes random bytes using the <b><i>rbytes_init(d)</i></b> function. Code for the same give below:</li>
+	<pre>
+	<code>
+303 static void
+304 rbytes_init(struct dir_info *d)
+305 {
+306         arc4random_buf(d->rbytes, sizeof(d->rbytes));
+307         /* add 1 to account for using d->rbytes[0] */
+308         d->rbytesused = 1 + d->rbytes[0] % (sizeof(d->rbytes) / 2);
+309 }
+	</code>
+	</pre>
+<font size="2">
+	<p align="center">rbytes_init(struct dir_info *d)
+</font>
+	<li><p>It is clearly seen from the above code that it is filling the <b><i>d->rbytes</i></b> with the random bytes using the <b><i>arc4random_buf()</i></b>. Then, keeps the tracks/count of the rbytes used with <b><i>d->rbytesused</i></b></li>
+	<li><p>After that as from the [code snippet #06], it is initializing the default values for some of the structure members, <b><i>d->regions_free = dir->regions_total = MALLOC_INTIAL_REGIONS;</i></b> where the value of macro <b><i>MALLOC_INITIAL_REGIONS</i></b> is <b><i>512</i></b>. Also, calculates the total region_info size, <b><i>regioninfo_size = d->regions_total * sizeof(struct region_info);</i></b></li>
+	<pre>
+	<code>
+105 struct region_info {
+106         void *p;                /* page; low bits used to mark chunks */
+107         uintptr_t size;         /* size for pages, or chunk_info pointer */
+108 #ifdef MALLOC_STATS
+109         void *f;                /* where allocated from */
+110 #endif
+111 };
+	</code>
+	</pre>
+<font size="2">
+	<p align="center">struct region_info
+</font>
+	<li><p> The structure <b><i>struct region_info</i></b> is used to keep track of mmap’ed regions by storing their address and size into a hash table as mentioned in the <a href="https://www.openbsd.com.au/papers/eurobsdcon2009/otto-malloc.pdf">slides</a> of <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b></li>
+	<li><p>then, it maps pages of size <i>regioninfo_size</i> for regions with the flag <b><i>MAP_CONCEAL</i></b> and assigns it to <b><i>d->r</i></b> and then checks if mapping failed</li>
+	<li><p> And, one more query that I had during understanding the source code of malloc(3) is about the code snippet given below [taken from the code snippet# 06]</li>
+	<pre>
+	<code>
+...
+...
+...
+502         for (i = 0; i <= MALLOC_MAXSHIFT; i++) {
+503                 LIST_INIT(&d->chunk_info_list[i]);
+504                 for (j = 0; j < MALLOC_CHUNK_LISTS; j++)
+505                         LIST_INIT(&d->chunk_dir[i][j]);
+506         }
+...
+...
+...
+	</code>
+	</pre>
+	<li><p><b><i>What is the purpose of creating these many linked lists?</i></b> So, after discussing with the <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b>, I came to know that these many lists is used to allow more randomization. As <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b> said "More than one list of free chunk pages per chunk size is maintained to allow for more randomization."</li>
+	<li><p>So, in short the above nested for loops will create 12 chunk_info_list where i is 0 to 11 and for each and every ith index there is j, so as per that,</li>
+	<pre>
+	<code>
+chunk_info_list[0]
+	chunk_dir[0][0]
+	chunk_dir[0][1]
+	chunk_dir[0][2]
+	chunk_dir[0][3]
+...
+...
+...
+chunk_info_list[11]
+	chunk_dir[11][0]
+	chunk_dir[11][1]
+	chunk_dir[11][2]
+	chunk_dir[11][3]
+
+...
+...
+...
+	</code>
+	</pre>
+	<li><p>One can also allow more randomization by increasing the <b><i>MALLOC_CHUNK_LISTS</i></b> but at the cost of overhead. Increasing the <b><i>MALLOC_MAXSHIFT</i></b> is not possible because it is the shift of the max chunk size that fits in a page. We will see later how these lists heps to achieve randomization</li>
+	<li><p>then, adds and updated the <b><i>d->malloc_used</i></b> for dumping the malloc stats information</li> 
+	<li>then, updated the default initialization of variables given below:</li>
+	<pre>
+	<code>
+...
+...
+...
+508         d->mmap_flag = mmap_flag;
+509         d->malloc_junk = mopts.def_malloc_junk;
+510         d->malloc_cache = mopts.def_malloc_cache;
+511         d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
+512         d->canary2 = ~d->canary1;
+513
+514         *dp = d;
+515 }
+	/* where it is already mentioned above code snippets that mopts.def_malloc_junk is 1 and
+	 *  mopts.def_malloc_cache is 64, already initialized default values in omalloc_init() 
+	 */
+	</code>
+	</pre>
+	<li><p>then, <i>dir_info</i> uses two canaries. There calculation is very easy. Whatever the address of <b><i>d</i></b> ( struct dir_info *d) just typecast it to <b><i>(u_int32_t)(uintptr_t)</i></b> and <b>XOR</b> it with <b><i>mopts.malloc_canary</i></b> and assign the result to <b><i>d->canary1</i></b> and then compute the <b><i>not (~)</i></b> of <b><i>d->canary1</i></b> then assign the result to <b><i>d->canary2</i></b> or in simpler words, convert into binary then take each bit and flips them to their logical opposite. convert 1's to 0's and vice versa then convert it to hex and assign it to <b><i>d->canary2</i></b></li>
+	<li><p>finally assign the initialized dir_info structure <b>d</b> to <b><i>*dp</i></b></li>
+</ul>
+<p>We are still in function <b><i>_malloc_init(int from_rthreads)</i></b>, so, as per the [code snippet #03], for <b><i>i == 0</i></b>, we have completed the function <b><i>omalloc_poolinit(&d, MAP_CONCEAL);</i></b>, now after that, <b><i>d->malloc_junk = 2;</i></b> and <b><i>d->malloc_cache = 0;</i></b> 
+<p>Then, it saves the index <b>i</b> to <b><i>d->mutex</i></b> and stored the initialized MAP_CONCEALED pool to <b><i>mopts.malloc_pool[i] = d;</i></b>
+<p>The value of <b>nmutexes</b> is 2, so, now loop will again do the whole same operations for index <b>i == 1</b> or we can say for <b>i != 0</b>.So, this time also it invokes <b><i>omalloc_poolinit(&d, 0)</i></b> but with no flag, [remember, last time it was MAP_CONCEAL, this time is 0]. So, <b><i>omalloc_poolinit(&d, 0)</i></b> performs the same operations but only the diff is with no flag value or with flag value 0
+<p>After completion of function <b><i>omalloc_poolinit(&d, 0)</i></b>, it sets junk value to default junk value and same for malloc_cache, that is, <b><i>d->malloc_junk = mopts.def_malloc_junk;</i></b> and <b><i>d->malloc_cache = mopts.def_malloc_cache;</i></b>. Now, again for <b>i = 1</b> it does the same thing, that is, saving the new index <b>1</b> to <b><i>d->mutex</i></b> and stores the pool to <b><i>mopts.malloc_pool[i] = d</i></b>
+<p>So, now <b>mopts.malloc_pool</b> has two pools, <b><i>mopts.malloc_pool[0]</i></b> and <b><i>mopts.malloc_pool[1]</i></b>
+<p>Next, it checks for multi-threading from variable <b>from_rthreads</b>, if the value is non-zero then it sets <b><i>mopts.malloc_mt = 1</i></b> which shows that program is multi-threaded but for our case it is zero (0), so, it doesn't go in that code flow and then the else code flow executes and sets <b><i>mopts.internal_funcs = 1</i></b>, from the structure <b><i>malloc_readonly</i></b>, it shows that setting <b>internal_funcs</b> means to use better function like recallocarray/freezero but I haven't seen them for our case, maybe they have used it for some other scenarios like in case of calloc, etc. <a href="https://marc.info/?l=openbsd-tech&m=148846616030488&w=2">recallocarray(3) - mailing list</a>
+<p>Finally it sets the perms to readonly, to prevent further tampering with them, again it checks last 12 bits and if they are 0 then it sets perms to PROT_READ, and <b><i>_malloc_init(0)</i></b> completed
 </body>
 </html>
-
