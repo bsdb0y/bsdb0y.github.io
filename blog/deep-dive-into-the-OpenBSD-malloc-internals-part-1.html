@@ -604,5 +604,110 @@ chunk_info_list[11]
 <p>So, now <b>mopts.malloc_pool</b> has two pools, <b><i>mopts.malloc_pool[0]</i></b> and <b><i>mopts.malloc_pool[1]</i></b>
 <p>Next, it checks for multi-threading from variable <b>from_rthreads</b>, if the value is non-zero then it sets <b><i>mopts.malloc_mt = 1</i></b> which shows that program is multi-threaded but for our case it is zero (0), so, it doesn't go in that code flow and then the else code flow executes and sets <b><i>mopts.internal_funcs = 1</i></b>, from the structure <b><i>malloc_readonly</i></b>, it shows that setting <b>internal_funcs</b> means to use better function like recallocarray/freezero but I haven't seen them for our case, maybe they have used it for some other scenarios like in case of calloc, etc. <a href="https://marc.info/?l=openbsd-tech&m=148846616030488&w=2">recallocarray(3) - mailing list</a>
 <p>Finally it sets the perms to readonly, to prevent further tampering with them, again it checks last 12 bits and if they are 0 then it sets perms to PROT_READ, and <b><i>_malloc_init(0)</i></b> completed
+<p>Now, we go back to the PROGLOGUE macro code in the [code snippet #01], I have pasted the code again below:
+<pre>
+<code>
+1256 #define PROLOGUE(p, fn)                 \
+1257         d = (p);                        \
+1258         if (d == NULL) {                \
+1259                 _malloc_init(0);        \
+1260                 d = (p);                \
+1261         }                               \
+1262         _MALLOC_LOCK(d->mutex);         \
+1263         d->func = fn;                   \
+1264         if (d->active++) {              \
+1265                 malloc_recurse(d);      \
+1266                 return NULL;            \
+1267         }                               \
+</code>
+</pre>
+<p>So, as from the PROLOGUE code, we can see that we have completed the <b><i>malloc_init(0)</i></b>.Now, if we remember correctly, here p refers to the function <b><i>getpool()</i></b>, calls getpool() function again and this time also due to single-threaded program, it returns <b><i>mopts.malloc_pool[1]</i></b>, which has the regular pool, not MAP_CONCEALED one, return the same to <b>d</b> then malloc_lock and assigns fn to <b><i>d->fn</i></b>, here fn means "malloc". It checks and incremented the <b><i>d->active</i></b> and doesn't go inside the if code-flow due to 0 value of <b>d->active</b>
+<p>As one can from the [code snippet #00], I have pasted it again below
+<pre>
+<code>
+1277 void *
+1278 malloc(size_t size)
+1279 {
+1280         void *r;
+1281         struct dir_info *d;
+1282         int saved_errno = errno;
+1283
+1284         PROLOGUE(getpool(), "malloc")
+1285         r = omalloc(d, size, 0, CALLER);
+1286         EPILOGUE()
+1287         return r;
+1288 }
+</code>
+</pre>
+<p> From line no. 1285, we can see that after PROLOGUE it calls <b><i>omalloc(d, size, CALLER)</i></b>. Code for <b><i>omalloc(d, size, CALLER)</i></b> given below:
+<pre>
+<code>
+1126	static void *
+1127	omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f)
+1128	{
+1129		void *p;
+1130		size_t psz;
+1131
+1132		if (sz > MALLOC_MAXCHUNK) {
+1133			if (sz >= SIZE_MAX - mopts.malloc_guard - MALLOC_PAGESIZE) {
+1134				errno = ENOMEM;
+1135				return NULL;
+1136			}
+1137			sz += mopts.malloc_guard;
+1138			psz = PAGEROUND(sz);
+1139			p = map(pool, NULL, psz, zero_fill);
+1140			if (p == MAP_FAILED) {
+1141				errno = ENOMEM;
+1142				return NULL;
+1143			}
+1144			if (insert(pool, p, sz, f)) {
+1145				unmap(pool, p, psz, 0, 0);
+1146				errno = ENOMEM;
+1147				return NULL;
+1148			}
+1149			if (mopts.malloc_guard) {
+1150				if (mprotect((char *)p + psz - mopts.malloc_guard,
+1151				    mopts.malloc_guard, PROT_NONE))
+1152					wrterror(pool, "mprotect");
+1153				STATS_ADD(pool->malloc_guarded, mopts.malloc_guard);
+1154			}
+1155
+1156			if (MALLOC_MOVE_COND(sz)) {
+1157				/* fill whole allocation */
+1158				if (pool->malloc_junk == 2)
+1159					memset(p, SOME_JUNK, psz - mopts.malloc_guard);
+1160				/* shift towards the end */
+1161				p = MALLOC_MOVE(p, sz);
+1162				/* fill zeros if needed and overwritten above */
+1163				if (zero_fill && pool->malloc_junk == 2)
+1164					memset(p, 0, sz - mopts.malloc_guard);
+1165			} else {
+1166				if (pool->malloc_junk == 2) {
+1167					if (zero_fill)
+1168						memset((char *)p + sz - mopts.malloc_guard,
+1169						    SOME_JUNK, psz - sz);
+1170					else
+1171						memset(p, SOME_JUNK,
+1172						    psz - mopts.malloc_guard);
+1173				} else if (mopts.chunk_canaries)
+1174					fill_canary(p, sz - mopts.malloc_guard,
+1175					    psz - mopts.malloc_guard);
+1176			}
+1177
+1178		} else {
+1179			/* takes care of SOME_JUNK */
+1180			p = malloc_bytes(pool, sz, f);
+1181			if (zero_fill && p != NULL && sz > 0)
+1182				memset(p, 0, sz);
+1183		}
+1184
+1185		return p;
+1186	}
+</code>
+</pre>
+<font size="2">
+	<p align="center">omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f)
+</font>
+<p>
 </body>
 </html>
