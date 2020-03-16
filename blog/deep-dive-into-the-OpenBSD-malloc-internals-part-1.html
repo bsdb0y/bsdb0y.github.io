@@ -382,7 +382,7 @@ main(int argc, char **argv) {
 <p>After the completion of <b><i>omalloc_init()</i></b>, coming again to [code snippet #03], there a variable named <b><i>nmutexes</i></b> which sets bydefault to <b><i>2</i></b> for single-threaded programs, we have already seen the initalization of <b><i>mopts.malloc_mutexes</i></b> default to <b><i>8</i></b> for multi-threaded programs in the function <b><i>omalloc_init()</i></b>. Here, for single-threaded, the value of variable <b><i>from_rthread</i></b> is <b><i>0</i></b> 
 <p>Then, it is checking for <b><i>MALLOC_PAGEMASK</i></b> bit for <b><i>malloc_readonly</i></b> address or simply we can say that it is checking the last 12 bits of the <b><i>malloc_readonly</i></b> structure address and all 12 bits must be <b><i>0</i></b> to apply perm bit <b><i>PROT_READ</i></b> and <b><i>PROT_WRITE</i></b>. I would also say it is also checking for even address 
 <p>After that, there is a loop till the <b><i>nmutexes</i></b> which is 2 for our case, single-threaded. For single-threaded programs, it maintains two malloc dir_info pools as indicates from the variable <b><i>nmutexes</i></b>. One for <b><i>MAP_CONCEALED</i></b> memory (#0) and one for regular (#1).
-For multi-threaded porgram more pools are created. This is to avoid contention, accesses to diffrent pools can run concurently [ref. <a href="https://marc.info/?l=openbsd-tech&m=154521318606876&w=2"> related to multi-pools - mailing list</a>]
+For multi-threaded porgram more pools are created. This is to avoid contention, accesses to diffrent pools can run concurently [ref. [1] <a href="https://marc.info/?l=openbsd-tech&m=154521318606876&w=2"> related to multi-pools - mailing list</a> [2] <a href="https://github.com/libressl-portable/openbsd/commit/55874ab3542715ce7e5c5e8ec0d6e1d7576a29a6#diff-5ce2636352a42c4e4a687c72939dbec9">github diff for more pools</a>]
 <p><b><i>omalloc_poolinit(&d, MAP_CONCEAL);</i></b> when <b><i>if i == 0</i></b> for MAP_CONCEALED memory and <b><i>else</i></b>, <b><i>omalloc_poolinit(&d, 0);</i></b> for regular memory pools. 
 <p>omalloc_poolinit()</i></b> code given below:
 <pre>
@@ -708,6 +708,144 @@ chunk_info_list[11]
 <font size="2">
 	<p align="center">omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f)
 </font>
-<p>
+<p><b><i>omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f);</i></b> does the following things...
+<ul>
+	<li><p>There are two code flow paths, <b>1st</b>, <b><i>if ( sz > MALLOC_MAXCHUNK)</i></b>. I have used size <b>8</b> in the sample code, so it won't go to this code flow path, but still I am going to explain but not in-depth. So, first it  checks if the size is greater than the <b><i>MALLOC_MAXCHUNK</i></b>, which is 4095. If size is less, then it uses <b>2nd</b> code flow, that is, it calls <b><i>malloc_bytes(pool, sz, f);</i></b> which we will see later, for now I am going to cover the case when size of greater in the following points</li>
+	<ul>
+		<li><p>After checking the size with MALLOC_MAXCHUNK then it checks if the requested size is bigger than SIZE_MAX (excluding mopts.malloc_guard and MALLOC_PAGESIZE), if yes, then it sets errno to ENOMEM</li>
+		<li><p>Then, it adds the malloc_guard value to requested size, then it rounds the page to multiple of pagesize, that is, if requested size is <= 4096 then it rounds it to 4096 but if requested size is 4097 then it rounds it to 8192</li>
+		<li><p>Then, it maps the page by taking provided <b><i>pool</i></b> as hint address then check if it fails</li>
+		<li> Then, it uses <b><i>insert(pool, p, sz, f);</i></b> function call to keep track of mmap’ed regions by storing their address and size into a hash table, we will se more in-depth code flow later, if it fails to insert then it unmaps the page and return ENOMEM</li>
+		<li><p>Then, it checks for malloc_guard page option, if it sets then it adds a guarded page as per the size mentioned by malloc_guard variable with PROT_NONE perms bit and then it adds the information for stats</li>
+		<li><p>Then, it checks for <b><i>MALLOC_MOVE_COND</i></b>, if the condition is true then it shifts the allocations towards the end, as mentioned in the source code comment,</li>
+		<pre>
+		<code>
+70 /*
+71  * We move allocations between half a page and a whole page towards the end,
+72  * subject to alignment constraints. This is the extra headroom we allow.
+73  * Set to zero to be the most strict.
+74  */
+75 #define MALLOC_LEEWAY           0
+76 #define MALLOC_MOVE_COND(sz)    ((sz) - mopts.malloc_guard <            \
+77                                     MALLOC_PAGESIZE - MALLOC_LEEWAY)
+78 #define MALLOC_MOVE(p, sz)      (((char *)(p)) +                        \
+79                                     ((MALLOC_PAGESIZE - MALLOC_LEEWAY - \
+80                                     ((sz) - mopts.malloc_guard)) &      \
+81                                     ~(MALLOC_MINSIZE - 1)))
+		</code>
+		</pre>
+		<li><p>After checking for condition, first, it checks for junking value, that is,<b><i>pool->malloc_junk == 2</i></b> if it equals <b>then</b> it fills the mmap'ed page <b>p</b> with <b><i>SOME_JUNK</i></b> which has bits <b><i>0xdb</i></b>, then as previously mentioned that it shifts the allocation towards end with macro <b>MALLOC_MOVE(p, sz)</b>, then later on it checks if zero-filling requires, if it requires then if fills the same JUNKed filled page with zeroes</li>
+		<li><p>But, if the <b><i>MALLOC_MOVE_COND</i></b>, condition is not true then it simple checks for junking value, that is, <b>pool->malloc_junk == 2</b>, if it equals to <b>2</b> then it checks for zero filling and if it requires then it fills from the address as mentioned in the code snippet given below if { ... }, and if zero filling not requires then it simply fills with SOME_JUNK as mentioned in the else { ... } code flow</li>
+		<pre>
+		<code>
+		...
+		...
+		...
+1166				if (pool->malloc_junk == 2) {
+1167					if (zero_fill)
+1168						memset((char *)p + sz - mopts.malloc_guard,
+1169						    SOME_JUNK, psz - sz);
+1170					else
+1171						memset(p, SOME_JUNK,
+1172						    psz - mopts.malloc_guard);
+		</code>
+		</pre>
+		<li><p>So, if the junking value is equals to 2, that is, <b><i>pool->malloc_junk == 2</i></b>, this code flow is covered in the previous point but if it fails or not equals to 2 then it checks for canaries, that is, <b><i> else if (mopts.chunk_canaries) </i></b> then it calls the <b>fill_canary</b> function to filling the canaries</li>
+	</ul>
+	<li><p>1st code flow completed, now <b>2nd code flow</b>, that is, <b><i>if (sz < MALLOC_MAXCHUNK)</i></b> means if requested size is less than the MALLOC_MAXCHUNK, previously in 1st code flow it was greater than the MALLOC_MAXCHUNK</li> 
+	<ul>
+		<li><p> it calls the function <b><i>malloc_bytes(pool, sz, f);</i></b> and the source code for the same given below</li>
+		<pre>
+		<code>
+948	/*
+949	 * Allocate a chunk
+950	 */
+951	static void *
+952	malloc_bytes(struct dir_info *d, size_t size, void *f)
+953	{
+954		u_int i, r;
+955		int j, listnum;
+956		size_t k;
+957		u_short	*lp;
+958		struct chunk_info *bp;
+959		void *p;
+960	
+961		if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)(uintptr_t)d) ||
+962		    d->canary1 != ~d->canary2)
+963			wrterror(d, "internal struct corrupt");
+964	
+965		j = find_chunksize(size);
+966	
+967		r = ((u_int)getrbyte(d) << 8) | getrbyte(d);
+968		listnum = r % MALLOC_CHUNK_LISTS;
+969		/* If it's empty, make a page more of that size chunks */
+970		if ((bp = LIST_FIRST(&d->chunk_dir[j][listnum])) == NULL) {
+971			bp = omalloc_make_chunks(d, j, listnum);
+972			if (bp == NULL)
+973				return NULL;
+974		}
+975	
+976		if (bp->canary != (u_short)d->canary1)
+977			wrterror(d, "chunk info corrupted");
+978	
+979		i = (r / MALLOC_CHUNK_LISTS) & (bp->total - 1);
+980	
+981		/* start somewhere in a short */
+982		lp = &bp->bits[i / MALLOC_BITS];
+983		if (*lp) {
+984			j = i % MALLOC_BITS;
+985			k = ffs(*lp >> j);
+986			if (k != 0) {
+987				k += j - 1;
+988				goto found;
+989			}
+990		}
+991		/* no bit halfway, go to next full short */
+992		i /= MALLOC_BITS;
+993		for (;;) {
+994			if (++i >= bp->total / MALLOC_BITS)
+995				i = 0;
+996			lp = &bp->bits[i];
+997			if (*lp) {
+998				k = ffs(*lp) - 1;
+999				break;
+1000			}
+1001		}
+1002	found:
+1003	#ifdef MALLOC_STATS
+1004		if (i == 0 && k == 0) {
+1005			struct region_info *r = find(d, bp->page);
+1006			r->f = f;
+1007		}
+1008	#endif
+1009	
+1010		*lp ^= 1 << k;
+1011	
+1012		/* If there are no more free, remove from free-list */
+1013		if (--bp->free == 0)
+1014			LIST_REMOVE(bp, entries);
+1015	
+1016		/* Adjust to the real offset of that chunk */
+1017		k += (lp - bp->bits) * MALLOC_BITS;
+1018	
+1019		if (mopts.chunk_canaries && size > 0)
+1020			bp->bits[bp->offset + k] = size;
+1021	
+1022		k <<= bp->shift;
+1023	
+1024		p = (char *)bp->page + k;
+1025		if (bp->size > 0) {
+1026			if (d->malloc_junk == 2)
+1027				memset(p, SOME_JUNK, bp->size);
+1028			else if (mopts.chunk_canaries)
+1029				fill_canary(p, size, bp->size);
+1030		}
+1031		return p;
+1032	}
+  		</code>
+		</pre>
+		<font size="2">
+			<p align="center">code snippet #07
+		</font>
 </body>
 </html>
