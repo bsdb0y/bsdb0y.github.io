@@ -550,6 +550,9 @@ d = (struct dir_info *)(p + MALLOC_PAGESIZE + (arc4random_uniform(d_avail) << MA
 ...
 	</code>
 	</pre>
+	<font size="2">
+		<p align="center">code snippet - lists creation to allow randomization
+	</font>
 	<li><p><b><i>What is the purpose of creating these many linked lists?</i></b> So, after discussing with the <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b>, I came to know that these many lists is used to allow more randomization. As <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b> said "More than one list of free chunk pages per chunk size is maintained to allow for more randomization."</li>
 	<li><p>So, in short the above nested for loops will create 12 chunk_info_list where i is 0 to 11 and for each and every ith index there is j, so as per that,</li>
 	<pre>
@@ -594,6 +597,9 @@ chunk_info_list[11]
 	 */
 	</code>
 	</pre>
+	<font size="2">
+		<p align="center">code snippet #07
+	</font>
 	<li><p>then, <i>dir_info</i> uses two canaries. There calculation is very easy. Whatever the address of <b><i>d</i></b> ( struct dir_info *d) just typecast it to <b><i>(u_int32_t)(uintptr_t)</i></b> and <b>XOR</b> it with <b><i>mopts.malloc_canary</i></b> and assign the result to <b><i>d->canary1</i></b> and then compute the <b><i>not (~)</i></b> of <b><i>d->canary1</i></b> then assign the result to <b><i>d->canary2</i></b> or in simpler words, convert into binary then take each bit and flips them to their logical opposite. convert 1's to 0's and vice versa then convert it to hex and assign it to <b><i>d->canary2</i></b></li>
 	<li><p>finally assign the initialized dir_info structure <b>d</b> to <b><i>*dp</i></b></li>
 </ul>
@@ -706,7 +712,7 @@ chunk_info_list[11]
 </code>
 </pre>
 <font size="2">
-	<p align="center">omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f)
+	<p align="center">code snippet #08
 </font>
 <p><b><i>omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f);</i></b> does the following things...
 <ul>
@@ -845,7 +851,109 @@ chunk_info_list[11]
   		</code>
 		</pre>
 		<font size="2">
-			<p align="center">code snippet #07
+			<p align="center">code snippet #09
+		</font>
+		<li><p><b><i>malloc_bytes(pool, sz, f);</i></b> is used to allocate a chunk. After some basic variable declaration, it checks for internal struct corruption with canaries of <b>d</b> and <b>mopts.malloc_canary</b> as mentioned and calculated in the [code snippet #07]</li>
+		<li><p>then, it finds the chunk size with the function <b><i>find_chunksize(size);</i></b>. Code given below</li>
+		<pre>
+		<code>
+ 919 static int
+ 920 find_chunksize(size_t size)
+ 921 {
+ 922         int r;
+ 923
+ 924         /* malloc(0) is special */
+ 925         if (size == 0)
+ 926                 return 0;
+ 927
+ 928         if (size < MALLOC_MINSIZE)
+ 929                 size = MALLOC_MINSIZE;
+ 930         size--;
+ 931
+ 932         r = MALLOC_MINSHIFT;
+ 933         while (size >> r)
+ 934                 r++;
+ 935         return r;
+ 936 }
+		</code>
+		</pre>
+		<font size="2">
+			<p align="center">code snippet #10
+		</font>
+		<li><p>As from the [code snippet #10], first it will check if given size is <b>0</b> then it returns <b>0</b>, then it checks if size is less than MALLOC_MINSIZE then it sets size to MALLOC_MINSIZE, else, it decrements the size and sets <b><i>r = MALLOC_MINSHIFT;</i></b>  and the value of MALLOC_MINSHIFT is <b>4</b>. Then it right shifts the <b>size</b> by <b>r</b> and it keeps incrementing the <b>r</b> till right shifting results becomes zero, then returns <b>r</b>. In our case, the size is 8, which is less than MALLOC_MINSIZE and then due to it is less than MALLOC_MISIZE, it sets the size to MALLOC_MINSIZE, which is 16, then it decrements and it becomes 15 and <b>15 >> 4</b>, r is MALLOC_MINSHIFT, which is 4. So, output of <b>15 >>4</b> is 0. So, it returns r, which is 4</li>
+		<li><p>As we can see from the [code snippet #9], after find_chunksize(size), it calls <b>((u_int)getrbyte(d) << 8) | getrbyte(d);</b>, so, getrbyte(d) given below:</li>
+		<pre>
+		<code>
+ 311 static inline u_char
+ 312 getrbyte(struct dir_info *d)
+ 313 {
+ 314         u_char x;
+ 315 
+ 316         if (d->rbytesused >= sizeof(d->rbytes))
+ 317                 rbytes_init(d);
+ 318         x = d->rbytes[d->rbytesused++];
+ 319         return x;
+ 320 }
+ 		</code>
+		</pre>
+		<font size="2">
+			<p align="center">code snippet #11
+		</font>
+		<li><p>So, in the above code, if <i>d->rbytesused >= sizeof(d->rbytes)</i> then it initializes the random bytes using <i>rbytes_init(d)</i>, else, it assigns x to <i>d->rbytes[d->rbytesused]</i> and returns the same. So as per the name indicates, I think it as getrbyte() means get-random-byte(), basically the whole line <b><i>r = ((u_int)getrbyte(d) << 8) | getrbyte(d);</i></b> does the following stuff...</li>
+		<pre>
+		<code>
+		get-random-byte then left shits by 8 then OR'ed with again some random byte
+		let's suppose,
+		1) a =  get-random-bytes
+		2) left shift a by 8 
+		3) b = get-random-bytes
+		4) r = a | b
+		for example, 0xd4 -> 0xd400 -> 0xd4cb, so r = 0xd4cb
+		</code>
+		</pre>
+		<li><p>then it finds the listnum, <b><i>listnum = r % MALLOC_CHUNK_LISTS;</i></b>, where MALLOC_CHUNK_LISTS is 4</li>
+
+		<li><p>As from the [code snippet - lists creation to allow randmization], we have seen that there is nested for loops which creates lists, helpful to allow randomization. So, here we can see that it randomly chooses the created lists for allocation of chunk_info</li>
+		<li><p>Then, it chooses some random list and makes it first list, now if the list is empty, that is, head is NULL then it calls function <b><i>omalloc_make_chunks(d, j, listnum);</i></b>to allocate chunks. Code for <b><i>omalloc_make_chunks</i></b> given below</li>
+		<pre>
+		<code>
+ 885 /*
+ 886  * Allocate a page of chunks
+ 887  */
+ 888 static struct chunk_info *
+ 889 omalloc_make_chunks(struct dir_info *d, int bits, int listnum)
+ 890 {
+ 891         struct chunk_info *bp;
+ 892         void *pp;
+ 893
+ 894         /* Allocate a new bucket */
+ 895         pp = map(d, NULL, MALLOC_PAGESIZE, 0);
+ 896         if (pp == MAP_FAILED)
+ 897                 return NULL;
+ 898
+ 899         /* memory protect the page allocated in the malloc(0) case */
+ 900         if (bits == 0 && mprotect(pp, MALLOC_PAGESIZE, PROT_NONE) == -1)
+ 901                 goto err;
+ 902
+ 903         bp = alloc_chunk_info(d, bits);
+ 904         if (bp == NULL)
+ 905                 goto err;
+ 906         bp->page = pp;
+ 907
+ 908         if (insert(d, (void *)((uintptr_t)pp | (bits + 1)), (uintptr_t)bp,
+ 909             NULL))
+ 910                 goto err;
+ 911         LIST_INSERT_HEAD(&d->chunk_dir[bits][listnum], bp, entries);
+ 912         return bp;
+ 913
+ 914 err:
+ 915         unmap(d, pp, MALLOC_PAGESIZE, 0, d->malloc_junk);
+ 916         return NULL;
+ 917 }
+		</code>
+		</pre>
+		<font size="2">
+			<p align="center">code snippet #12
 		</font>
 </body>
 </html>
