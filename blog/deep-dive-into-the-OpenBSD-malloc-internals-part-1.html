@@ -21,7 +21,7 @@
 </font>
 
     <h1 class="post-title">
-	    Tale of OpenBSD secure memory allocator internals -  malloc(3) <font size=5> [Part - 1] </font> 
+	    Tale of OpenBSD secure memory allocator internals -  malloc(3)
     </h1>
 
 <figure>
@@ -34,9 +34,9 @@
 <p>It's been a very long time I haven't written anything after my last OpenBSD blogs about pledge and kernel internals.
 <p>So, again I started reading OpenBSD source codes with debugger after reducing my sleep timings and managing to get some time after professional life. This time I have picked one of my favourite item from my wishlist to learn and share, that is, OpenBSD <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a>, secure allocator
 
-<p>I will try to keep it as <b><i>n</i></b> part series due to lengthy content and this series will be mostly focussed on user-space code of <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a>
+<p>I will try to keep it as <b><i>n</i></b> part series due to lengthy content and this series will be mostly focussed on user-space code of <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a> and its family 
 
-<p>First of all, I would like to thanks to <b><i><a href="https://twitter.com/ottom6k">Otto Moerbeek</a></i></b>, <b><i><a href="https://twitter.com/canadianbryan">Bryan Steel</a></i></b> and <b><i>Fabien Romano</i></b> for helping me to understand the <a href="https://man.openbsd.org/malloc.3">malloc(3)</a> internals and cleared all my queries.
+<p>First of all, I would like to thanks <b><i><a href="https://twitter.com/ottom6k">Otto Moerbeek</a></i></b>, <b><i><a href="https://twitter.com/canadianbryan">Bryan Steel</a></i></b> and <b><i>Fabien Romano</i></b> for helping me to understand the <a href="https://man.openbsd.org/malloc.3">malloc(3)</a> internals and cleared all my queries.
 
 <p>So, we should start now... :) 
 
@@ -954,6 +954,89 @@ chunk_info_list[11]
 		</pre>
 		<font size="2">
 			<p align="center">code snippet #12
+		</font>
+		<li><p>The above code is used to allocate a page of chunks, which is already mentioned in the comments <b> :D </b></li>
+		<li><p>First, it maps/allocates page up to len MALLOC_PAGESIZE hint addr is NULL using <b><i>map(d, NULL, MALLOC_PAGESIZE, 0);</i></b>, then it checks for its failure and returns NULL if fails</li>
+		<li>Then, it memory protects the allocated page for <b><i>malloc(0)</i></b> case with <b>PROT_NONE</b></li>
+		<li>Then, it allocates the chunk info by calling the function <b><i>alloc_chunk_info(d, bits);</i></b> and code for the same given below:</li>
+		<pre>
+		<code>
+ 847 static struct chunk_info *
+ 848 alloc_chunk_info(struct dir_info *d, int bits)
+ 849 {
+ 850         struct chunk_info *p;
+ 851
+ 852         if (LIST_EMPTY(&d->chunk_info_list[bits])) {
+ 853                 size_t size, count, i;
+ 854                 char *q;
+ 855
+ 856                 if (bits == 0)
+ 857                         count = MALLOC_PAGESIZE / MALLOC_MINSIZE;
+ 858                 else
+ 859                         count = MALLOC_PAGESIZE >> bits;
+ 860
+ 861                 size = howmany(count, MALLOC_BITS);
+ 862                 size = sizeof(struct chunk_info) + (size - 1) * sizeof(u_short);
+ 863                 if (mopts.chunk_canaries)
+ 864                         size += count * sizeof(u_short);
+ 865                 size = _ALIGN(size);
+ 866
+ 867                 q = MMAP(MALLOC_PAGESIZE, d->mmap_flag);
+ 868                 if (q == MAP_FAILED)
+ 869                         return NULL;
+ 870                 STATS_ADD(d->malloc_used, MALLOC_PAGESIZE);
+ 871                 count = MALLOC_PAGESIZE / size;
+ 872
+ 873                 for (i = 0; i < count; i++, q += size) {
+ 874                         p = (struct chunk_info *)q;
+ 875                         LIST_INSERT_HEAD(&d->chunk_info_list[bits], p, entries);
+ 876                 }
+ 877         }
+ 878         p = LIST_FIRST(&d->chunk_info_list[bits]);
+ 879         LIST_REMOVE(p, entries);
+ 880         if (p->shift == 0)
+ 881                 init_chunk_info(d, p, bits);
+ 882         return p;
+ 883 }
+		</code>
+		</pre>
+		<font size="2">
+			<p align="center">code snippet #13
+		</font>
+		<li><p>First it checks if the list is empty where bits is 4 for our case, and if it is then it checks if bits is 0, if ys then it calculate count by dividing the MALLOC_PAGESIZE with MALLOC_MINSIZE but in out case bits is equals to 4, so, it calculates count for all cases when bit != 0 by <b><i>MALLOC_PAGESIZE >> bits</i></b>, which comes as 256 for our case</li>
+		<li><p>Then, howmany(x, y) is ((x) + ((y) - 1) / y), so as per that, x = count and y  MALLOC_BITS, which is 256 and 16 respectively for our case and the result is 16</li>
+		<li><p>Then, it calculates size from adding the sizeof(struct chunk_info) + (size - 1) * sizeof(u_short), for our case, it came as 40 + (16 - 1) * 2 = 70 and then it checks for mopt.chunk_canaries and if it is there then it calculates <i>size += count * sizeof(u_short);</i> so, I have compiled the sample code with malloc option <b>C</b>, so, chunk_canaries is there, for our case size became, <b>size = 70 + 256 * 2 = 582</b> then it aligns the size to _ALIGN(size), which make it from 582 to 584</li>
+		<li><p>Then, it maps page using mmap(2) upto MALLOC_PAGESIZE with mmap_flag value as 0 due to the mopts.malloc_pool[1], mopts.malloc_pool[0] has MAP_CONCEALed memory.Then, it adds information about malloc usage count from adding MALLOC_PAGESIZE to variable d->malloc_used. Then, it calculates count from <b>count = MALLOC_PAGESIZE / size</b> where it is 4096 / 584 = 7, for our case</li>
+		<li><p>Then, it creates count number of lists for chunk_info. For our case, count was 7 so, it creates 7  lists with the list head updated with p. The, it chooses first list then removes it from the lists. Then it checks for p->shift, if it is zero (0) then it calls function <b><i>init_chunk_info(d, p, bits);</i></b> then after the initializaton it returns <b>p</b>. Code for the same given below:</li>
+		<pre>
+		<code>
+ 823 static void
+ 824 init_chunk_info(struct dir_info *d, struct chunk_info *p, int bits)
+ 825 {
+ 826         int i;
+ 827
+ 828         if (bits == 0) {
+ 829                 p->shift = MALLOC_MINSHIFT;
+ 830                 p->total = p->free = MALLOC_PAGESIZE >> p->shift;
+ 831                 p->size = 0;
+ 832                 p->offset = 0xdead;
+ 833         } else {
+ 834                 p->shift = bits;
+ 835                 p->total = p->free = MALLOC_PAGESIZE >> p->shift;
+ 836                 p->size = 1U << bits;
+ 837                 p->offset = howmany(p->total, MALLOC_BITS);
+ 838         }
+ 839         p->canary = (u_short)d->canary1;
+ 840
+ 841         /* set all valid bits in the bitmap */
+ 842         i = p->total - 1;
+ 843         memset(p->bits, 0xff, sizeof(p->bits[0]) * (i / MALLOC_BITS));
+ 844         p->bits[i / MALLOC_BITS] = (2U << (i % MALLOC_BITS)) - 1;
+ 845 }
+		</code>
+		</pre>
+		<font size="2">
+			<p align="center">code snippet #14
 		</font>
 </body>
 </html>
