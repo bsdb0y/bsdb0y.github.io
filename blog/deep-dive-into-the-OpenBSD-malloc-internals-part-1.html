@@ -34,7 +34,7 @@
 <p>It's been a very long time I haven't written anything after my last OpenBSD blogs about pledge and kernel internals.
 <p>So, again I started reading OpenBSD source codes with debugger after reducing my sleep timings and managing to get some time after professional life. This time I have picked one of my favourite item from my wishlist to learn and share, that is, OpenBSD <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a>, secure allocator
 
-<p>I will try to keep it as <b><i>n</i></b> part series due to lengthy content and this series will be mostly focussed on user-space code of <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a> and its family 
+<p>I will try to keep it as <b><i>n</i></b> part series due to lengthy content and this series will be mostly focussed on user-space code of <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a> and friends 
 
 <p>First of all, I would like to thanks <b><i><a href="https://twitter.com/ottom6k">Otto Moerbeek</a></i></b>, <b><i><a href="https://twitter.com/canadianbryan">Bryan Steel</a></i></b> and <b><i>Fabien Romano</i></b> for helping me to understand the <a href="https://man.openbsd.org/malloc.3">malloc(3)</a> internals and cleared all my queries.
 
@@ -1007,7 +1007,7 @@ chunk_info_list[11]
 		<li><p>Then, howmany(x, y) is ((x) + ((y) - 1) / y), so as per that, x = count and y  MALLOC_BITS, which is 256 and 16 respectively for our case and the result is 16</li>
 		<li><p>Then, it calculates size from adding the sizeof(struct chunk_info) + (size - 1) * sizeof(u_short), for our case, it came as 40 + (16 - 1) * 2 = 70 and then it checks for mopt.chunk_canaries and if it is there then it calculates <i>size += count * sizeof(u_short);</i> so, I have compiled the sample code with malloc option <b>C</b>, so, chunk_canaries is there, for our case size became, <b>size = 70 + 256 * 2 = 582</b> then it aligns the size to _ALIGN(size), which make it from 582 to 584</li>
 		<li><p>Then, it maps page using mmap(2) upto MALLOC_PAGESIZE with mmap_flag value as 0 due to the mopts.malloc_pool[1], mopts.malloc_pool[0] has MAP_CONCEALed memory.Then, it adds information about malloc usage count from adding MALLOC_PAGESIZE to variable d->malloc_used. Then, it calculates count from <b>count = MALLOC_PAGESIZE / size</b> where it is 4096 / 584 = 7, for our case</li>
-		<li><p>Then, it creates count number of lists for chunk_info. For our case, count was 7 so, it creates 7  lists with the list head updated with p. The, it chooses first list then removes it from the lists. Then it checks for p->shift, if it is zero (0) then it calls function <b><i>init_chunk_info(d, p, bits);</i></b> then after the initializaton it returns <b>p</b>. Code for the same given below:</li>
+		<li><p>Then, it creates count number of lists for chunk_info. For our case, count was 7 so, it creates 7  lists with the list head updated with p. The, it chooses first list then removes it from the lists. Then it checks for p->shift and here shift means how may shifts it will take to get the p->size, if it is zero (0) then it calls function <b><i>init_chunk_info(d, p, bits);</i></b> then after the initializaton it returns <b>p</b>. Code for the same given below:</li>
 		<pre>
 		<code>
  823 static void
@@ -1038,5 +1038,17 @@ chunk_info_list[11]
 		<font size="2">
 			<p align="center">code snippet #14
 		</font>
+
+		<li><p>From the above code snippet, it is used to initialize the chunk information. There it is checking for whether the value of bits is 0 or not 0. If 0 then it initializes some default value as mentioned in the above code. And, it seems that bit == 0, is the case of malloc(0). But, if it is not 0 then it initializes some other values as mentioned in the above code. Then, it assigns the canary, that is <b><i>p->canary = (u_short)d->canary1;</i></b></li>
+		<li><p>Then, set all the valid bits in the bitmap. For our case, <i>i = p->total - 1;</i>, where p->total = 256 and i = 255 then it copies the 0xff to p->bits upto <b><i>sizeof(p->bits[0]) * (i / MALLOC_BITS)) - 1</i></b> and it came 30 for our case.</li>
+		<li><p>Then it is assigning some value to p->bits, where a bitmap specifing which chunks are still free to use, for our case, i = 255, MALLOC_BITS = 16, so, it became,</li>
+		<pre>
+		<code>
+		p->bits[255 / 16] = (2U << ( 255 % 16)) - 1
+		then, p->bits[15] = (2U << ( 15 )) - 1
+		then, p->bits[15] = 65536 - 1
+		then, p->bits[15] = 65535
+		</code>
+		</pre>
 </body>
 </html>
