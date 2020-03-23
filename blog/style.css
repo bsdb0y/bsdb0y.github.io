@@ -91,3 +91,7 @@ ul {
 	text-align: center;
 	border: 0;
 }
+
+.neg_margin {
+	margin-top: -40px;
+}
