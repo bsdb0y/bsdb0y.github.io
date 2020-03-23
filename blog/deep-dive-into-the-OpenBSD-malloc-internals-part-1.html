@@ -3,20 +3,21 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <title>Deep dive into OpenBSD malloc(3) internals</title>
+    <title>A Deep dive into OpenBSD malloc(3) internals</title>
 </head>
 <body>
     <header>
     <a href="/" style="color:#444444;text-decoration:none;"><h2>#BSDBOY</h2></a>
     </header>
 <font size="+1">
-<a href="/pages/books.html">Books</a> |
-<a href="https://marc.info/?a=149745405500002&r=1&w=2" target="_blank">Mailing List (marc.info)</a> |
-<a href="https://twitter.com/_neerajpal" target="_blank">Twitter</a> |
-<a href="https://github.com/neerajpal09" target="_blank">Github</a> |
-<a href="https://stackexchange.com/users/6592094/neeraj-pal?tab=accounts" target="_blank">StackExchange</a> |
-<a href="https://www.linkedin.com/in/neerajpal09/" target="_blank">LinkedIn</a> |
-<a href="/pages/about.html">About Me</a>
+	<a href="https://bugs.freebsd.org/bugzilla/buglist.cgi?bug_status=New&bug_status=Open&bug_status=In%20Progress&bug_status=UNCONFIRMED&email1=neerajpal09%40gmail.com&emailreporter1=1&emailtype1=equals&list_id=345264&query_format=advanced&resolution=---">Bugs</a> |
+	<a href="/pages/books.html">Books</a> |
+	<a href="https://marc.info/?a=149745405500002&r=1&w=2" target="_blank">Mailing List (marc.info)</a> |
+	<a href="https://twitter.com/_neerajpal" target="_blank">Twitter</a> |
+	<a href="https://github.com/neerajpal09" target="_blank">Github</a> |
+	<a href="https://stackexchange.com/users/6592094/neeraj-pal?tab=accounts" target="_blank">StackExchange</a> |
+	<a href="https://www.linkedin.com/in/neerajpal09/" target="_blank">LinkedIn</a> |
+	<a href="/pages/about.html">About Me</a>
 <h2></h2>
 </font>
 
@@ -31,7 +32,12 @@
 
 <p>Hi there,</p>
 
-<p>It's been a very long time I haven't written anything after my last OpenBSD blogs about pledge and kernel internals.
+<p>It's been a very long time I haven't written anything after my last OpenBSD blogs, that is,
+<ul>
+	<li><p><a href="/blog/OpenBSD-Kernel-Internals-creation-of-process-from-user-space-to-kernel-space.html">OpenBSD Kernel Internals — Creation of process from user-space to kernel space</a>.
+	<li><p><a href="/blog/openbsd-intro-to-update-on-pledge.html">OpenBSD: Introduction to `execpromises` in the pledge(2)</a>
+	<li><p><a href="/blog/pledge-a-openbsd-defensive-approach.html">pledge(2): OpenBSD's defensive approach to OS Security</a>
+</ul>
 <p>So, again I started reading OpenBSD source codes with debugger after reducing my sleep timings and managing to get some time after professional life. This time I have picked one of my favourite item from my wishlist to learn and share, that is, OpenBSD <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a>, secure allocator
 
 <p>I will try to keep it as <b><i>n</i></b> part series due to lengthy content and this series will be mostly focussed on user-space code of <a href="/https://man.openbsd.org/malloc.3">malloc(3)</a> and friends 
@@ -270,12 +276,12 @@ main(int argc, char **argv) {
 <p>So, let's suppose one want to use the canary option then one has to set the option using systcl(8), like I have used it from the command: <b><i>systcl vm.malloc_conf=C</i></b>
 <p><b><i>omalloc_init()</i></b> does the following things:
 <ul>
-	<li><p>initializes some variables of <b><i>malloc_readonly</i></b> structure to default values like <b><i>mopts.malloc_mutexes</i></b> is the default number of mutexes, <b><i>mopts.def_malloc_junk</i></b> is the default number of junk filling and <b><i>mopts.def_malloc_cache</i></b> is the default number of free page cache</li>
-	<li><p>then, it checks one by one for all 3 ways that is mentioned above for setting a malloc option. In our case, I have used systcl(8) option, so for sysctl it goes to <i>case 0:</i> and get the value to <i>char b[16]</i> and then it assigns to pointer to character variable <i>p</i> then after looping for other two it goes for extracting the value that is there in <i>p</i></li>
-	<li><p>first it checks for the malloc option <b><i>S</i></b> which enables all the security auditing features of OpenBSD <a href="https://man.openbsd.org/malloc.3">malloc(3)</a></li>
+	<li><p>Initializes some variables of <b><i>malloc_readonly</i></b> structure to default values like <b><i>mopts.malloc_mutexes</i></b> is the default number of mutexes, <b><i>mopts.def_malloc_junk</i></b> is the default number of junk filling and <b><i>mopts.def_malloc_cache</i></b> is the default number of free page cache</li>
+	<li><p>Then, it checks one by one for all 3 ways that is mentioned above for setting a malloc option. In our case, I have used systcl(8) option, so for sysctl it goes to <i>case 0:</i> and get the value to <i>char b[16]</i> and then it assigns to pointer to character variable <i>p</i> then after looping for other two it goes for extracting the value that is there in <i>p</i></li>
+	<li><p>First it checks for the malloc option <b><i>S</i></b> which enables all the security auditing features of OpenBSD <a href="https://man.openbsd.org/malloc.3">malloc(3)</a></li>
 	<ul>
-		<li>if it is there then it calls <b><i>omalloc_parseopt(*q);</i></b> function then after that it sets <b><i>mopts.def_malloc_cache</i></b> to <b><i>0</i></b> or to <b><i>MALLOC_DEFAULT_CACHE</i></b>, depends on whether it is <b><i>S</i></b> or <b><i>s</i></b></li>
-		<li>if it is not there, then it simply calls the function <b><i>omalloc_parseopt(*p);</i></b></li>
+		<li>If it is there then it calls <b><i>omalloc_parseopt(*q);</i></b> function then after that it sets <b><i>mopts.def_malloc_cache</i></b> to <b><i>0</i></b> or to <b><i>MALLOC_DEFAULT_CACHE</i></b>, depends on whether it is <b><i>S</i></b> or <b><i>s</i></b></li>
+		<li>If it is not there, then it simply calls the function <b><i>omalloc_parseopt(*p);</i></b></li>
 	</ul>
 </ul>
 <p> function <b><i>omalloc_parseopt(char opt)</i></b> extracts the character and in our case it is <b><i>C</i></b> for malloc canary, so after parsing, it goes to <b><i>case 'C'</i></b> and sets <b><i>mopts.chunk_canaries</i></b> to <b><i>1</i></b>, it does the same for other characters and sets or enables/initializes their variables. Code for the same function given below: 
@@ -483,7 +489,7 @@ d = (struct dir_info *)(p + MALLOC_PAGESIZE + (arc4random_uniform(d_avail) << MA
 <p class="code_des">d offset calculation</p>
 	<li><p>So, as mentioned by the developer <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b> in the <a href="https://marc.info/?l=openbsd-tech&m=158408023212237&w=2">mailing list</a> that the <b><i>dir_info</i></b> structure ends up on an aligned address somewhere in the middle pages on an offset between 0 and (210<<4) = 0..3360, counting from the start of the two middle pages.So, it becomes like d = [p + MALLOC_PAGESIZE + (0..3360)], where (0..3360) is the offset value from 0 to 3360 max</li>
 	<li><p>As from the code, in my opinion, it looks like there is no guard page bydefault on the both the sides, however, it is there only one side but after discussing with the developer <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b>. He said that <b><i>dir_info</i></b> is special and having a guard page on both sides for regular allocation can be done, but would waste more pages. He mentioned to note that <b>allocations are already spread throughout the address space, so it is very likely that an allocation is surrounded by unmapped pages</b>. So, finally he mentioned that there will be guard page on each side
-	<li><p>then it initializes random bytes using the <b><i>rbytes_init(d)</i></b> function. Code for the same give below:</li>
+	<li><p>Then it initializes random bytes using the <b><i>rbytes_init(d)</i></b> function. Code for the same give below:</li>
 	<pre id="rbytes_init">
 	<code>
 303 static void
@@ -510,8 +516,8 @@ d = (struct dir_info *)(p + MALLOC_PAGESIZE + (arc4random_uniform(d_avail) << MA
 	</code>
 	</pre>
 	<p class="code_des">struct region_info</p>
-	<li><p> The structure <b><i>struct region_info</i></b> is used to keep track of mmap’ed regions by storing their address and size into a hash table as mentioned in the <a href="https://www.openbsd.com.au/papers/eurobsdcon2009/otto-malloc.pdf">slides</a> of <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b></li>
-	<li><p>then, it maps pages of size <i>regioninfo_size</i> for regions with the flag <b><i>MAP_CONCEAL</i></b> and assigns it to <b><i>d->r</i></b> and then checks if mapping failed</li>
+	<li><p>The structure <b><i>struct region_info</i></b> is used to keep track of mmap’ed regions by storing their address and size into a hash table as mentioned in the <a href="https://www.openbsd.com.au/papers/eurobsdcon2009/otto-malloc.pdf">slides</a> of <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b></li>
+	<li><p>Then, it maps pages of size <i>regioninfo_size</i> for regions with the flag <b><i>MAP_CONCEAL</i></b> and assigns it to <b><i>d->r</i></b> and then checks if mapping failed</li>
 	<li><p> And, one more query that I had during understanding the source code of malloc(3) is about the code snippet given below [taken from the code snippet# 06]</li>
 	<pre id="list_create">
 	<code>
@@ -554,8 +560,8 @@ chunk_info_list[11]
 	</pre>
 	<p class="code_des">list creation sample example to visualize</p>
 	<li><p>One can also allow more randomization by increasing the <b><i>MALLOC_CHUNK_LISTS</i></b> but at the cost of overhead. Increasing the <b><i>MALLOC_MAXSHIFT</i></b> is not possible because it is the shift of the max chunk size that fits in a page. We will see later how these lists heps to achieve randomization</li>
-	<li><p>then, adds and updated the <b><i>d->malloc_used</i></b> for dumping the malloc stats information</li> 
-	<li>then, updated the default initialization of variables given below:</li>
+	<li><p>Then, adds and updated the <b><i>d->malloc_used</i></b> for dumping the malloc stats information</li> 
+	<li>Then, updated the default initialization of variables given below:</li>
 	<pre id="code_snippet_07">
 	<code>
 ...
@@ -575,8 +581,8 @@ chunk_info_list[11]
 	</code>
 	</pre>
 	<p class="code_des">code snippet #07</p>
-	<li><p>then, <i>dir_info</i> uses two canaries. There calculation is very easy. Whatever the address of <b><i>d</i></b> ( struct dir_info *d) just typecast it to <b><i>(u_int32_t)(uintptr_t)</i></b> and <b>XOR</b> it with <b><i>mopts.malloc_canary</i></b> and assign the result to <b><i>d->canary1</i></b> and then compute the <b><i>not (~)</i></b> of <b><i>d->canary1</i></b> then assign the result to <b><i>d->canary2</i></b> or in simpler words, convert into binary then take each bit and flips them to their logical opposite. convert 1's to 0's and vice versa then convert it to hex and assign it to <b><i>d->canary2</i></b></li>
-	<li><p>finally assign the initialized dir_info structure <b>d</b> to <b><i>*dp</i></b></li>
+	<li><p>Then, <i>dir_info</i> uses two canaries. There calculation is very easy. Whatever the address of <b><i>d</i></b> ( struct dir_info *d) just typecast it to <b><i>(u_int32_t)(uintptr_t)</i></b> and <b>XOR</b> it with <b><i>mopts.malloc_canary</i></b> and assign the result to <b><i>d->canary1</i></b> and then compute the <b><i>not (~)</i></b> of <b><i>d->canary1</i></b> then assign the result to <b><i>d->canary2</i></b> or in simpler words, convert into binary then take each bit and flips them to their logical opposite. convert 1's to 0's and vice versa then convert it to hex and assign it to <b><i>d->canary2</i></b></li>
+	<li><p>Finally assign the initialized dir_info structure <b>d</b> to <b><i>*dp</i></b></li>
 </ul>
 <p>We are still in function <b><i>_malloc_init(int from_rthreads)</i></b>, so, as per the [code snippet #03], for <b><i>i == 0</i></b>, we have completed the function <b><i>omalloc_poolinit(&d, MAP_CONCEAL);</i></b>, now after that, <b><i>d->malloc_junk = 2;</i></b> and <b><i>d->malloc_cache = 0;</i></b> 
 <p>Then, it saves the index <b>i</b> to <b><i>d->mutex</i></b> and stored the initialized MAP_CONCEALED pool to <b><i>mopts.malloc_pool[i] = d;</i></b>
@@ -737,7 +743,7 @@ chunk_info_list[11]
 	</ul>
 	<li><p>1st code flow completed, now <b>2nd code flow</b>, that is, <b><i>if (sz < MALLOC_MAXCHUNK)</i></b> means if requested size is less than the MALLOC_MAXCHUNK, previously in 1st code flow it was greater than the MALLOC_MAXCHUNK</li> 
 	<ul>
-		<li><p> it calls the function <b><i>malloc_bytes(pool, sz, f);</i></b> and the source code for the same given below</li>
+		<li><p>It calls the function <b><i>malloc_bytes(pool, sz, f);</i></b> and the source code for the same given below</li>
 		<pre id="code_snippet_09">
 		<code>
 948	/*
@@ -829,7 +835,7 @@ chunk_info_list[11]
 		</pre>
 		<p class="code_des">code snippet #09</p>
 		<li><p><b><i>malloc_bytes(pool, sz, f);</i></b> is used to allocate a chunk. After some basic variable declaration, it checks for internal struct corruption with canaries of <b>d</b> and <b>mopts.malloc_canary</b> as mentioned and calculated in the <a href="#code_snippet_07">[code snippet #07]</a></li>
-		<li><p>then, it finds the chunk size with the function <b><i>find_chunksize(size);</i></b>. Code given below</li>
+		<li><p>Then, it finds the chunk size with the function <b><i>find_chunksize(size);</i></b>. Code given below</li>
 		<pre id="code_snippet_10"">
 		<code>
  919 static int
@@ -883,7 +889,7 @@ chunk_info_list[11]
 		</code>
 		</pre>
 		<p class="code_des">explanation snippet</p>
-		<li><p>then it finds the listnum, <b><i>listnum = r % MALLOC_CHUNK_LISTS;</i></b>, where MALLOC_CHUNK_LISTS is 4</li>
+		<li><p>Then it finds the listnum, <b><i>listnum = r % MALLOC_CHUNK_LISTS;</i></b>, where MALLOC_CHUNK_LISTS is 4</li>
 
 		<li><p>As from the <a href="#list_create">[code snippet - lists creation to allow randmization]</a>, we have seen that there is nested for loops which creates lists, helpful to allow randomization. So, here we can see that it randomly chooses the created lists for allocation of chunk_info</li>
 		<li><p>Then, it chooses some random list and makes it first list, now if the list is empty, that is, head is NULL then it calls function <b><i>omalloc_make_chunks(d, j, listnum);</i></b>to allocate chunks. Code for <b><i>omalloc_make_chunks</i></b> given below</li>
@@ -1238,10 +1244,11 @@ of chunks in the page.</b>
 		<p class="code_des">fill_canary - canary filling code</p>
 		<li><p>For our case, check_sz = 16 - 8, then, check_sz = 8, then check for maximum chunk length and if greater than CHUNK_CHECK_LENGTH then sets the same. Then, copy the SOME_JUNK to ptr + sz till size <i>check_sz</i>, for our case, ptr + sz = 0xcde2d918d38, where ptr=0xcde2d918d30 and sz=0x8 copies SOME_JUNK till check_sz which has 0x10 length. Now, if in the case of heap-overflow, if any buffer tries to write more than size sz, that is, 0x8 then it corrupts the SOME_JUNK value and that detects as heap-overflow attack and abort(). Rest about canary validation we will see on further series of malloc friends</li>
 		<li><p>Then, finally it returns the page + offset address filled with canary</li>
-		<li><p>Now, the malloc_bytes function is completed and as we can see further in <b>omalloc()</b>, <a href="#code_snippet_08">[code snippet #08</a>. After the malloc_bytes call, it checks for zero_filling and also checks if p != NULL and sz > 0. If all conditions meet then it copies zero to entire address p till size sz and returns <b>p</b></li>
-		<li><p>So, now as from the <a href="#code_snippet_00">[code snippet #00]</a>, After omalloc() function, it calls for <a href="#epilogue">EPILOGUE()</a>.Following the code explains about the EPILOGUE() macro</li>
-		<pre id="epilogue_code">
-		<code>
+	</ul>
+	<li><p>Now, the malloc_bytes function is completed and as we can see further in <b>omalloc()</b>, <a href="#code_snippet_08">[code snippet #08</a>. After the malloc_bytes call, it checks for zero_filling and also checks if p != NULL and sz > 0. If all conditions meet then it copies zero to entire address p till size sz and returns <b>p</b></li>
+	<li><p>So, now as from the <a href="#code_snippet_00">[code snippet #00]</a>, After omalloc() function, it calls for <a href="#epilogue">EPILOGUE()</a>.Following the code explains about the EPILOGUE() macro</li>
+	<pre id="epilogue_code">
+	<code>
 1269 #define EPILOGUE()                              \
 1270         d->active--;                            \
 1271         _MALLOC_UNLOCK(d->mutex);               \
@@ -1249,20 +1256,20 @@ of chunks in the page.</b>
 1273                 wrterror(d, "out of memory");   \
 1274         if (r != NULL)                          \
 1275                 errno = saved_errno;            \
-		</code>
-		</pre>
-		<p class="code_des">EPILOGUE() macro - code snippet #16</p>
-		<li><p>So, as from the above code, we can see that EPILOGUE() does the following things</li>
-		<ul>
-			<li><p>It decrements the active count</li>
-			<li><p>Unlock the locked stuff</li>
-			<li><p>Then, it checks if <b>r</b> is NULL and also checks for <b>mopts.malloc_xmalloc</b> then it "prints out of memory" as error and abort(). But if <b>r</b> is not NULL then it saves <b>saved_errno</b> to <b>errno</b> variable and completes the epilogue() process</li>
-		</ul>
-		<li><p>Now, we have reached the end of the malloc(3) internals. So, if we recall the <a href="#code_snippet_01">[code snippet #00]</a>, After EPILOGUE(), it returns the <b>r</b>, which has the address value, <b><i>0xcde2d918d30</i></b>, <b><i>(char *)bp->page + k </i></b> as mentioned in the <a href="#code_snippet_09">[code snippet #09]</a> line no. 1024</li>
-		<li><p>Now coming back to the <a href="#sample_code">[sample code for malloc(3) internals]</a>, as we can see that after <b><i>buff1 = (char *)malloc(8);</i></b>, it copies the user controlled input to buff1 and then calls <b><i>free(buff1)</i></b></li>
-		<li><p>Following is the gdb window to show canary and canary overwrite, from the same sample code</li>
-			<pre id="user_space_code">
-			<code>
+	</code>
+	</pre>
+	<p class="code_des">EPILOGUE() macro - code snippet #16</p>
+	<li><p>So, as from the above code, we can see that EPILOGUE() does the following things</li>
+	<ul>
+		<li><p>It decrements the active count</li>
+		<li><p>Unlock the locked stuff</li>
+		<li><p>Then, it checks if <b>r</b> is NULL and also checks for <b>mopts.malloc_xmalloc</b> then it "prints out of memory" as error and abort(). But if <b>r</b> is not NULL then it saves <b>saved_errno</b> to <b>errno</b> variable and completes the epilogue() process</li>
+	</ul>
+	<li><p>Now, we have reached the end of the malloc(3) internals. So, if we recall the <a href="#code_snippet_01">[code snippet #00]</a>, After EPILOGUE(), it returns the <b>r</b>, which has the address value, <b><i>0xcde2d918d30</i></b>, <b><i>(char *)bp->page + k </i></b> as mentioned in the <a href="#code_snippet_09">[code snippet #09]</a> line no. 1024</li>
+	<li><p>Now coming back to the <a href="#sample_code">[sample code for malloc(3) internals]</a>, as we can see that after <b><i>buff1 = (char *)malloc(8);</i></b>, it copies the user controlled input to buff1 and then calls <b><i>free(buff1)</i></b></li>
+	<li><p>Following is the gdb window to show canary and canary overwrite, from the same sample code</li>
+	<pre id="user_space_code">
+	<code>
 openbsd# LD_PRELOAD=/usr/src/lib/libc/obj/libc.so.95.1 gdb -q sample
 (gdb) br main
 Breakpoint 1 at 0x1363: file sample.c, line 7.
@@ -1299,13 +1306,31 @@ thrkill () at -:3
 	in -
 Current language:  auto; currently asm
 (gdb)
-			</code>
-			</pre>
-			<p class="code_des">gdb showing the canary corruption and malloc aborting the process</p>
-			<li><p>In the above debugging window, one can see that just after the malloc(3) allocation, there are canaries with <b>0xdb</b> bytes, which is filled by the <b><i>fill_canary()</i></b> as explained in the code snippet - <a href="#canary_id">fill_canary - canary filling code</a></li>
-			
-			<li><p>Then, after the memory allocation that is explained above, it copies the user controlled input to that memory area. And, after giving string <b>AAAABBBBCCCCDDDD</b>, one can see that the canaries are corrupted as it has overwritten the <b>0xdb</b> bytes with the <b>0x43</b> and <b>0x44</b> which is <b>C</b> and <b>D</b>, then later it calls <b>free(buff1)</b>, which is responsible to validate canary corruption and calls abort() if corrupted with the information like chunk address and size</li>
-			<li><p>So, validation of canaries in user-related chunk is validated in <b>free()</b>. But due to the lengthy content, I would like to cover the malloc(3) friends library calls in the upcoming blogs</li> 
-	</ul>
+		</code>
+		</pre>
+		<p class="code_des">gdb showing the canary corruption and malloc aborting the process</p>
+		<li><p>In the above debugging window, one can see that just after the malloc(3) allocation, there are canaries with <b>0xdb</b> bytes, which is filled by the <b><i>fill_canary()</i></b> as explained in the code snippet - <a href="#canary_id">fill_canary - canary filling code</a></li>
+		
+		<li><p>Then, after the memory allocation that is explained above, it copies the user controlled input to that memory area. And, after giving string <b>AAAABBBBCCCCDDDD</b>, one can see that the canaries are corrupted as it has overwritten the <b>0xdb</b> bytes with the <b>0x43</b> and <b>0x44</b> which is <b>C</b> and <b>D</b>, then later it calls <b>free(buff1)</b>, which is responsible to validate canary corruption and calls abort() if corrupted with the information like chunk address and size</li>
+		<li><p>So, validation of canaries in user-related chunk is validated in <b>free()</b>. But due to the lengthy content, I would like to cover the malloc(3) friends library calls in the upcoming blogs</li> 
+</ul>
+<h3>References:</h3>
+<ul>
+	<li><p><a href="https://man.openbsd.org/malloc.3">malloc(3)</a> man page</li>
+	<li><p><a href="https://marc.info/?l=openbsd-tech&m=158378974915381&w=2">OpenBSD community - mailing list</a></li>
+	<li><p><a href="https://www.openbsd.com.au/papers/eurobsdcon2009/otto-malloc.pdf">A new malloc(3) for OpenBSD</a> slides by <a href="https://twitter.com/ottom6k/"><b><i>Otto Moerbeek</i></b></a></li>
+	<li><p><a href="http://www.ouah.org/BSD-heap-smashing.txt">BSD Heap Smashing</a>, paper by <b><i>bbp@krukh.net</i></b> on <b><i>phkmalloc</i></b> <font size=3>[from security point of view]</font></li>
+	<li><p><a href="https://github.com/libressl-portable/openbsd/commits/master/src/lib/libc/stdlib/malloc.c">GitHub code history for old commit messages</a></li>
+	<li><p><a href="https://marc.info/?l=openbsd-tech&w=2&r=1&s=malloc&q=b">information on all the commits in mailing list</a></li>
+	<li><p><a href="http://phk.freebsd.dk/pubs/malloc.pdf">phkmalloc</a>, paper by <b><i>Poul-Henning Kamp</i></b></li>
+	<li><p><a href="https://github.com/mulander/openbsd-daily">malloc(3) code series</a> by <a href="https://twitter.com/mulander"><b><i>Adam Wolk</i></b></a> and <b><i>@DuClare</i></b>
+	<li><p>Discussions on twitter with developers</li>
+	<li><p>Google :)</li>
+</ul>
+<p>I have covered all stuff that I have learned while reading the code of malloc(3). In case, if I have forgotten or missed something, please feel free to update me.
+<p>If I have explained something wrongly or incorrectly then please feel free to update or correct me, I am also a learner and beginner so that may happen. :)</p>
+
+<span><b>Happy Kernel Hacking</i></b></span>
+
 </body>
 </html>
