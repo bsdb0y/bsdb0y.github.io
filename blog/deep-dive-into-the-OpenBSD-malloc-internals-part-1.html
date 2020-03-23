@@ -198,8 +198,8 @@ main(int argc, char **argv) {
 </code>
 </pre>
 <p class="code_des">code snippet #03</p>	
-<p>In the <a href="#code_snippet_3">[code snippet #03]</a>, we can see that first it does some MALLOC_LOCKing and checks for the <b><i>from_rthreads</i></b> and also for <b><i>mopts.malloc_pool[1]</i></b> as an outcome it is not <b><i>true</i></b> due to <b><i>mopts.malloc_pool[1]</i></b> which is <b><i>NULL</i></b>
-<p>Then, after that it checks for <b><i>mopts.malloc_canary</i></b> and it wil be always 0 first time due to structure initialized to zero (0) and then it calls function <b><i>omalloc_init()</i></b> and code for the same given below</p>
+<p>In the <a href="#code_snippet_03">[code snippet #03]</a>, we can see that first it does some MALLOC_LOCKing and checks for the <b><i>from_rthreads</i></b> and also for <b><i>mopts.malloc_pool[1]</i></b> as an outcome it is not <b><i>true</i></b> due to <b><i>mopts.malloc_pool[1]</i></b> which is <b><i>NULL</i></b>
+<p>Then, after that it checks for <b><i>mopts.malloc_canary</i></b> and it wil be always 0 first time due to structure initialized to zero (0) and then it calls function <b><i>omalloc_init()</i></b> and code for the same given below
 <pre id="#code_snippet_04">
 <code>
 405	static void
