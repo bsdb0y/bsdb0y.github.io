@@ -41,7 +41,7 @@
 <p>So, we should start now... :) 
 
 <p>I have used the following sample code to start my journey with the OpenBSD 6.6-stable <a href="https://man.openbsd.org/malloc.3">malloc(3)</a>
-<pre>
+<pre id="sample_code">
 <code>
 #include &lt;stdio.h&gt;
 #include &lt;stdlib.h&gt;
@@ -57,6 +57,7 @@ main(int argc, char **argv) {
 }
 </code>
 </pre>
+<p class="code_des">sample code used for learning internals</p>	
 <p>Compiled the libc with debug symbols and switched off the optimization by compiling it with clang option "-O0 -g".
 
 <h5><p>Followed the below steps to compile the libc with debug symbols</h5>
@@ -76,7 +77,7 @@ main(int argc, char **argv) {
 <p>I would say one can either compile and use LD_PRELOAD to load the compiled libc and use debugger or one can compile with printf statements then use the same LD_PRELOAD for that specific sample code.
 
 <p> So, just after the <a href="https://man.openbsd.org/malloc.3">malloc(3)</a> from the sample code, it directly jumps to function malloc(size_t size) from file <span><i>/usr/src/lib/libc/stdlib/malloc.c:1278</i></span>
-<pre>
+<pre id="code_snippet_00">
 <code>
 1277 void *
 1278 malloc(size_t size)
@@ -92,9 +93,7 @@ main(int argc, char **argv) {
 1288 }
 </pre>
 </code>
-<font size="2">
-	<p align="center">code snippet #00
-</font>
+<p class="code_des">code snippet #00</p>	
 <p> As explained by the developer <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b> in the <b><i><a href="https://twitter.com/ottom6k/status/1236170000312012800">tweet on twitter</a></i></b> that <b><i>struct dir_info</i></b> contains all the meta information malloc needs to keep track of what page regions have been allocated, which pages regions are in the free-cache and for pages of chunks which chunks are free and which are allocated.
 
 <p> So, as per the code given above, one can see after some basic initialization-declaration, there is some macro PROLOGUE and EPILOGUE. It means the same like how it sounds, usually these two means,
@@ -102,11 +101,11 @@ main(int argc, char **argv) {
 <h5><p>prologue:</p></h5>
 <p><a href="https:/en.wikipedia.org/wiki/Function_prologue#Prologue">Function prologue</a>. In assembly language programming, the function prologue is a few lines of code at the beginning of a function, which prepare the stack and registers for use within the function. Here, instead of preparing the stack and registers, it initializes some other necessary malloc requirements that we will see later.
 
-<h5><p>epilogue:</p></h5>
+<h5 id="epilogue"><p>epilogue:</p></h5>
 <p><a href="https://en.wikipedia.org/wiki/Function_prologue#Epilogue">Function epilogue</a> reverses the actions of the function prologue and returns control to the calling function.
 
 <p>PROLGOUE macro given below:
-<pre>
+<pre id="code_snippet_01">
 <code>
 1256 #define PROLOGUE(p, fn)                 \
 1257         d = (p);                        \
@@ -122,12 +121,9 @@ main(int argc, char **argv) {
 1267         }                               \
 </pre>
 </code>
-<font size="2">
-	<p align="center">code snippet #01
-</font>
-<p>As from the [code snippet #00], we can see that  <b><i>p</i></b> is <b><i>getpool()</i></b> and <b><i>fn</i></b> is callee function, that is, <b><i>"malloc"</i></b>
-<p> As from the [code snippet 01], we can see that it first calls <b><i>getpool()</i></b> function and the code for <b><i>getpool()</i></b> given below
-<pre>
+<p class="code_des">code snippet #01</p>	
+<p>As from the <a href="#code_snippet_00">[code snippet #00]</a>, we can see that  <b><i>p</i></b> is <b><i>getpool()</i></b> and <b><i>fn</i></b> is the function string, that is, <b><i>"malloc"</i></b> and from the <a href="#code_snippet_01">[code snippet 01]</a>, we can see that it first calls <b><i>getpool()</i></b> function and the code for <b><i>getpool()</i></b> given below
+<pre id="code_snippet_02">
 <code>
 270 static inline struct dir_info *
 271 getpool(void)
@@ -140,13 +136,11 @@ main(int argc, char **argv) {
 278 }
 </pre>
 </code>
-<font size="2">
-	<p align="center">code snippet #02
-</font>
-<p> In the [code snippet #02] we can see that first it checks whether it has multi-threads or single-threads. And, in our case it is single threaded binary, so after <b><i>if</i></b> it returns <b><i>mopts.malloc_pool[1]</i></b> which is <b><i>NULL</i></b>.
-<p>Now, after that from the [code snippet #01] it checks whether <b><i>d</i></b> is <b><i>NULL</i></b> or not. In our case it is <b><i>NULL</i></b> as at first it will always be <b><i>NULL</i></b> after that it calls <b><i>_malloc_init(0)</i></b> but when <b><i>d</i></b> is <b><i>not NULL</i></b> then it assigns <b><i>fn</i></b> to <b><i>d->func</i></b> then check and increment the <b><i>d->active</i></b> then calls <b><i>malloc_recurse(d)</i></b> and returns <b><i>NULL</i></b> but for our situation it is not the flow.
+<p class="code_des">code snippet #02</p>	
+<p> In the <a href="#code_snippet_02">[code snippet #02]</a> we can see that first it checks whether it has multi-threads or single-threads. And, in our case it is single threaded binary, so after <b><i>if</i></b> it returns <b><i>mopts.malloc_pool[1]</i></b> which is <b><i>NULL</i></b>.
+<p>Now, after that from the <a href="#code_snippet_01">[code snippet #01]</a> it checks whether <b><i>d</i></b> is <b><i>NULL</i></b> or not. In our case it is <b><i>NULL</i></b> as at first it will always be <b><i>NULL</i></b> after that it calls <b><i>_malloc_init(0)</i></b> but when <b><i>d</i></b> is <b><i>not NULL</i></b> then it assigns <b><i>fn</i></b> to <b><i>d->func</i></b> then check and increment the <b><i>d->active</i></b> then calls <b><i>malloc_recurse(d)</i></b> and returns <b><i>NULL</i></b> but for our situation it is not the flow.
 <p>Code for <b><i>_malloc_init(0)</i></b> given below
-<pre>
+<pre id="code_snippet_03">
 <code>
 1207 void
 1208 _malloc_init(int from_rthreads)
@@ -197,12 +191,10 @@ main(int argc, char **argv) {
 1253 }
 </pre>
 </code>
-<font size="2">
-	<p align="center">code snippet #03
-</font>
-<p> In the [code snippet #03], we can see that first it does some MALLOC_LOCKing and checks for the <b><i>from_rthreads</i></b> and also for <b><i>mopts.malloc_pool[1]</i></b> as an outcome it is not <b><i>true</i></b> due to <b><i>mopts.malloc_pool[1]</i></b> which is <b><i>NULL</i></b>
+<p class="code_des">code snippet #03</p>	
+<p> In the <a href="#code_snippet_3">[code snippet #03]</a>, we can see that first it does some MALLOC_LOCKing and checks for the <b><i>from_rthreads</i></b> and also for <b><i>mopts.malloc_pool[1]</i></b> as an outcome it is not <b><i>true</i></b> due to <b><i>mopts.malloc_pool[1]</i></b> which is <b><i>NULL</i></b>
 <p> Then, after that it checks for <b><i>mopts.malloc_canary</i></b> and it wil be always 0 first time due to structure initialized to zero (0) and then it calls function <b><i>omalloc_init()</i></b> and code for the same given below
-<pre>
+<pre id="#code_snippet_04">
 <code>
 405	static void
 406	omalloc_init(void)
@@ -273,9 +265,7 @@ main(int argc, char **argv) {
 471	}
 </pre>
 </code>
-<font size="2">
-	<p align="center">code snippet #04
-</font>
+<p class="code_des">code snippet #04</p>
 <p>OpenBSD malloc(3) has lots of feature and they are configurable using <i>systcl(8)</i>, environment variable <i>MALLOC_OPTIONS</i> and compile-time option <i>malloc_options</i> 
 <p>So, let's suppose one want to use the canary option then one has to set the option using systcl(8), like I have used it from the command: <b><i>systcl vm.malloc_conf=C</i></b>
 <p><b><i>omalloc_init()</i></b> does the following things:
@@ -289,7 +279,7 @@ main(int argc, char **argv) {
 	</ul>
 </ul>
 <p> function <b><i>omalloc_parseopt(char opt)</i></b> extracts the character and in our case it is <b><i>C</i></b> for malloc canary, so after parsing, it goes to <b><i>case 'C'</i></b> and sets <b><i>mopts.chunk_canaries</i></b> to <b><i>1</i></b>, it does the same for other characters and sets or enables/initializes their variables. Code for the same function given below: 
-<pre>
+<pre id="code_snippet_05">
 <code>
 322	static void
 323	omalloc_parseopt(char opt)
@@ -375,17 +365,15 @@ main(int argc, char **argv) {
 403	}
 </pre>
 </code>
-<font size="2">
-	<p align="center">code snippet #05
-</font>
-<p> There are some <b><i>ifdef MALLOC_STATS</i></b> in the entire source, which means it dumps extra malloc stats information whenever requires. So, as from the [code snippet #04], after completing <b><i>omalloc_parseopt(char opt)</i></b>, there is some MALLOC_STATS condition then after them, a random cookie assigns to <b><i>mopts.malloc_canary</i></b> using <b><i>arc4random()</i></b> 
-<p>After the completion of <b><i>omalloc_init()</i></b>, coming again to [code snippet #03], there a variable named <b><i>nmutexes</i></b> which sets bydefault to <b><i>2</i></b> for single-threaded programs, we have already seen the initalization of <b><i>mopts.malloc_mutexes</i></b> default to <b><i>8</i></b> for multi-threaded programs in the function <b><i>omalloc_init()</i></b>. Here, for single-threaded, the value of variable <b><i>from_rthread</i></b> is <b><i>0</i></b> 
+<p class="code_des">code snippet #05</p>
+<p> There are some <b><i>ifdef MALLOC_STATS</i></b> in the entire source, which means it dumps extra malloc stats information whenever requires. So, as from the <a href="#code_snippet_04">[code snippet #04]</a>, after completing <b><i>omalloc_parseopt(char opt)</i></b>, there is some MALLOC_STATS condition then after them, a random cookie assigns to <b><i>mopts.malloc_canary</i></b> using <b><i>arc4random()</i></b> 
+<p>After the completion of <b><i>omalloc_init()</i></b>, coming again to <a href="#code_snippet_03">[code snippet #03]</a>, there a variable named <b><i>nmutexes</i></b> which sets bydefault to <b><i>2</i></b> for single-threaded programs, we have already seen the initalization of <b><i>mopts.malloc_mutexes</i></b> default to <b><i>8</i></b> for multi-threaded programs in the function <b><i>omalloc_init()</i></b>. Here, for single-threaded, the value of variable <b><i>from_rthread</i></b> is <b><i>0</i></b> 
 <p>Then, it is checking for <b><i>MALLOC_PAGEMASK</i></b> bit for <b><i>malloc_readonly</i></b> address or simply we can say that it is checking the last 12 bits of the <b><i>malloc_readonly</i></b> structure address and all 12 bits must be <b><i>0</i></b> to apply perm bit <b><i>PROT_READ</i></b> and <b><i>PROT_WRITE</i></b>. I would also say it is also checking for even address 
 <p>After that, there is a loop till the <b><i>nmutexes</i></b> which is 2 for our case, single-threaded. For single-threaded programs, it maintains two malloc dir_info pools as indicates from the variable <b><i>nmutexes</i></b>. One for <b><i>MAP_CONCEALED</i></b> memory (#0) and one for regular (#1).
 For multi-threaded porgram more pools are created. This is to avoid contention, accesses to diffrent pools can run concurently [ref. [1] <a href="https://marc.info/?l=openbsd-tech&m=154521318606876&w=2"> related to multi-pools - mailing list</a> [2] <a href="https://github.com/libressl-portable/openbsd/commit/55874ab3542715ce7e5c5e8ec0d6e1d7576a29a6#diff-5ce2636352a42c4e4a687c72939dbec9">github diff for more pools</a>]
 <p><b><i>omalloc_poolinit(&d, MAP_CONCEAL);</i></b> when <b><i>if i == 0</i></b> for MAP_CONCEALED memory and <b><i>else</i></b>, <b><i>omalloc_poolinit(&d, 0);</i></b> for regular memory pools. 
 <p>omalloc_poolinit()</i></b> code given below:
-<pre>
+<pre id="code_snippet_06">
 <code>
 473 static void
 474 omalloc_poolinit(struct dir_info **dp, int mmap_flag)
@@ -432,21 +420,17 @@ For multi-threaded porgram more pools are created. This is to avoid contention, 
 515 }
 </pre>
 </code>
-<font size="2">
-	<p align="center">code snippet #06
-</font>
+<p class="code_des">code snippet #06</p>
 <p><b><i>omalloc_poolinit(struct dir_inf **dp, int mmap_flag)</i></b> does the following things:
 <ul>
 	<li><p>After some basic variable declarations, first it maps page into memory using mmap(2) in MMAPNONE(sz, f) where sz is the size and f is the flag</li>
-<pre>
+<pre id="code_snippet_07">
 <code>
 96 #define MMAPNONE(sz,f)  mmap(NULL, (sz), PROT_NONE, \
 97     MAP_ANON | MAP_PRIVATE | (f), -1, 0)
 </pre>
 </code>
-<font size="2">
-	<p align="center">MMAPNONE(sz, f)
-</font>
+<p class="code_des">code snippet #07</p>	
 	<li><p>So, as from the above macro defination, we can see that the first parameter of mmap(2), that is, addr is <b><i>NULL</i></b></li>
 <pre>
 <code>
@@ -467,11 +451,9 @@ For multi-threaded porgram more pools are created. This is to avoid contention, 
      a page boundary.  If len is 0, the mapping will fail with EINVAL.
 </pre>
 </code>
-<font size="2">
-	<p align="center"><a href="https://man.openbsd.org/mmap.2">mmap(2)</a> man page
-</font>
+<p class="code_des"><a href="https://man.openbsd.org/mmap.2">mmap(2)</a> man page
 	<li><p>So below are the figures that I got it from gdb during debugging through execution</li>
-<pre>
+<pre id="page_cal">
 <code>
 sz = DIR_INFO_RSZ + (MALLOC_PAGESIZE * 2)
 where DIR_INFO_RSZ = ((sizeof(struct dir_info) + MALLOC_PAGEMASK) & ~MALLOC_PAGEMASK)
@@ -482,27 +464,27 @@ and sz becomes 8192 + (4096 * 2) = 16384 bytes
 and, f = MMAP_CONCEAL; which means it prevents from leaking the information and also it excludes the mapping from core dumps
 </code>
 </pre>
-<font size="2">
-	<p align="center">page calculations
-</font>
-	<li><p>So, as from the above page mapping calculations, DIR_INFO_RSZ indicates that to store the <b><i>dir_info</i></b> structure we need <b><i>2 pages</i></b> and allocate <b><i> 4 pages PROT_NONE</i></b> using MMAPNONE with flag as "MAP_CONCEAL", which can be seen in [code snippet #06]</li>
+<p class="code_des">page calculations</p>
+	<li><p>So, as from the above page mapping calculations, DIR_INFO_RSZ indicates that to store the <b><i>dir_info</i></b> structure we need <b><i>2 pages</i></b> and allocate <b><i> 4 pages PROT_NONE</i></b> using MMAPNONE with flag as "MAP_CONCEAL", which can be seen in <a href="#code_snippet_06">[code snippet #06]</a></li>
 	<li><p>Then, making two middle pages R/W which can be seen from the macro value of DIR_INFO_RSZ, 2 pages</li>
 	<li><p>then, calculate the <b><i>d_avail</i></b> to randomise offset inside the page at which the <b><i>dir_info</i></b> lies (subject to alignment by 1 << MALLOC_MINSHIFT)</li>
-<pre>
+<pre id="d_avail">
 <code>
 d_avail = (8192 - 4824) >> 4 = 3368 >> 4 = 210
 </pre>
 </code>
+<p class="code_des">d_avail variable</p>
 	<li><p> the d_avail is 210, now calculate offset, d </li>
-<pre>
+<pre id="d_offset">
 <code>
 d = (struct dir_info *)(p + MALLOC_PAGESIZE + (arc4random_uniform(d_avail) << MALLOC_MINSHIFT));
 </code>
 </pre>
+<p class="code_des">d offset calculation</p>
 	<li><p>So, as mentioned by the developer <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b> in the <a href="https://marc.info/?l=openbsd-tech&m=158408023212237&w=2">mailing list</a> that the <b><i>dir_info</i></b> structure ends up on an aligned address somewhere in the middle pages on an offset between 0 and (210<<4) = 0..3360, counting from the start of the two middle pages.So, it becomes like d = [p + MALLOC_PAGESIZE + (0..3360)], where (0..3360) is the offset value from 0 to 3360 max</li>
 	<li><p>As from the code, in my opinion, it looks like there is no guard page bydefault on the both the sides, however, it is there only one side but after discussing with the developer <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b>. He said that <b><i>dir_info</i></b> is special and having a guard page on both sides for regular allocation can be done, but would waste more pages. He mentioned to note that <b>allocations are already spread throughout the address space, so it is very likely that an allocation is surrounded by unmapped pages</b>. So, finally he mentioned that there will be guard page on each side
 	<li><p>then it initializes random bytes using the <b><i>rbytes_init(d)</i></b> function. Code for the same give below:</li>
-	<pre>
+	<pre id="rbytes_init">
 	<code>
 303 static void
 304 rbytes_init(struct dir_info *d)
@@ -513,12 +495,10 @@ d = (struct dir_info *)(p + MALLOC_PAGESIZE + (arc4random_uniform(d_avail) << MA
 309 }
 	</code>
 	</pre>
-<font size="2">
-	<p align="center">rbytes_init(struct dir_info *d)
-</font>
+	<p class="code_des">rbytes_init(struct dir_info *d);</p>
 	<li><p>It is clearly seen from the above code that it is filling the <b><i>d->rbytes</i></b> with the random bytes using the <b><i>arc4random_buf()</i></b>. Then, keeps the tracks/count of the rbytes used with <b><i>d->rbytesused</i></b></li>
-	<li><p>After that as from the [code snippet #06], it is initializing the default values for some of the structure members, <b><i>d->regions_free = dir->regions_total = MALLOC_INTIAL_REGIONS;</i></b> where the value of macro <b><i>MALLOC_INITIAL_REGIONS</i></b> is <b><i>512</i></b>. Also, calculates the total region_info size, <b><i>regioninfo_size = d->regions_total * sizeof(struct region_info);</i></b></li>
-	<pre>
+	<li><p>After that as from the <a href="#code_snippet_06">[code snippet #06]</a>, it is initializing the default values for some of the structure members, <b><i>d->regions_free = dir->regions_total = MALLOC_INTIAL_REGIONS;</i></b> where the value of macro <b><i>MALLOC_INITIAL_REGIONS</i></b> is <b><i>512</i></b>. Also, calculates the total region_info size, <b><i>regioninfo_size = d->regions_total * sizeof(struct region_info);</i></b></li>
+	<pre id="region_info">
 	<code>
 105 struct region_info {
 106         void *p;                /* page; low bits used to mark chunks */
@@ -529,13 +509,11 @@ d = (struct dir_info *)(p + MALLOC_PAGESIZE + (arc4random_uniform(d_avail) << MA
 111 };
 	</code>
 	</pre>
-<font size="2">
-	<p align="center">struct region_info
-</font>
+	<p class="code_des">struct region_info</p>
 	<li><p> The structure <b><i>struct region_info</i></b> is used to keep track of mmap’ed regions by storing their address and size into a hash table as mentioned in the <a href="https://www.openbsd.com.au/papers/eurobsdcon2009/otto-malloc.pdf">slides</a> of <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b></li>
 	<li><p>then, it maps pages of size <i>regioninfo_size</i> for regions with the flag <b><i>MAP_CONCEAL</i></b> and assigns it to <b><i>d->r</i></b> and then checks if mapping failed</li>
 	<li><p> And, one more query that I had during understanding the source code of malloc(3) is about the code snippet given below [taken from the code snippet# 06]</li>
-	<pre>
+	<pre id="list_create">
 	<code>
 ...
 ...
@@ -550,12 +528,10 @@ d = (struct dir_info *)(p + MALLOC_PAGESIZE + (arc4random_uniform(d_avail) << MA
 ...
 	</code>
 	</pre>
-	<font size="2">
-		<p align="center">code snippet - lists creation to allow randomization
-	</font>
+	<p class="code_des">code snippet - lists creation to allow randomization</p>
 	<li><p><b><i>What is the purpose of creating these many linked lists?</i></b> So, after discussing with the <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b>, I came to know that these many lists is used to allow more randomization. As <b><i><a href="https://twitter.com/ottom6k">Otto@</a></i></b> said "More than one list of free chunk pages per chunk size is maintained to allow for more randomization."</li>
 	<li><p>So, in short the above nested for loops will create 12 chunk_info_list where i is 0 to 11 and for each and every ith index there is j, so as per that,</li>
-	<pre>
+	<pre id="list_creation_expl">
 	<code>
 chunk_info_list[0]
 	chunk_dir[0][0]
@@ -576,10 +552,11 @@ chunk_info_list[11]
 ...
 	</code>
 	</pre>
+	<p class="code_des">list creation sample example to visualize</p>
 	<li><p>One can also allow more randomization by increasing the <b><i>MALLOC_CHUNK_LISTS</i></b> but at the cost of overhead. Increasing the <b><i>MALLOC_MAXSHIFT</i></b> is not possible because it is the shift of the max chunk size that fits in a page. We will see later how these lists heps to achieve randomization</li>
 	<li><p>then, adds and updated the <b><i>d->malloc_used</i></b> for dumping the malloc stats information</li> 
 	<li>then, updated the default initialization of variables given below:</li>
-	<pre>
+	<pre id="code_snippet_07">
 	<code>
 ...
 ...
@@ -597,21 +574,19 @@ chunk_info_list[11]
 	 */
 	</code>
 	</pre>
-	<font size="2">
-		<p align="center">code snippet #07
-	</font>
+	<p class="code_des">code snippet #07</p>
 	<li><p>then, <i>dir_info</i> uses two canaries. There calculation is very easy. Whatever the address of <b><i>d</i></b> ( struct dir_info *d) just typecast it to <b><i>(u_int32_t)(uintptr_t)</i></b> and <b>XOR</b> it with <b><i>mopts.malloc_canary</i></b> and assign the result to <b><i>d->canary1</i></b> and then compute the <b><i>not (~)</i></b> of <b><i>d->canary1</i></b> then assign the result to <b><i>d->canary2</i></b> or in simpler words, convert into binary then take each bit and flips them to their logical opposite. convert 1's to 0's and vice versa then convert it to hex and assign it to <b><i>d->canary2</i></b></li>
 	<li><p>finally assign the initialized dir_info structure <b>d</b> to <b><i>*dp</i></b></li>
 </ul>
 <p>We are still in function <b><i>_malloc_init(int from_rthreads)</i></b>, so, as per the [code snippet #03], for <b><i>i == 0</i></b>, we have completed the function <b><i>omalloc_poolinit(&d, MAP_CONCEAL);</i></b>, now after that, <b><i>d->malloc_junk = 2;</i></b> and <b><i>d->malloc_cache = 0;</i></b> 
 <p>Then, it saves the index <b>i</b> to <b><i>d->mutex</i></b> and stored the initialized MAP_CONCEALED pool to <b><i>mopts.malloc_pool[i] = d;</i></b>
-<p>The value of <b>nmutexes</b> is 2, so, now loop will again do the whole same operations for index <b>i == 1</b> or we can say for <b>i != 0</b>.So, this time also it invokes <b><i>omalloc_poolinit(&d, 0)</i></b> but with no flag, [remember, last time it was MAP_CONCEAL, this time is 0]. So, <b><i>omalloc_poolinit(&d, 0)</i></b> performs the same operations but only the diff is with no flag value or with flag value 0
+<p>The value of <b>nmutexes</b> is 2, so, now loop will again do the whole same operations for index <b>i == 1</b> or we can say for <b>i != 0</b>.So, this time also it invokes <b><i>omalloc_poolinit(&d, 0)</i></b> but with no flag, <i>remember, last time it was MAP_CONCEAL, this time is 0</i>. So, <b><i>omalloc_poolinit(&d, 0)</i></b> performs the same operations but only the diff is with no flag value or with flag value 0
 <p>After completion of function <b><i>omalloc_poolinit(&d, 0)</i></b>, it sets junk value to default junk value and same for malloc_cache, that is, <b><i>d->malloc_junk = mopts.def_malloc_junk;</i></b> and <b><i>d->malloc_cache = mopts.def_malloc_cache;</i></b>. Now, again for <b>i = 1</b> it does the same thing, that is, saving the new index <b>1</b> to <b><i>d->mutex</i></b> and stores the pool to <b><i>mopts.malloc_pool[i] = d</i></b>
 <p>So, now <b>mopts.malloc_pool</b> has two pools, <b><i>mopts.malloc_pool[0]</i></b> and <b><i>mopts.malloc_pool[1]</i></b>
 <p>Next, it checks for multi-threading from variable <b>from_rthreads</b>, if the value is non-zero then it sets <b><i>mopts.malloc_mt = 1</i></b> which shows that program is multi-threaded but for our case it is zero (0), so, it doesn't go in that code flow and then the else code flow executes and sets <b><i>mopts.internal_funcs = 1</i></b>, from the structure <b><i>malloc_readonly</i></b>, it shows that setting <b>internal_funcs</b> means to use better function like recallocarray/freezero but I haven't seen them for our case, maybe they have used it for some other scenarios like in case of calloc, etc. <a href="https://marc.info/?l=openbsd-tech&m=148846616030488&w=2">recallocarray(3) - mailing list</a>
 <p>Finally it sets the perms to readonly, to prevent further tampering with them, again it checks last 12 bits and if they are 0 then it sets perms to PROT_READ, and <b><i>_malloc_init(0)</i></b> completed
 <p>Now, we go back to the PROGLOGUE macro code in the [code snippet #01], I have pasted the code again below:
-<pre>
+<pre id="revisited_prologue_code">
 <code>
 1256 #define PROLOGUE(p, fn)                 \
 1257         d = (p);                        \
@@ -627,9 +602,10 @@ chunk_info_list[11]
 1267         }                               \
 </code>
 </pre>
+<p class="code_des">revisited PROLOGUE macro code</p>
 <p>So, as from the PROLOGUE code, we can see that we have completed the <b><i>malloc_init(0)</i></b>.Now, if we remember correctly, here p refers to the function <b><i>getpool()</i></b>, calls getpool() function again and this time also due to single-threaded program, it returns <b><i>mopts.malloc_pool[1]</i></b>, which has the regular pool, not MAP_CONCEALED one, return the same to <b>d</b> then malloc_lock and assigns fn to <b><i>d->fn</i></b>, here fn means "malloc". It checks and incremented the <b><i>d->active</i></b> and doesn't go inside the if code-flow due to 0 value of <b>d->active</b>
-<p>As one can see from the [code snippet #00], I have pasted it again below
-<pre>
+<p>As one can see from the <a href="#code_snippet_00">[code snippet #00]</a>, I have pasted it again below
+<pre id="revisited_malloc_code">
 <code>
 1277 void *
 1278 malloc(size_t size)
@@ -645,8 +621,9 @@ chunk_info_list[11]
 1288 }
 </code>
 </pre>
+<p class="code_des">revisited malloc code</p>
 <p> From line no. 1285, we can see that after PROLOGUE it calls <b><i>omalloc(d, size, CALLER)</i></b>. Code for <b><i>omalloc(d, size, CALLER)</i></b> given below:
-<pre>
+<pre id="code_snippet_08">
 <code>
 1126	static void *
 1127	omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f)
@@ -711,9 +688,7 @@ chunk_info_list[11]
 1186	}
 </code>
 </pre>
-<font size="2">
-	<p align="center">code snippet #08
-</font>
+<p class="code_des">code snippet #08</p>
 <p><b><i>omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f);</i></b> does the following things...
 <ul>
 	<li><p>There are two code flow paths, <b>1st</b>, <b><i>if ( sz > MALLOC_MAXCHUNK)</i></b>. I have used size <b>8</b> in the sample code, so it won't go to this code flow path, but still I am going to explain but not in-depth. So, first it  checks if the size is greater than the <b><i>MALLOC_MAXCHUNK</i></b>, which is 4095. If size is less, then it uses <b>2nd</b> code flow, that is, it calls <b><i>malloc_bytes(pool, sz, f);</i></b> which we will see later, for now I am going to cover the case when size of greater in the following points</li>
@@ -721,10 +696,10 @@ chunk_info_list[11]
 		<li><p>After checking the size with MALLOC_MAXCHUNK then it checks if the requested size is bigger than SIZE_MAX (excluding mopts.malloc_guard and MALLOC_PAGESIZE), if yes, then it sets errno to ENOMEM</li>
 		<li><p>Then, it adds the malloc_guard value to requested size, then it rounds the page to multiple of pagesize, that is, if requested size is <= 4096 then it rounds it to 4096 but if requested size is 4097 then it rounds it to 8192</li>
 		<li><p>Then, it maps the page by taking provided <b><i>pool</i></b> as hint address then check if it fails</li>
-		<li> Then, it uses <b><i>insert(pool, p, sz, f);</i></b> function call to keep track of mmap’ed regions by storing their address and size into a hash table, we will se more in-depth code flow later, if it fails to insert then it unmaps the page and return ENOMEM</li>
+		<li id="insert_read"> Then, it uses <b><i>insert(pool, p, sz, f);</i></b> function call to keep track of mmap’ed regions by storing their address and size into a hash table, we will se more in-depth code flow later, if it fails to insert then it unmaps the page and return ENOMEM</li>
 		<li><p>Then, it checks for malloc_guard page option, if it sets then it adds a guarded page as per the size mentioned by malloc_guard variable with PROT_NONE perms bit and then it adds the information for stats</li>
 		<li><p>Then, it checks for <b><i>MALLOC_MOVE_COND</i></b>, if the condition is true then it shifts the allocations towards the end, as mentioned in the source code comment,</li>
-		<pre>
+		<pre id="macro_cals">
 		<code>
 70 /*
 71  * We move allocations between half a page and a whole page towards the end,
@@ -740,9 +715,10 @@ chunk_info_list[11]
 81                                     ~(MALLOC_MINSIZE - 1)))
 		</code>
 		</pre>
+		<p class="code_des">macro definitions for moving allocations</p>
 		<li><p>After checking for condition, first, it checks for junking value, that is,<b><i>pool->malloc_junk == 2</i></b> if it equals <b>then</b> it fills the mmap'ed page <b>p</b> with <b><i>SOME_JUNK</i></b> which has bits <b><i>0xdb</i></b>, then as previously mentioned that it shifts the allocation towards end with macro <b>MALLOC_MOVE(p, sz)</b>, then later on it checks if zero-filling requires, if it requires then if fills the same JUNKed filled page with zeroes</li>
 		<li><p>But, if the <b><i>MALLOC_MOVE_COND</i></b>, condition is not true then it simple checks for junking value, that is, <b>pool->malloc_junk == 2</b>, if it equals to <b>2</b> then it checks for zero filling and if it requires then it fills from the address as mentioned in the code snippet given below if { ... }, and if zero filling not requires then it simply fills with SOME_JUNK as mentioned in the else { ... } code flow</li>
-		<pre>
+		<pre id="junk_checks">
 		<code>
 		...
 		...
@@ -756,12 +732,13 @@ chunk_info_list[11]
 1172						    psz - mopts.malloc_guard);
 		</code>
 		</pre>
+		<p class="code_des">junking checks</p>
 		<li><p>So, if the junking value is equals to 2, that is, <b><i>pool->malloc_junk == 2</i></b>, this code flow is covered in the previous point but if it fails or not equals to 2 then it checks for canaries, that is, <b><i> else if (mopts.chunk_canaries) </i></b> then it calls the <b>fill_canary</b> function to filling the canaries</li>
 	</ul>
 	<li><p>1st code flow completed, now <b>2nd code flow</b>, that is, <b><i>if (sz < MALLOC_MAXCHUNK)</i></b> means if requested size is less than the MALLOC_MAXCHUNK, previously in 1st code flow it was greater than the MALLOC_MAXCHUNK</li> 
 	<ul>
 		<li><p> it calls the function <b><i>malloc_bytes(pool, sz, f);</i></b> and the source code for the same given below</li>
-		<pre>
+		<pre id="code_snippet_09">
 		<code>
 948	/*
 949	 * Allocate a chunk
@@ -850,12 +827,10 @@ chunk_info_list[11]
 1032	}
   		</code>
 		</pre>
-		<font size="2">
-			<p align="center">code snippet #09
-		</font>
-		<li><p><b><i>malloc_bytes(pool, sz, f);</i></b> is used to allocate a chunk. After some basic variable declaration, it checks for internal struct corruption with canaries of <b>d</b> and <b>mopts.malloc_canary</b> as mentioned and calculated in the [code snippet #07]</li>
+		<p class="code_des">code snippet #09</p>
+		<li><p><b><i>malloc_bytes(pool, sz, f);</i></b> is used to allocate a chunk. After some basic variable declaration, it checks for internal struct corruption with canaries of <b>d</b> and <b>mopts.malloc_canary</b> as mentioned and calculated in the <a href="#code_snippet_07">[code snippet #07]</a></li>
 		<li><p>then, it finds the chunk size with the function <b><i>find_chunksize(size);</i></b>. Code given below</li>
-		<pre>
+		<pre id="code_snippet_10"">
 		<code>
  919 static int
  920 find_chunksize(size_t size)
@@ -877,12 +852,10 @@ chunk_info_list[11]
  936 }
 		</code>
 		</pre>
-		<font size="2">
-			<p align="center">code snippet #10
-		</font>
-		<li><p>As from the [code snippet #10], first it will check if given size is <b>0</b> then it returns <b>0</b>, then it checks if size is less than MALLOC_MINSIZE then it sets size to MALLOC_MINSIZE, else, it decrements the size and sets <b><i>r = MALLOC_MINSHIFT;</i></b>  and the value of MALLOC_MINSHIFT is <b>4</b>. Then it right shifts the <b>size</b> by <b>r</b> and it keeps incrementing the <b>r</b> till right shifting results becomes zero, then returns <b>r</b>. In our case, the size is 8, which is less than MALLOC_MINSIZE and then due to it is less than MALLOC_MISIZE, it sets the size to MALLOC_MINSIZE, which is 16, then it decrements and it becomes 15 and <b>15 >> 4</b>, r is MALLOC_MINSHIFT, which is 4. So, output of <b>15 >>4</b> is 0. So, it returns r, which is 4</li>
-		<li><p>As we can see from the [code snippet #9], after find_chunksize(size), it calls <b>((u_int)getrbyte(d) << 8) | getrbyte(d);</b>, so, getrbyte(d) given below:</li>
-		<pre>
+		<p class="code_des">code snippet #10</p>
+		<li><p>As from the <a href="#code_Snippet_10">[code snippet #10]</a>, first it will check if given size is <b>0</b> then it returns <b>0</b>, then it checks if size is less than MALLOC_MINSIZE then it sets size to MALLOC_MINSIZE, else, it decrements the size and sets <b><i>r = MALLOC_MINSHIFT;</i></b>  and the value of MALLOC_MINSHIFT is <b>4</b>. Then it right shifts the <b>size</b> by <b>r</b> and it keeps incrementing the <b>r</b> till right shifting results becomes zero, then returns <b>r</b>. In our case, the size is 8, which is less than MALLOC_MINSIZE and then due to it is less than MALLOC_MISIZE, it sets the size to MALLOC_MINSIZE, which is 16, then it decrements and it becomes 15 and <b>15 >> 4</b>, r is MALLOC_MINSHIFT, which is 4. So, output of <b>15 >>4</b> is 0. So, it returns r, which is 4</li>
+		<li><p>As we can see from the <a href="#code_snippet_09">[code snippet #9]</a>, after find_chunksize(size), it calls <b>((u_int)getrbyte(d) << 8) | getrbyte(d);</b>, so, getrbyte(d) given below:</li>
+		<pre id="code_Snippet_11">
 		<code>
  311 static inline u_char
  312 getrbyte(struct dir_info *d)
@@ -896,11 +869,9 @@ chunk_info_list[11]
  320 }
  		</code>
 		</pre>
-		<font size="2">
-			<p align="center">code snippet #11
-		</font>
+		<p class="code_des">code snippet #11</p>
 		<li><p>So, in the above code, if <i>d->rbytesused >= sizeof(d->rbytes)</i> then it initializes the random bytes using <i>rbytes_init(d)</i>, else, it assigns x to <i>d->rbytes[d->rbytesused]</i> and returns the same. So as per the name indicates, I think it as getrbyte() means get-random-byte(), basically the whole line <b><i>r = ((u_int)getrbyte(d) << 8) | getrbyte(d);</i></b> does the following stuff...</li>
-		<pre>
+		<pre id="explanation_snippet">
 		<code>
 		get-random-byte then left shits by 8 then OR'ed with again some random byte
 		let's suppose,
@@ -911,11 +882,12 @@ chunk_info_list[11]
 		for example, 0xd4 -> 0xd400 -> 0xd4cb, so r = 0xd4cb
 		</code>
 		</pre>
+		<p class="code_des">explanation snippet</p>
 		<li><p>then it finds the listnum, <b><i>listnum = r % MALLOC_CHUNK_LISTS;</i></b>, where MALLOC_CHUNK_LISTS is 4</li>
 
-		<li><p>As from the [code snippet - lists creation to allow randmization], we have seen that there is nested for loops which creates lists, helpful to allow randomization. So, here we can see that it randomly chooses the created lists for allocation of chunk_info</li>
+		<li><p>As from the <a href="#list_create">[code snippet - lists creation to allow randmization]</a>, we have seen that there is nested for loops which creates lists, helpful to allow randomization. So, here we can see that it randomly chooses the created lists for allocation of chunk_info</li>
 		<li><p>Then, it chooses some random list and makes it first list, now if the list is empty, that is, head is NULL then it calls function <b><i>omalloc_make_chunks(d, j, listnum);</i></b>to allocate chunks. Code for <b><i>omalloc_make_chunks</i></b> given below</li>
-		<pre>
+		<pre id="code_snippet_12">
 		<code>
  885 /*
  886  * Allocate a page of chunks
@@ -952,14 +924,12 @@ chunk_info_list[11]
  917 }
 		</code>
 		</pre>
-		<font size="2">
-			<p align="center">code snippet #12
-		</font>
+		<p class="code_des">code snippet #12</p>	
 		<li><p>The above code is used to allocate a page of chunks, which is already mentioned in the comments <b> :D </b></li>
 		<li><p>First, it maps/allocates page up to len MALLOC_PAGESIZE hint addr is NULL using <b><i>map(d, NULL, MALLOC_PAGESIZE, 0);</i></b>, then it checks for its failure and returns NULL if fails</li>
 		<li>Then, it memory protects the allocated page for <b><i>malloc(0)</i></b> case with <b>PROT_NONE</b></li>
 		<li>Then, it allocates the chunk info by calling the function <b><i>alloc_chunk_info(d, bits);</i></b> and code for the same given below:</li>
-		<pre>
+		<pre id="code_snippet_13">
 		<code>
  847 static struct chunk_info *
  848 alloc_chunk_info(struct dir_info *d, int bits)
@@ -1000,15 +970,13 @@ chunk_info_list[11]
  883 }
 		</code>
 		</pre>
-		<font size="2">
-			<p align="center">code snippet #13
-		</font>
+		<p class="code_des">code snippet #13</p>
 		<li><p>First it checks if the list is empty where bits is 4 for our case, and if it is then it checks if bits is 0, if ys then it calculate count by dividing the MALLOC_PAGESIZE with MALLOC_MINSIZE but in out case bits is equals to 4, so, it calculates count for all cases when bit != 0 by <b><i>MALLOC_PAGESIZE >> bits</i></b>, which comes as 256 for our case</li>
 		<li><p>Then, howmany(x, y) is ((x) + ((y) - 1) / y), so as per that, x = count and y  MALLOC_BITS, which is 256 and 16 respectively for our case and the result is 16</li>
 		<li><p>Then, it calculates size from adding the sizeof(struct chunk_info) + (size - 1) * sizeof(u_short), for our case, it came as 40 + (16 - 1) * 2 = 70 and then it checks for mopt.chunk_canaries and if it is there then it calculates <i>size += count * sizeof(u_short);</i> so, I have compiled the sample code with malloc option <b>C</b>, so, chunk_canaries is there, for our case size became, <b>size = 70 + 256 * 2 = 582</b> then it aligns the size to _ALIGN(size), which make it from 582 to 584</li>
 		<li><p>Then, it maps page using mmap(2) upto MALLOC_PAGESIZE with mmap_flag value as 0 due to the mopts.malloc_pool[1], mopts.malloc_pool[0] has MAP_CONCEALed memory.Then, it adds information about malloc usage count from adding MALLOC_PAGESIZE to variable d->malloc_used. Then, it calculates count from <b>count = MALLOC_PAGESIZE / size</b> where it is 4096 / 584 = 7, for our case</li>
-		<li><p>Then, it creates count number of lists for chunk_info. For our case, count was 7 so, it creates 7  lists with the list head updated with p. The, it chooses first list then removes it from the lists. Then it checks for p->shift and here shift means how may shifts it will take to get the p->size, if it is zero (0) then it calls function <b><i>init_chunk_info(d, p, bits);</i></b> then after the initializaton it returns <b>p</b>. Code for the same given below:</li>
-		<pre>
+		<li><p>Then, it creates count number of lists for chunk_info. For our case, count was 7 so, it creates 7 lists with the list head updated with p. Then, it chooses first list then removes it from the lists. Then it checks for p->shift and here shift means how may shifts it will take to get the p->size, if it is zero (0) then it calls function <b><i>init_chunk_info(d, p, bits);</i></b> then after the initializaton it returns <b>p</b>. Code for the same given below:</li>
+		<pre id="code_snippet_14">
 		<code>
  823 static void
  824 init_chunk_info(struct dir_info *d, struct chunk_info *p, int bits)
@@ -1035,14 +1003,12 @@ chunk_info_list[11]
  845 }
 		</code>
 		</pre>
-		<font size="2">
-			<p align="center">code snippet #14
-		</font>
+		<p class="code_des">code snippet #14</p>
 
-		<li><p>From the above code snippet, it is used to initialize the chunk information. There it is checking for whether the value of bits is 0 or not 0. If 0 then it initializes some default value as mentioned in the above code. And, it seems that bit == 0, is the case of malloc(0). But, if it is not 0 then it initializes some other values as mentioned in the above code. Then, it assigns the canary, that is <b><i>p->canary = (u_short)d->canary1;</i></b></li>
+		<li><p>From the above code snippet, it is used to initialize the chunk information. There it is checking for whether the value of bits is 0 or not 0. If 0 then it initializes some default value as mentioned in the above code. And, it seems that bit == 0, is the case of malloc(0). But, if it is not 0 then it initializes some other values as mentioned in the above code. Then, it assigns dir_info canary1 to chunk canary with typecasts in u_short, that is <b><i>p->canary = (u_short)d->canary1;</i></b></li>
 		<li><p>Then, set all the valid bits in the bitmap. For our case, <i>i = p->total - 1;</i>, where p->total = 256 and i = 255 then it copies the 0xff to p->bits upto <b><i>sizeof(p->bits[0]) * (i / MALLOC_BITS)) - 1</i></b> and it came 30 for our case.</li>
 		<li><p>Then it is assigning some value to p->bits, where a bitmap specifing which chunks are still free to use, for our case, i = 255, MALLOC_BITS = 16, so, it became,</li>
-		<pre>
+		<pre id="bitmap_calcs">
 		<code>
 		p->bits[255 / 16] = (2U << ( 255 % 16)) - 1
 		then, p->bits[15] = (2U << ( 15 )) - 1
@@ -1050,5 +1016,296 @@ chunk_info_list[11]
 		then, p->bits[15] = 65535
 		</code>
 		</pre>
+		<p class="code_des">bitmap calculations explanation</p>
+		<li><p>Now, the chunk initializaton is completed. As from the [code snippet #13], we can see that after the function <i>init_chunk_info(d, p, bits);</i>, it returns the initialized chunk <b>p</b></li>
+		<li><p>Now, after the completion of both the functions <b>init_chunk_info()</b> and <b>alloc_chunk_info()</b>, it returns the allocated and initialized chunk to the function <b>omalloc_make_chunks()</b>, so, now we will proceed the same but in reverse direction, just like how stack works, nestedly creating of stacks from 0..n now going back from n..0, in other words, simply we can say now, we proceed by returning from all the functions that we came from. Returning the new initialized and allocated chunk <b>p</b> to <b>bp</b>, which we can see from the <a href="#code_snippet_12">[code snippet #12]</a>. So, after line :<b> 903</b> it checks bp for NULL and it bp is not NULL then it assigns the new page that it creates on line: <b>895</b>, that is, <b><i>bp->page = pp;</i></b>. Then, it uses <b><i>insert(d, (void *)((uintptr_t)pp | (bits + 1)), (uintptr_t)bp, NULL)</i></b> and the code for <b>insert(struct dir_info *d, void *p, size_t sz, void *f)</b>. Code for the same given below:</li>
+		<pre id="code_snippet_15">
+		<code>
+564 /*
+565  * The hashtable uses the assumption that p is never NULL. This holds since
+566  * non-MAP_FIXED mappings with hint 0 start at BRKSIZ.
+567  */
+568 static int
+569 insert(struct dir_info *d, void *p, size_t sz, void *f)
+570 {
+571         size_t index;
+572         size_t mask;
+573         void *q;
+574
+575         if (d->regions_free * 4 < d->regions_total) {
+576                 if (omalloc_grow(d))
+577                         return 1;
+578         }
+579         mask = d->regions_total - 1;
+580         index = hash(p) & mask;
+581         q = d->r[index].p;
+582         STATS_INC(d->inserts);
+583         while (q != NULL) {
+584                 index = (index - 1) & mask;
+585                 q = d->r[index].p;
+586                 STATS_INC(d->insert_collisions);
+587         }
+588         d->r[index].p = p;
+589         d->r[index].size = sz;
+590 #ifdef MALLOC_STATS
+591         d->r[index].f = f;
+592 #endif
+593         d->regions_free--;
+594         return 0;
+595 }
+		</code>
+		</pre>
+		<p class="code_des">code snippet #15</p>	
+		<li><p>As we have already seen above about <a href="#insert_read">insert()</a> that this function uses to keep track of mmap’ed regions by storing their address and size into a hash table, in-depth explanation of the code given below</li>
+		<li><p>From the <a href="#code_snippet_15">[code snippet #15]</a>, we can see that initially it checks for whether the slots is too filled, which means more than 75% (>75%), if yes, then it calls <b><i>omalloc_grow(d);</i></b> and returns 1. If no, means it is less 75% (<75%) then it decrements <b>d->regions_total by 1</b> and assign it to mask variable. Then it calculates, index, through anding (&) a <b>hash(p)</b> function and <b>mask</b>. <b>hash(p)</b> function given below:</li>
+		<pre id="hash_fn">
+		<code>
+ 254 static inline size_t
+ 255 hash(void *p)
+ 256 {
+ 257         size_t sum;
+ 258         uintptr_t u;
+ 259
+ 260         u = (uintptr_t)p >> MALLOC_PAGESHIFT;
+ 261         sum = u;
+ 262         sum = (sum << 7) - sum + (u >> 16);
+ 263 #ifdef __LP64__
+ 264         sum = (sum << 7) - sum + (u >> 32);
+ 265         sum = (sum << 7) - sum + (u >> 48);
+ 266 #endif
+ 267         return sum;
+ 268 }
+		</code>
+		</pre>
+		<p class="code_des"> hash(p) function</p>
+		<li><p>hash(p) does some shifting calculations as one can see from the above mentioned code. Then, it returns that sum and '&' with mask that is calculated previously. Here, <b>d->r</b> refers to the structure <b>struct region_info</b>, which has address and size to maintain mmap'ed regions into hash table. After that it assigns the already existing address to q, that is, <b>q = d->r[index].p</b>. If q is not NULL then it again recalulcates index and then finds the q and increment the collisions information for stats. if q is NULL, then it simply stores the new addr, p, to struct region_info, same for size, then it decrements the free slots count</li> 
+		<li><p>Then, as from the <a href="#code_snippet_12">code snippet #12</a>, it inserts list head <b>LIST_INSERT_HEAD(&d->chunk_dir[bits][listnum], bp, entries);</b>, where bits is 4, for our case and listnum is random for each invocaton then returns the <b>page of chunks</b> or *allocated chunk* (still in doubt) <b>bp</b> with the initialized values and page <b>bp->page</b></li>
+		<li><p>In my understanding as from the <a href="#code_snippet_09">[code snippet #09]</a>, the <b>bp</b> seems to be the allocated chunks in a page, and <b>pp</b> seems to be the bucket of chunks, or in other words, a page of chunks as we can see from the <a href="#code_snippet_12">[code snippet #12]</a> on line no. 895</li>
+		<li><p>Now, comming back to the main code, that is, <b><i>malloc_bytes</i></b> in <a href="#code_snippet_09">[code snippet #09]</a>. Then, it checks for chunk canary corruption on line no. 976, </b><i>if(bp->canary != (u_short)d->canary1)</i></b>, if not equal then calls wrterror() with the string "chunk info corrupted" and abort()</li>
+		<li><p>Then, it calculates, <b>i</b>, <b><i>i = (r / MALLOC_CHUNK_LISTS) & (bp->total - 1);</i></b>, where, r is the random byte, MALLOC_CHUNK_LISTS is 4 and bp->total is the total no. of chunks. Then, after calculating the i it calculates the index of the chunk which is free, as we know that <b><i>bp->bits</i></b> is responsible for tracking the free chunks to use</li>
+		<li><p>Also, in support of the code, I have found one of the interesting <a href="http://www.ouah.org/BSD-heap-smashing.txt">old paper</a> to provided some details about the <b><i>phkmalloc</i></b> internas. So, as per the paper it is mentioned that</li>
+		<pre id="paper_info">
+		<code>
+struct pginfo {
+    struct pginfo       *next;  /* next on the free list */
+    void                *page;  /* Pointer to the page */
+    u_short             size;   /* size of this page's chunks */
+    u_short             shift;  /* How far to shift for this size chunks */
+    u_short             free;   /* How many free chunks */
+    u_short             total;  /* How many chunk */
+    u_int               bits[1]; /* Which chunks are free */
+};
+
+The next field is a pointer to the next structure in the list, or 0 if the
+element is the last of the list.
+
+The page field points to the beginning of the page (it is always a multiple of
+malloc_pagesize).
+
+The size field is set to the size in bytes of the chunks contained in this page.
+
+The free field is the number of free chunks in the page.
+
+The total field is the sum of the number of free chunks in the page and of the
+number of allocated chunks in the page. The page is freed (ie. returned to the
+lower layer) whenever ( free == total ) becomes true.
+
+<b>At last, the bits field is a variable size array indicating which chunks in the
+page are free chunks. Each chunk is associated with a unique bit in the field,
+namely the bit obtained when applying the ( 1 << n ) mask to bits[i] where:
+
+  ( i * MALLOC_BITS ) + n = ( chunk_address & malloc_pagemask ) / chunk_size
+
+MALLOC_BITS is the number of bits a u_int has on the specific architecture phk
+malloc is running on. It is defined as follows:
+
+#define MALLOC_BITS     ((int)(8*sizeof(u_int)))
+
+This bit is set to one when the chunk is free, and to 0 when the chunk is in
+use. Of course, the effective size of the bits field will depend on the number
+of chunks in the page.</b>
+		</code>
+		</pre>
+		<p class="code_des">some common details from phkmalloc and omalloc</p>
+		<li><p>Now, the calculations given below computes the offset of the chunk in the page</li>
+		<pre id="code_k_offset">
+		<code>
+...
+...
+...
+981		/* start somewhere in a short */
+982		lp = &bp->bits[i / MALLOC_BITS];
+983		if (*lp) {
+984			j = i % MALLOC_BITS;
+985			k = ffs(*lp >> j);
+986			if (k != 0) {
+987				k += j - 1;
+988				goto found;
+989			}
+990		}
+991		/* no bit halfway, go to next full short */
+992		i /= MALLOC_BITS;
+993		for (;;) {
+994			if (++i >= bp->total / MALLOC_BITS)
+995				i = 0;
+996			lp = &bp->bits[i];
+997			if (*lp) {
+998				k = ffs(*lp) - 1;
+999				break;
+1000			}
+1001		}
+1002	found:
+1003	#ifdef MALLOC_STATS
+1004		if (i == 0 && k == 0) {
+1005			struct region_info *r = find(d, bp->page);
+1006			r->f = f;
+1007		}
+1008	#endif
+1009	
+1010		*lp ^= 1 << k;
+1011	
+1012		/* If there are no more free, remove from free-list */
+1013		if (--bp->free == 0)
+1014			LIST_REMOVE(bp, entries);
+1015	
+1016		/* Adjust to the real offset of that chunk */
+1017		k += (lp - bp->bits) * MALLOC_BITS;
+1018	
+1019		if (mopts.chunk_canaries && size > 0)
+1020			bp->bits[bp->offset + k] = size;
+1021	
+1022		k <<= bp->shift;
+1023	
+1024		p = (char *)bp->page + k;
+1025		if (bp->size > 0) {
+1026			if (d->malloc_junk == 2)
+1027				memset(p, SOME_JUNK, bp->size);
+1028			else if (mopts.chunk_canaries)
+1029				fill_canary(p, size, bp->size);
+1030		}
+1031		return p;
+1032	}
+		</code>
+		</pre>
+		<p class="code_des">code for offset computation in the page</p>
+		<li><p>It assigns the address of bp->bits[13] to lp, for our case, i = 0xd3 (or 211) and MALLOC_BITS is 16. then , if *lp is not null then it assigns i % MALLOC_BITS to j, which is j = 3, then, it goes to find the first set bit and assign it to k, <b>k = ffs(*lp >> j);</b>, code given below for demostration</li>
+		<pre id="demo_ffs">
+		<code>
+ 1 /* ffs -- Find the first bit set in the parameter
+ 2
+ 3 @deftypefn Supplemental int ffs (int @var{valu})
+ 4
+ 5 Find the first (least significant) bit set in @var{valu}.  Bits are
+ 6 numbered from right to left, starting with bit 1 (corresponding to the
+ 7 value 1).  If @var{valu} is zero, zero is returned.
+ 8
+ 9 @end deftypefn
+10
+11 */
+12
+13 int
+14 ffs (register int valu)
+15 {
+16   register int bit;
+17
+18   if (valu == 0)
+19     return 0;
+20
+21   for (bit = 1; !(valu & 1); bit++)
+22         valu >>= 1;
+23
+24   return bit;
+25 }
+		</code>
+		</pre>
+		<p class="code_des">ffs(register int valu)</p>
+		<li><p>For our case, *lp is 0xffff and j is 3, so *lp >> j is 8191 and ffs(8191) is 1 and return to k. And, if k != 0 then k = k + j - 1 => k = 1 + 3 - 1 => k = 3, then goto found</li>
+		<li><p>*lp = *lp ^ 1 << k, then 0xffff ^ 1 << 0x3 => *lp = 0xfff7. Then, if bp->free is 0 then remove lists bp and decrement the bp->free value, if not 0 then also decrement the bp->free and k = k + (lp - bp->bits) * MALLOC_BITS; => k = 0xd3 (or 211). Then, check if mopts.chunk_canaries is enable and size > 0, if yes, then bp->bits[bp->offset + k] = size => bp->bits[16 + 211] = 0x8</li>
+		<li><p>Then, k <<= bp->shift. It means k = k << bp->shift => k = 0xd3 (or 211) * 16 => k = 0xd30 (or 3376). Then, calculate offset in the page, <b><i>p = (char *)bp->page + k;</i></b>, for our case, bp->page is 0xcde2d918000 and k is 0xd30 => p = 0xcde2d918d30. Then it checks if the bp->size > 0, if yes, then check for more junking through, <b>d->malloc_junk == 2</b>, if more junking  set, then it copies SOME_JUNK to p till the bp->size, but if no more_junking option set then it checks for mopt.chunk_canaries, and if canary is enable then, fill_canary functions calls with p, size and bp->size</li>
+		<pre id="canary_id">
+		<code>
+938 static void
+939 fill_canary(char *ptr, size_t sz, size_t allocated)
+940 {
+941         size_t check_sz = allocated - sz;
+942
+943         if (check_sz > CHUNK_CHECK_LENGTH)
+944                 check_sz = CHUNK_CHECK_LENGTH;
+945         memset(ptr + sz, SOME_JUNK, check_sz);
+946 }
+		</code>
+		</pre>
+		<p class="code_des">fill_canary - canary filling code</p>
+		<li><p>For our case, check_sz = 16 - 8, then, check_sz = 8, then check for maximum chunk length and if greater than CHUNK_CHECK_LENGTH then sets the same. Then, copy the SOME_JUNK to ptr + sz till size <i>check_sz</i>, for our case, ptr + sz = 0xcde2d918d38, where ptr=0xcde2d918d30 and sz=0x8 copies SOME_JUNK till check_sz which has 0x10 length. Now, if in the case of heap-overflow, if any buffer tries to write more than size sz, that is, 0x8 then it corrupts the SOME_JUNK value and that detects as heap-overflow attack and abort(). Rest about canary validation we will see on further series of malloc friends</li>
+		<li><p>Then, finally it returns the page + offset address filled with canary</li>
+		<li><p>Now, the malloc_bytes function is completed and as we can see further in <b>omalloc()</b>, <a href="#code_snippet_08">[code snippet #08</a>. After the malloc_bytes call, it checks for zero_filling and also checks if p != NULL and sz > 0. If all conditions meet then it copies zero to entire address p till size sz and returns <b>p</b></li>
+		<li><p>So, now as from the <a href="#code_snippet_00">[code snippet #00]</a>, After omalloc() function, it calls for <a href="#epilogue">EPILOGUE()</a>.Following the code explains about the EPILOGUE() macro</li>
+		<pre id="epilogue_code">
+		<code>
+1269 #define EPILOGUE()                              \
+1270         d->active--;                            \
+1271         _MALLOC_UNLOCK(d->mutex);               \
+1272         if (r == NULL && mopts.malloc_xmalloc)  \
+1273                 wrterror(d, "out of memory");   \
+1274         if (r != NULL)                          \
+1275                 errno = saved_errno;            \
+		</code>
+		</pre>
+		<p class="code_des">EPILOGUE() macro - code snippet #16</p>
+		<li><p>So, as from the above code, we can see that EPILOGUE() does the following things</li>
+		<ul>
+			<li><p>It decrements the active count</li>
+			<li><p>Unlock the locked stuff</li>
+			<li><p>Then, it checks if <b>r</b> is NULL and also checks for <b>mopts.malloc_xmalloc</b> then it "prints out of memory" as error and abort(). But if <b>r</b> is not NULL then it saves <b>saved_errno</b> to <b>errno</b> variable and completes the epilogue() process</li>
+		</ul>
+		<li><p>Now, we have reached the end of the malloc(3) internals. So, if we recall the <a href="#code_snippet_01">[code snippet #00]</a>, After EPILOGUE(), it returns the <b>r</b>, which has the address value, <b><i>0xcde2d918d30</i></b>, <b><i>(char *)bp->page + k </i></b> as mentioned in the <a href="#code_snippet_09">[code snippet #09]</a> line no. 1024</li>
+		<li><p>Now coming back to the <a href="#sample_code">[sample code for malloc(3) internals]</a>, as we can see that after <b><i>buff1 = (char *)malloc(8);</i></b>, it copies the user controlled input to buff1 and then calls <b><i>free(buff1)</i></b></li>
+		<li><p>Following is the gdb window to show canary and canary overwrite, from the same sample code</li>
+			<pre id="user_space_code">
+			<code>
+openbsd# LD_PRELOAD=/usr/src/lib/libc/obj/libc.so.95.1 gdb -q sample
+(gdb) br main
+Breakpoint 1 at 0x1363: file sample.c, line 7.
+(gdb) r AAAABBBBCCCCDDDD
+Starting program: /root/test/sample AAAABBBBCCCCDDDD
+Breakpoint 1 at 0x4517aff7363: file sample.c, line 7.
+Error while reading shared library symbols:
+Dwarf Error: wrong version in compilation unit header (is 4, should be 2) [in module /usr/libexec/ld.so]
+
+Breakpoint 1, main (argc=2, argv=0x7f7ffffee678) at sample.c:7
+7		char *buff1 = NULL;
+Current language:  auto; currently minimal
+(gdb) n
+8		buff1 = (char *)malloc(8);
+(gdb) n
+9		strcpy(buff1, argv[1]);
+(gdb) x/16x buff1
+0x453ec9b6fe0:	0x00000000	0x00000000	0xdbdbdbdb	0xdbdbdbdb
+0x453ec9b6ff0:	0x00000000	0x00000000	0x00000000	0x00000000
+0x453ec9b7000:	Cannot access memory at address 0x453ec9b7000
+(gdb) n
+10		free(buff1);
+(gdb) x/16x buff1
+0x453ec9b6fe0:	0x41414141	0x42424242	0x43434343	0x44444444
+0x453ec9b6ff0:	0x00000000	0x00000000	0x00000000	0x00000000
+0x453ec9b7000:	Cannot access memory at address 0x453ec9b7000
+(gdb) c
+Continuing.
+sample(3165) in free(): chunk canary corrupted 0x453ec9b6fe0 0x8@0x8
+
+Program received signal SIGABRT, Aborted.
+thrkill () at -:3
+3	-: No such file or directory.
+	in -
+Current language:  auto; currently asm
+(gdb)
+			</code>
+			</pre>
+			<p class="code_des">gdb showing the canary corruption and malloc aborting the process</p>
+			<li><p>In the above debugging window, one can see that just after the malloc(3) allocation, there are canaries with <b>0xdb</b> bytes, which is filled by the <b><i>fill_canary()</i></b> as explained in the code snippet - <a href="#canary_id">fill_canary - canary filling code</a></li>
+			
+			<li><p>Then, after the memory allocation that is explained above, it copies the user controlled input to that memory area. And, after giving string <b>AAAABBBBCCCCDDDD</b>, one can see that the canaries are corrupted as it has overwritten the <b>0xdb</b> bytes with the <b>0x43</b> and <b>0x44</b> which is <b>C</b> and <b>D</b>, then later it calls <b>free(buff1)</b>, which is responsible to validate canary corruption and calls abort() if corrupted with the information like chunk address and size</li>
+			<li><p>So, validation of canaries in user-related chunk is validated in <b>free()</b>. But due to the lengthy content, I would like to cover the malloc(3) friends library calls in the upcoming blogs</li> 
+	</ul>
 </body>
 </html>
