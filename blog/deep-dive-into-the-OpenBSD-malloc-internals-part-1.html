@@ -931,9 +931,101 @@ chunk_info_list[11]
 		</code>
 		</pre>
 		<p class="code_des">code snippet #12</p>	
-		<li><p>The above code is used to allocate a page of chunks, which is already mentioned in the comments <b> :D </b></li>
+		<li><p>The above code is used to allocate a page of chunks, which is already mentioned in the comments</li>
 		<li><p>First, it maps/allocates page up to len MALLOC_PAGESIZE hint addr is NULL using <b><i>map(d, NULL, MALLOC_PAGESIZE, 0);</i></b>, then it checks for its failure and returns NULL if fails</li>
-		<li>Then, it memory protects the allocated page for <b><i>malloc(0)</i></b> case with <b>PROT_NONE</b></li>
+		<li><p>Code for <b>map</b> given below</li>
+		<pre id="code_map">
+		<code>
+751 static void *
+752 map(struct dir_info *d, void *hint, size_t sz, int zero_fill)
+753 {
+754	size_t psz = sz >> MALLOC_PAGESHIFT;
+755	struct region_info *r, *big = NULL;
+756	u_int i;
+757	void *p;
+758 
+759	if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)(uintptr_t)d) ||
+760	    d->canary1 != ~d->canary2)
+761		wrterror(d, "internal struct corrupt");
+762	if (sz != PAGEROUND(sz))
+763		wrterror(d, "map round");
+764 
+765	if (hint == NULL && psz > d->free_regions_size) {
+766		_MALLOC_LEAVE(d);
+767		p = MMAP(sz, d->mmap_flag);
+768		_MALLOC_ENTER(d);
+769		if (p != MAP_FAILED)
+770			STATS_ADD(d->malloc_used, sz);
+771		/* zero fill not needed */
+772		return p;
+773	}
+774	for (i = 0; i < d->malloc_cache; i++) {
+775		r = &d->free_regions[(i + d->rotor) & (d->malloc_cache - 1)];
+776		if (r->p != NULL) {
+777			if (hint != NULL && r->p != hint)
+778				continue;
+779			if (r->size == psz) {
+780				p = r->p;
+781				r->p = NULL;
+782				d->free_regions_size -= psz;
+783				if (mopts.malloc_freeunmap)
+784					mprotect(p, sz, PROT_READ | PROT_WRITE);
+785				if (zero_fill)
+786					memset(p, 0, sz);
+787				else if (d->malloc_junk == 2 &&
+788				    mopts.malloc_freeunmap)
+789					memset(p, SOME_FREEJUNK, sz);
+790				d->rotor += i + 1;
+791				return p;
+792			} else if (r->size > psz)
+793				big = r;
+794		}
+795	}
+796	if (big != NULL) {
+797		r = big;
+798		p = r->p;
+799		r->p = (char *)r->p + (psz << MALLOC_PAGESHIFT);
+800		if (mopts.malloc_freeunmap)
+801			mprotect(p, sz, PROT_READ | PROT_WRITE);
+802		r->size -= psz;
+803		d->free_regions_size -= psz;
+804		if (zero_fill)
+805			memset(p, 0, sz);
+806		else if (d->malloc_junk == 2 && mopts.malloc_freeunmap)
+807			memset(p, SOME_FREEJUNK, sz);
+808		return p;
+809	}
+810	if (hint != NULL)
+811		return MAP_FAILED;
+812	if (d->free_regions_size > d->malloc_cache)
+813		wrterror(d, "malloc cache");
+814	_MALLOC_LEAVE(d);
+815	p = MMAP(sz, d->mmap_flag);
+816	_MALLOC_ENTER(d);
+817	if (p != MAP_FAILED)
+818		STATS_ADD(d->malloc_used, sz);
+819	/* zero fill not needed */
+820	return p;
+821 }
+		</code>
+		</pre>
+		<p class="code_des">code for map(struct dir_info *d, void *hint, size_t sz, int zero_fill)
+		<li><p>From the <a href="#code_snippet_12">[code snippet #12]</a>, we can see that the parameters for the map() function given below:</li>
+		<pre id="map_para">
+		<code>
+		calls map(d, NULL, MALLOC_PAGESIZE, 0);
+		After corelating the map() calling from <a href="#code_snippet_12">[code snippet #12]</a> and <a href="#code_map">map() function defination</a>, 
+		→ first parameter, d belongs to struct dir_info *d
+		→ second parameter, NULL belongs to *hint
+		→ third parameter, MALLOC_PAGESIZE belongs to sz
+		→ fourth parameter, 0 indicates zero_filling requirements
+		</code>
+		</pre>
+		<p class="code_des">corelation of map() paramters</p>
+		<li><p>First, map() assigns the right shifted value of sz by MALLOC_PAGESHIFT bytes, which is 4096 >> 12 => 0x1. So, psz = 0x1. Then, it defines some pointer objects for the structure region_info and some other pointer variables, later, it checks for internal struct corruption through canaries. Then, it verifies the roundness of size sz. if it passes, then it checks whether the provided hint is NULL and psz is greater than free_pages_cache. So, for our case, the d->free_regions_size is 0x0 and psz is 0x1, so, it condition satisfies and it comes under if{...} code flow, where it first does MALLOC_LEAVE means it checks if is it multi-threaded program then decrement the d->active count and unlock malloc and returns <b>but</b> if it is single-threaded, like for our case, then it simply returns without doing anything</li>
+		<li><p>Then, it maps pages with provided flag mmap_flag and size sz. mmap_flag is 0x0, as if we remember correctly then second time getpool() returns d with mmap_flag is 0x0. Then, it does MALLOC_ENTER which is the opposite of MALLOC_LEAVE. It means check if the program is multi-threaded then lock malloc and increment the d->active count <b>but</b> if the program is single-threaded then it does nothing and simply returns. Then , it checks whether p is failed. If not then it adds stats information, that is, increments the d->malloc_used to sz, that is, <b>d->malloc_used += sz</b> then it returns</li>
+		<li><p>For our case, map() completed, but other code flows may be explained later in the upcoming malloc series, as the blog has already become lengthy</li>
+		<li>Then, coming back to <a href="#code_snippet_12">[code snippet #12]</a>, it memory protects the allocated page for <b><i>malloc(0)</i></b> case with <b>PROT_NONE</b> but our case is <b>malloc(8)</b></li>
 		<li>Then, it allocates the chunk info by calling the function <b><i>alloc_chunk_info(d, bits);</i></b> and code for the same given below:</li>
 		<pre id="code_snippet_13">
 		<code>
