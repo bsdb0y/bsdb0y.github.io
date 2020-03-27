@@ -200,7 +200,7 @@ main(int argc, char **argv) {
 <p class="code_des">code snippet #03</p>	
 <p>In the <a href="#code_snippet_03">[code snippet #03]</a>, we can see that first it does some MALLOC_LOCKing and checks for the <b><i>from_rthreads</i></b> and also for <b><i>mopts.malloc_pool[1]</i></b> as an outcome it is not <b><i>true</i></b> due to <b><i>mopts.malloc_pool[1]</i></b> which is <b><i>NULL</i></b>
 <p>Then, after that it checks for <b><i>mopts.malloc_canary</i></b> and it wil be always 0 first time due to structure initialized to zero (0) and then it calls function <b><i>omalloc_init()</i></b> and code for the same given below
-<pre id="#code_snippet_04">
+<pre id="code_snippet_04">
 <code>
 405	static void
 406	omalloc_init(void)
@@ -1178,9 +1178,9 @@ chunk_info_list[11]
 		</pre>
 		<p class="code_des"> hash(p) function</p>
 		<li><p>hash(p) does some shifting calculations as one can see from the above mentioned code. Then, it returns that sum and '&' with mask that is calculated previously. Here, <b>d->r</b> refers to the structure <b>struct region_info</b>, which has address and size to maintain mmap'ed regions into hash table. After that it assigns the already existing address to q, that is, <b>q = d->r[index].p</b>. If q is not NULL then it again recalulcates index and then finds the q and increment the collisions information for stats. if q is NULL, then it simply stores the new addr, p, to struct region_info, same for size, then it decrements the free slots count</li> 
-		<li><p>Then, as from the <a href="#code_snippet_12">[code snippet #12]</a>, it inserts list head <b>LIST_INSERT_HEAD(&d->chunk_dir[bits][listnum], bp, entries);</b>, where bits is 4, for our case and listnum is random for each invocaton then returns the <b>page of chunks</b> or *allocated chunk* (still in doubt) <b>bp</b> with the initialized values and page <b>bp->page</b></li>
+		<li><p>Then, as from the <a href="#code_snippet_12">[code snippet #12]</a>, it inserts list head <b>LIST_INSERT_HEAD(&d->chunk_dir[bits][listnum], bp, entries);</b>, where bits is 4, for our case and listnum is random for each invocaton then returns the associated meta-info, <b>bp</b> with the allocated-initialized chunk information and page of chunks, <b>bp->page</b></li>.
 		<li><p>In my understanding as from the <a href="#code_snippet_09">[code snippet #09]</a>, the <b>bp</b> seems to be the allocated chunks in a page, and <b>pp</b> seems to be the bucket of chunks, or in other words, a page of chunks as we can see from the <a href="#code_snippet_12">[code snippet #12]</a> on line no. 895</li>
-		<li><p>Now, comming back to the main code, that is, <b><i>malloc_bytes</i></b> in <a href="#code_snippet_09">[code snippet #09]</a>. Then, it checks for chunk canary corruption on line no. 976, </b><i>if(bp->canary != (u_short)d->canary1)</i></b>, if not equal then calls wrterror() with the string "chunk info corrupted" and abort()</li>
+		<li><p>Now, coming back to the main code, that is, <b><i>malloc_bytes</i></b> in <a href="#code_snippet_09">[code snippet #09]</a>. Then, it checks for chunk canary corruption on line no. 976, </b><i>if(bp->canary != (u_short)d->canary1)</i></b>, if not equal then calls wrterror() with the string "chunk info corrupted" and abort()</li>
 		<li><p>Then, it calculates, <b>i</b>, <b><i>i = (r / MALLOC_CHUNK_LISTS) & (bp->total - 1);</i></b>, where, r is the random byte, MALLOC_CHUNK_LISTS is 4 and bp->total is the total no. of chunks. Then, after calculating the i it calculates the index of the chunk which is free, as we know that <b><i>bp->bits</i></b> is responsible for tracking the free chunks to use</li>
 		<li id="bit_explan"><p>Also, in support of the code, I have found one of the interesting <a href="http://www.ouah.org/BSD-heap-smashing.txt">old paper</a> to provided some details about the <b><i>phkmalloc</i></b> internas. So, as per the paper it is mentioned that</li>
 		<pre id="paper_info">
@@ -1319,8 +1319,19 @@ of chunks in the page.</b>
 		</pre>
 		<p class="code_des">ffs(register int valu)</p>
 		<li><p>For our case, *lp is 0xffff and j is 3, so *lp >> j is 8191 and ffs(8191) is 1 and return to k. And, if k != 0 then k = k + j - 1 => k = 1 + 3 - 1 => k = 3, then goto found</li>
-		<li><p>*lp = *lp ^ 1 << k, then 0xffff ^ 1 << 0x3 => *lp = 0xfff7. Then, if bp->free is 0 then remove lists bp and decrement the bp->free value, if not 0 then also decrement the bp->free and k = k + (lp - bp->bits) * MALLOC_BITS; => k = 0xd3 (or 211). Then, check if mopts.chunk_canaries is enable and size > 0, if yes, then bp->bits[bp->offset + k] = size => bp->bits[16 + 211] = 0x8</li>
+		<li><p>*lp = *lp ^ 1 << k, then 0xffff ^ 1 << 0x3 => *lp = 0xfff7. Here, it sets the bits of the bitmap. Then, if bp->free is 0 then remove lists bp and decrement the bp->free value, if not 0 then also decrement the bp->free and k = k + (lp - bp->bits) * MALLOC_BITS; => k = 0xd3 (or 211). Then, check if mopts.chunk_canaries is enable and size > 0, if yes, then bp->bits[bp->offset + k] = size => bp->bits[16 + 211] = 0x8</li>
 		<li><p>Then, k <<= bp->shift. It means k = k << bp->shift => k = 0xd3 (or 211) * 16 => k = 0xd30 (or 3376). Then, calculate offset in the page, <b><i>p = (char *)bp->page + k;</i></b>, for our case, bp->page is 0xcde2d918000 and k is 0xd30 => p = 0xcde2d918d30. Then it checks if the bp->size > 0, if yes, then check for more junking through, <b>d->malloc_junk == 2</b>, if more junking  set, then it copies SOME_JUNK to p till the bp->size, but if no more_junking option set then it checks for mopt.chunk_canaries, and if canary is enable then, fill_canary functions calls with p, size and bp->size</li>
+		<li><p>Here, in short, information about the offset calculations</li>
+		<pre id="short_page_cal">
+		<code>
+		1. bp->page or pp is the page of chunks and bp is the associated meta-info
+		2. k is the chunk number, before shiting, which means k is the index for the chunk in the page bp->page
+		3. After shifting, k becomes the byte offset of the chunk inside the bp->page page
+		</code>
+		</pre>
+		<p class="code_des">inshort summary of the page calculations</p>
+
+		<li><p>Code for fill_canary() function given below</li></p>
 		<pre id="canary_id">
 		<code>
 938 static void
