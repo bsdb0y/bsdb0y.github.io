@@ -69,11 +69,10 @@ main(int argc, char **argv) {
 <h5><p>Followed the below steps to compile the libc with debug symbols</h5>
 <pre>
 <code>
-<p>1. cd $openbsd_src_directory
-<p>2. cd lib/libc
-<p>3. CFLAGS="-g -O0" CXXFLAGS="-g -O0" make obj
-<p>4. CFLAGS="-g -O0" CXXFLAGS="-g -O0" make -j4 
-</ul>
+1. cd $openbsd_src_directory
+2. cd lib/libc
+3. CFLAGS="-g -O0" CXXFLAGS="-g -O0" make obj
+4. CFLAGS="-g -O0" CXXFLAGS="-g -O0" make
 </code>
 </pre>
 <p>I haven't installed it and used gdb-style debugging approach for code reading instead of debugging with printf style debugging.
