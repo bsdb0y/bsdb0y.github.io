@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<atom:link href="/pages/rss.xml" rel="self" type="application/rss+xml"/>
+<title>Tech stories by bsdb0y</title>
+<description>Subscribe via RSS</description>
+<link>https://bsdb0y.github.io</link>
+<lastBuildDate>Mon, 1 Oct 2018 00:00:00 +0000</lastBuildDate>
+
+<item>
+<guid>https://bsdb0y.github.io/blog/deep-dive-into-the-OpenBSD-malloc-and-friends-internals-part-1.html</guid>
+<link>https://bsdb0y.github.io/blog/deep-dive-into-the-OpenBSD-malloc-and-friends-internals-part-1.html</link>
+<pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
+<title>Deep dive into OpenBSD secure memory allocator internals - malloc(3)</title>
+<description><![CDATA[
+	<p>A deep dive tale of OpenBSD secure memory allocator internals - malloc(3)</p>
+]]></description>
+</item>
+</channel></rss>
