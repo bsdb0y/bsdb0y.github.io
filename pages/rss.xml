@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
-<atom:link href="/pages/rss.xml" rel="self" type="application/rss+xml"/>
+<atom:link href="https://bsdb0y.github.io/pages/rss.xml" rel="self" type="application/rss+xml"/>
 <title>Tech stories by bsdb0y</title>
 <description>Subscribe via RSS</description>
 <link>https://bsdb0y.github.io</link>
@@ -13,7 +13,57 @@
 <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
 <title>Deep dive into OpenBSD secure memory allocator internals - malloc(3)</title>
 <description><![CDATA[
-	<p>A deep dive tale of OpenBSD secure memory allocator internals - malloc(3)</p>
+	<p>A deep dive tale of OpenBSD secure memory allocator internals - malloc(3). Learn about the internal workings, code flows and security concets of OpenBSD malloc(3).</p>
+	<h5>Several security mitigations included in the OpenBSD malloc(3). Some of them are:</h5>
+	<ul>
+		<li><p>randomizations throughout the entire address space</p></li>
+		<li><p>canaries implementation</p></li>
+		<li><p>Guard pages implementation</p></li>
+		<li><p>memory corruption detections includes double free, use-after-free, <b>etc.</b></p></li>
+	</ul>
 ]]></description>
 </item>
+
+<item>
+<guid>https://bsdb0y.github.io/blog/OpenBSD-Kernel-Internals-creation-of-process-from-user-space-to-kernel-space.html</guid>
+<link>https://bsdb0y.github.io/blog/OpenBSD-Kernel-Internals-creation-of-process-from-user-space-to-kernel-space.html</link>
+<pubDate>Thurs, 25 Oct 2018 00:00:00 +0000</pubDate>
+<title>OpenBSD Kernel Internals - Creation of process from user-space to kernel space</title>
+<description><![CDATA[
+	<p>A deep dive into OpenBSD kernel ineternals, which shows the creation of any process form the user-space to kernel space.</p>
+	<p>It explains about <b><i>"what happens in the kernel-space, when executes any command from the cli in user-space"</i></b></p> 
+]]></description>
+</item>
+
+
+<item>
+<guid>https://bsdb0y.github.io/blog/openbsd-intro-to-update-on-pledge.html</guid>
+<link>https://bsdb0y.github.io/blog/openbsd-intro-to-update-on-pledge.html</link>
+<pubDate>Thurs, 25 Oct 2018 00:00:00 +0000</pubDate>
+<title>OpenBSD: Introduction to "execpromises" in the pledge(2)</title>
+<description><![CDATA[
+	<p>Introduction on 2nd parameter newly introduced in the pledge(2) on OpenBSD.</p>
+]]></description>
+</item>
+
+<item>
+<guid>https://bsdb0y.github.io/blog/pledge-a-openbsd-defensive-approach.html</guid>
+<link>https://bsdb0y.github.io/blog/pledge-a-openbsd-defensive-approach.html</link>
+<pubDate>Thurs, 25 Oct 2018 00:00:00 +0000</pubDate>
+<title>pledge(2): OpenBSD's defensive approach to OS security</title>
+<description><![CDATA[
+	<p>Introduction on pledge(2) on OpenBSD which covers the usage in user-space codes and internal working of the pledge(2) from the kernel point of view</p>
+]]></description>
+</item>
+
+<item>
+<guid>https://bsdb0y.github.io/blog/installing-hugo-and-hosting-on-openbsd.html</guid>
+<link>https://bsdb0y.github.io/blog/installing-hugo-and-hosting-on-openbsd.html</link>
+<pubDate>Mon, 1 Oct 2018 00:00:00 +0000</pubDate>
+<title>Installing Hugo and publishing Hugo web-pages on OpenBSD server</title>
+<description><![CDATA[
+	<p>Introduction on installing Hugo, static site generator. Deployment of Hugo web-pages on the OpenBSD server</p> 
+]]></description>
+</item>
+
 </channel></rss>
