@@ -329,8 +329,7 @@ Defination of &lt;code&gt;omalloc_parseopt(char opt)&lt;/code&gt; as mentioned:&
 &lt;span style=&#34;color:#ae81ff&#34;&gt;401&lt;/span&gt;			&lt;span style=&#34;color:#66d9ef&#34;&gt;break&lt;/span&gt;;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;402&lt;/span&gt;		}
 &lt;span style=&#34;color:#ae81ff&#34;&gt;403&lt;/span&gt;	}
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;code snippet #05&lt;/p&gt;
-&lt;p&gt;As we can see that there are some &lt;code&gt;MALLOC_STATS&lt;/code&gt; in the entire source, which means it dumps extra malloc stats information. So, coming back to &lt;code&gt;omalloc_init()&lt;/code&gt;, after completing &lt;code&gt;omalloc_parseopt(char opt)&lt;/code&gt; function, there are some malloc stats condition then, a random cookie gets assign to &lt;code&gt;mopts.malloc_canary&lt;/code&gt; using &lt;code&gt;arc4random()&lt;/code&gt;&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;As we can see that there are some &lt;code&gt;MALLOC_STATS&lt;/code&gt; in the entire source, which means it dumps extra malloc stats information. So, coming back to &lt;code&gt;omalloc_init()&lt;/code&gt;, after completing &lt;code&gt;omalloc_parseopt(char opt)&lt;/code&gt; function, there are some malloc stats condition then, a random cookie gets assign to &lt;code&gt;mopts.malloc_canary&lt;/code&gt; using &lt;code&gt;arc4random()&lt;/code&gt;&lt;/p&gt;
 &lt;p&gt;Coming back to defination of &lt;code&gt;_malloc_init(0)&lt;/code&gt;, after the completion of &lt;code&gt;omalloc_init()&lt;/code&gt;,  there is a variable named &lt;code&gt;nmutexes&lt;/code&gt; which gets assign bydefault to &lt;code&gt;2&lt;/code&gt; for single-threaded programs, we have already seen the initalization of &lt;code&gt;mopts.malloc_mutexes&lt;/code&gt; default to &lt;code&gt;8&lt;/code&gt; for multi-threaded programs in the function &lt;code&gt;omalloc_init()&lt;/code&gt;. For single-threaded, the value of variable &lt;code&gt;from_rthread&lt;/code&gt; is &lt;code&gt;0&lt;/code&gt;
 Then, it checks for &lt;code&gt;MALLOC_PAGEMASK&lt;/code&gt; bit for &lt;code&gt;malloc_readonly&lt;/code&gt; address or simply we can say that it is checking the last 12 bits of the &lt;code&gt;malloc_readonly&lt;/code&gt; structure address and all 12 bits must be &lt;code&gt;0&lt;/code&gt; to apply the perm bit &lt;code&gt;PROT_READ&lt;/code&gt; and &lt;code&gt;PROT_WRITE&lt;/code&gt;. Could say from the debugger that it is also checking for even address&lt;/p&gt;
 &lt;p&gt;After that, there is a loop till the &lt;code&gt;nmutexes&lt;/code&gt; which is 2 for our single-threaded case.&lt;/p&gt;
@@ -388,8 +387,7 @@ Then, it checks for &lt;code&gt;MALLOC_PAGEMASK&lt;/code&gt; bit for &lt;code&gt
 &lt;span style=&#34;color:#ae81ff&#34;&gt;513&lt;/span&gt;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;514&lt;/span&gt;         &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;dp &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; d;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;515&lt;/span&gt; }
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;code snippet #06&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;omalloc_poolinit(struct dir_inf **dp, int mmap_flag)&lt;/code&gt; workings:&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;omalloc_poolinit(struct dir_info **dp, int mmap_flag)&lt;/code&gt; workings:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;After some basic variable declarations, first it maps page into memory using mmap(2) in MMAPNONE(sz, f) where sz is the size and f is the flag&lt;/li&gt;
 &lt;/ul&gt;
@@ -633,8 +631,7 @@ Defination of &lt;code&gt;omalloc(d, size, CALLER)&lt;/code&gt; as mentioned:&lt
 &lt;span style=&#34;color:#ae81ff&#34;&gt;1184&lt;/span&gt;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;1185&lt;/span&gt; 	&lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; p;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;1186&lt;/span&gt; }
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;code snippet #08&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f);&lt;/code&gt; function internals:&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f);&lt;/code&gt; function internals:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;There are two code flows
 &lt;ul&gt;
@@ -807,8 +804,7 @@ Defination of &lt;code&gt;omalloc(d, size, CALLER)&lt;/code&gt; as mentioned:&lt
 &lt;span style=&#34;color:#ae81ff&#34;&gt;318&lt;/span&gt;         x &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; d&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;rbytes[d&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;rbytesused&lt;span style=&#34;color:#f92672&#34;&gt;++&lt;/span&gt;];
 &lt;span style=&#34;color:#ae81ff&#34;&gt;319&lt;/span&gt;         &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; x;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;320&lt;/span&gt; }
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;code snippet #11&lt;/p&gt;
-&lt;ul&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
 &lt;li&gt;in the above code, first it checks whether the &lt;strong&gt;rbytesused&lt;/strong&gt; is more than the sizeof(rbytes), if yes, then it initializes the random bytes using &lt;code&gt;rbytes_init(d)&lt;/code&gt; and then assigns the value of &lt;code&gt;d-&amp;gt;rbytes[d-&amp;gt;rbytesused]&lt;/code&gt; to x and also increments the &lt;strong&gt;d-&amp;gt;rbytesused&lt;/strong&gt; count and returns the same but if the condition fails then it will directly assigns the rbytesused count to x and increment the same and return the same x&lt;/li&gt;
 &lt;li&gt;So as per the name indicates, my feeling is that the getrbyte() means get-random-byte(), basically the whole line &lt;code&gt;r = ((u_int)getrbyte(d) &amp;lt;&amp;lt; 8) | getrbyte(d);&lt;/code&gt; does the following magic&lt;/li&gt;
 &lt;/ul&gt;
@@ -857,8 +853,7 @@ for example, 0xd4 -&amp;gt; 0xd400 -&amp;gt; 0xd4cb, so r = 0xd4cb`
 &lt;span style=&#34;color:#ae81ff&#34;&gt;915&lt;/span&gt;         unmap(d, pp, MALLOC_PAGESIZE, &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;, d&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;malloc_junk);
 &lt;span style=&#34;color:#ae81ff&#34;&gt;916&lt;/span&gt;         &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; NULL;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;917&lt;/span&gt; }
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;code snippet #12&lt;/p&gt;
-&lt;ul&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
 &lt;li&gt;The above code is used to allocate a page of chunks, as mentioned in the comments. First, it maps/allocates page up to len MALLOC_PAGESIZE with hint addr as NULL using &lt;code&gt;map(d, NULL, MALLOC_PAGESIZE, 0);&lt;/code&gt;, then it checks for its failure and returns NULL if fails. Defination of &lt;code&gt;map()&lt;/code&gt; as given below&lt;/li&gt;
 &lt;/ul&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;751&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;void&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;
@@ -994,8 +989,7 @@ for example, 0xd4 -&amp;gt; 0xd400 -&amp;gt; 0xd4cb, so r = 0xd4cb`
 &lt;span style=&#34;color:#ae81ff&#34;&gt;881&lt;/span&gt;                 init_chunk_info(d, p, bits);
 &lt;span style=&#34;color:#ae81ff&#34;&gt;882&lt;/span&gt;         &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; p;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;883&lt;/span&gt; }
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;code snippet #13&lt;/p&gt;
-&lt;ul&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
 &lt;li&gt;First it checks if the list is empty where bits is 4 for our case, and if it is empty then it checks if bits is 0, if yes, then it calculates the count by dividing the MALLOC_PAGESIZE with MALLOC_MINSIZE but in our case bits is equals to 4, so, it calculates count for all cases when bit != 0 by &lt;strong&gt;MALLOC_PAGESIZE &amp;raquo; bits&lt;/strong&gt;, which comes as 256 for our case&lt;/li&gt;
 &lt;li&gt;Then, howmany(x, y) is ((x) + ((y) - 1) / y), so as per that, x = count and y is MALLOC_BITS, which is 256 and 16 respectively for our case and the result is 16&lt;/li&gt;
 &lt;li&gt;Then, it calculates size from adding the &lt;code&gt;sizeof(struct chunk_info) + (size - 1) * sizeof(u_short)&lt;/code&gt;, for our case, it came as &lt;code&gt;40 + (16 - 1) * 2 = 70&lt;/code&gt; and then it checks for mopt.chunk_canaries and if it is there then it calculates &lt;code&gt;size += count * sizeof(u_short);&lt;/code&gt; remember we have compiled our sample code with malloc option &lt;strong&gt;C&lt;/strong&gt;, so, chunk_canaries is there, for our case size became, &lt;code&gt;size = 70 + 256 * 2 = 582&lt;/code&gt; then it aligns the size to &lt;code&gt;ALIGN(size)&lt;/code&gt;, which make it from 582 to 584&lt;/li&gt;
@@ -1026,8 +1020,7 @@ for example, 0xd4 -&amp;gt; 0xd400 -&amp;gt; 0xd4cb, so r = 0xd4cb`
 &lt;span style=&#34;color:#ae81ff&#34;&gt;843&lt;/span&gt;         memset(p&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;bits, &lt;span style=&#34;color:#ae81ff&#34;&gt;0xff&lt;/span&gt;, &lt;span style=&#34;color:#66d9ef&#34;&gt;sizeof&lt;/span&gt;(p&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;bits[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;]) &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt; (i &lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt; MALLOC_BITS));
 &lt;span style=&#34;color:#ae81ff&#34;&gt;844&lt;/span&gt;         p&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;bits[i &lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt; MALLOC_BITS] &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; (&lt;span style=&#34;color:#ae81ff&#34;&gt;2U&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;lt;&lt;/span&gt; (i &lt;span style=&#34;color:#f92672&#34;&gt;%&lt;/span&gt; MALLOC_BITS)) &lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;845&lt;/span&gt; }
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;code snippet #14&lt;/p&gt;
-&lt;ul&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
 &lt;li&gt;&lt;code&gt;init_chunk_info()&lt;/code&gt; is used to initialize the chunk information. It checks for whether the value of bits is 0 or not and if 0 then it initializes some default value as mentioned in the code and it seems that &lt;code&gt;bit == 0&lt;/code&gt;, is the case of malloc(0) but if it is not 0 then it initializes some other values as mentioned in the code. Then, it assigns &lt;strong&gt;dir_info&lt;/strong&gt; canary1 to chunk canary with typecasts in u_short, that is &lt;code&gt;p-&amp;gt;canary = (u_short)d-&amp;gt;canary1;&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;Then, set all the valid bits in the bitmap. For our case, &lt;code&gt;i = p-&amp;gt;total - 1;&lt;/code&gt;, where p-&amp;gt;total = 256 and i = 255 then it copies the 0xff to p-&amp;gt;bits upto &lt;code&gt;sizeof(p-&amp;gt;bits[0]) * (i / MALLOC_BITS)) - 1&lt;/code&gt; which we have observed 30 for our case.&lt;/li&gt;
 &lt;li&gt;Then it assigns some value to p-&amp;gt;bits, where a bitmap specifing which chunks are still free to use, for better explanation on &lt;strong&gt;p-&amp;gt;bits&lt;/strong&gt;, for our case, i = 255, MALLOC_BITS = 16, so, it becomes,&lt;/li&gt;
@@ -1073,8 +1066,7 @@ Defination for &lt;code&gt;insert(struct dir_info *d, void *p, size_t sz, void *
 &lt;span style=&#34;color:#ae81ff&#34;&gt;593&lt;/span&gt;         d&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;regions_free&lt;span style=&#34;color:#f92672&#34;&gt;--&lt;/span&gt;;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;594&lt;/span&gt;         &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;;
 &lt;span style=&#34;color:#ae81ff&#34;&gt;595&lt;/span&gt; }
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;code snippet #15&lt;/p&gt;
-&lt;ul&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
 &lt;li&gt;we can see that initially it checks for whether the slots is too filled, which means more than 75% (&amp;gt;75%), if yes then it calls &lt;code&gt;omalloc_grow(d);&lt;/code&gt; and returns 1, if no then means it is less 75% (&amp;lt;75%) then it decrements &lt;strong&gt;d-&amp;gt;regions_total&lt;/strong&gt; by &lt;strong&gt;1&lt;/strong&gt; and assign it to mask variable. Then it calculates, index, through anding (&amp;amp;) a &lt;strong&gt;hash(p)&lt;/strong&gt; function and &lt;strong&gt;mask&lt;/strong&gt;. Defination of &lt;strong&gt;hash(p)&lt;/strong&gt; function given below:&lt;/li&gt;
 &lt;/ul&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;254&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;inline&lt;/span&gt; size_t

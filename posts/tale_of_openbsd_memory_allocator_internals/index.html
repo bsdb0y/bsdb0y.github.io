@@ -137,7 +137,7 @@
       <span class="post-author">:: bsdb0y</span>
     
     
-      <span class="post-reading-time">:: 47 min read (9939 words)</span>
+      <span class="post-reading-time">:: 47 min read (9915 words)</span>
     
   </div>
 
@@ -470,8 +470,7 @@ Defination of <code>omalloc_parseopt(char opt)</code> as mentioned:</p>
 <span style="color:#ae81ff">401</span>			<span style="color:#66d9ef">break</span>;
 <span style="color:#ae81ff">402</span>		}
 <span style="color:#ae81ff">403</span>	}
-</code></pre></div><p>code snippet #05</p>
-<p>As we can see that there are some <code>MALLOC_STATS</code> in the entire source, which means it dumps extra malloc stats information. So, coming back to <code>omalloc_init()</code>, after completing <code>omalloc_parseopt(char opt)</code> function, there are some malloc stats condition then, a random cookie gets assign to <code>mopts.malloc_canary</code> using <code>arc4random()</code></p>
+</code></pre></div><p>As we can see that there are some <code>MALLOC_STATS</code> in the entire source, which means it dumps extra malloc stats information. So, coming back to <code>omalloc_init()</code>, after completing <code>omalloc_parseopt(char opt)</code> function, there are some malloc stats condition then, a random cookie gets assign to <code>mopts.malloc_canary</code> using <code>arc4random()</code></p>
 <p>Coming back to defination of <code>_malloc_init(0)</code>, after the completion of <code>omalloc_init()</code>,  there is a variable named <code>nmutexes</code> which gets assign bydefault to <code>2</code> for single-threaded programs, we have already seen the initalization of <code>mopts.malloc_mutexes</code> default to <code>8</code> for multi-threaded programs in the function <code>omalloc_init()</code>. For single-threaded, the value of variable <code>from_rthread</code> is <code>0</code>
 Then, it checks for <code>MALLOC_PAGEMASK</code> bit for <code>malloc_readonly</code> address or simply we can say that it is checking the last 12 bits of the <code>malloc_readonly</code> structure address and all 12 bits must be <code>0</code> to apply the perm bit <code>PROT_READ</code> and <code>PROT_WRITE</code>. Could say from the debugger that it is also checking for even address</p>
 <p>After that, there is a loop till the <code>nmutexes</code> which is 2 for our single-threaded case.</p>
@@ -529,8 +528,7 @@ Then, it checks for <code>MALLOC_PAGEMASK</code> bit for <code>malloc_readonly</
 <span style="color:#ae81ff">513</span>
 <span style="color:#ae81ff">514</span>         <span style="color:#f92672">*</span>dp <span style="color:#f92672">=</span> d;
 <span style="color:#ae81ff">515</span> }
-</code></pre></div><p>code snippet #06</p>
-<p><code>omalloc_poolinit(struct dir_inf **dp, int mmap_flag)</code> workings:</p>
+</code></pre></div><p><code>omalloc_poolinit(struct dir_info **dp, int mmap_flag)</code> workings:</p>
 <ul>
 <li>After some basic variable declarations, first it maps page into memory using mmap(2) in MMAPNONE(sz, f) where sz is the size and f is the flag</li>
 </ul>
@@ -774,8 +772,7 @@ Defination of <code>omalloc(d, size, CALLER)</code> as mentioned:</p>
 <span style="color:#ae81ff">1184</span>
 <span style="color:#ae81ff">1185</span> 	<span style="color:#66d9ef">return</span> p;
 <span style="color:#ae81ff">1186</span> }
-</code></pre></div><p>code snippet #08</p>
-<p><code>omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f);</code> function internals:</p>
+</code></pre></div><p><code>omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f);</code> function internals:</p>
 <ul>
 <li>There are two code flows
 <ul>
@@ -948,8 +945,7 @@ Defination of <code>omalloc(d, size, CALLER)</code> as mentioned:</p>
 <span style="color:#ae81ff">318</span>         x <span style="color:#f92672">=</span> d<span style="color:#f92672">-&gt;</span>rbytes[d<span style="color:#f92672">-&gt;</span>rbytesused<span style="color:#f92672">++</span>];
 <span style="color:#ae81ff">319</span>         <span style="color:#66d9ef">return</span> x;
 <span style="color:#ae81ff">320</span> }
-</code></pre></div><p>code snippet #11</p>
-<ul>
+</code></pre></div><ul>
 <li>in the above code, first it checks whether the <strong>rbytesused</strong> is more than the sizeof(rbytes), if yes, then it initializes the random bytes using <code>rbytes_init(d)</code> and then assigns the value of <code>d-&gt;rbytes[d-&gt;rbytesused]</code> to x and also increments the <strong>d-&gt;rbytesused</strong> count and returns the same but if the condition fails then it will directly assigns the rbytesused count to x and increment the same and return the same x</li>
 <li>So as per the name indicates, my feeling is that the getrbyte() means get-random-byte(), basically the whole line <code>r = ((u_int)getrbyte(d) &lt;&lt; 8) | getrbyte(d);</code> does the following magic</li>
 </ul>
@@ -998,8 +994,7 @@ for example, 0xd4 -&gt; 0xd400 -&gt; 0xd4cb, so r = 0xd4cb`
 <span style="color:#ae81ff">915</span>         unmap(d, pp, MALLOC_PAGESIZE, <span style="color:#ae81ff">0</span>, d<span style="color:#f92672">-&gt;</span>malloc_junk);
 <span style="color:#ae81ff">916</span>         <span style="color:#66d9ef">return</span> NULL;
 <span style="color:#ae81ff">917</span> }
-</code></pre></div><p>code snippet #12</p>
-<ul>
+</code></pre></div><ul>
 <li>The above code is used to allocate a page of chunks, as mentioned in the comments. First, it maps/allocates page up to len MALLOC_PAGESIZE with hint addr as NULL using <code>map(d, NULL, MALLOC_PAGESIZE, 0);</code>, then it checks for its failure and returns NULL if fails. Defination of <code>map()</code> as given below</li>
 </ul>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#ae81ff">751</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>
@@ -1135,8 +1130,7 @@ for example, 0xd4 -&gt; 0xd400 -&gt; 0xd4cb, so r = 0xd4cb`
 <span style="color:#ae81ff">881</span>                 init_chunk_info(d, p, bits);
 <span style="color:#ae81ff">882</span>         <span style="color:#66d9ef">return</span> p;
 <span style="color:#ae81ff">883</span> }
-</code></pre></div><p>code snippet #13</p>
-<ul>
+</code></pre></div><ul>
 <li>First it checks if the list is empty where bits is 4 for our case, and if it is empty then it checks if bits is 0, if yes, then it calculates the count by dividing the MALLOC_PAGESIZE with MALLOC_MINSIZE but in our case bits is equals to 4, so, it calculates count for all cases when bit != 0 by <strong>MALLOC_PAGESIZE &raquo; bits</strong>, which comes as 256 for our case</li>
 <li>Then, howmany(x, y) is ((x) + ((y) - 1) / y), so as per that, x = count and y is MALLOC_BITS, which is 256 and 16 respectively for our case and the result is 16</li>
 <li>Then, it calculates size from adding the <code>sizeof(struct chunk_info) + (size - 1) * sizeof(u_short)</code>, for our case, it came as <code>40 + (16 - 1) * 2 = 70</code> and then it checks for mopt.chunk_canaries and if it is there then it calculates <code>size += count * sizeof(u_short);</code> remember we have compiled our sample code with malloc option <strong>C</strong>, so, chunk_canaries is there, for our case size became, <code>size = 70 + 256 * 2 = 582</code> then it aligns the size to <code>ALIGN(size)</code>, which make it from 582 to 584</li>
@@ -1167,8 +1161,7 @@ for example, 0xd4 -&gt; 0xd400 -&gt; 0xd4cb, so r = 0xd4cb`
 <span style="color:#ae81ff">843</span>         memset(p<span style="color:#f92672">-&gt;</span>bits, <span style="color:#ae81ff">0xff</span>, <span style="color:#66d9ef">sizeof</span>(p<span style="color:#f92672">-&gt;</span>bits[<span style="color:#ae81ff">0</span>]) <span style="color:#f92672">*</span> (i <span style="color:#f92672">/</span> MALLOC_BITS));
 <span style="color:#ae81ff">844</span>         p<span style="color:#f92672">-&gt;</span>bits[i <span style="color:#f92672">/</span> MALLOC_BITS] <span style="color:#f92672">=</span> (<span style="color:#ae81ff">2U</span> <span style="color:#f92672">&lt;&lt;</span> (i <span style="color:#f92672">%</span> MALLOC_BITS)) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>;
 <span style="color:#ae81ff">845</span> }
-</code></pre></div><p>code snippet #14</p>
-<ul>
+</code></pre></div><ul>
 <li><code>init_chunk_info()</code> is used to initialize the chunk information. It checks for whether the value of bits is 0 or not and if 0 then it initializes some default value as mentioned in the code and it seems that <code>bit == 0</code>, is the case of malloc(0) but if it is not 0 then it initializes some other values as mentioned in the code. Then, it assigns <strong>dir_info</strong> canary1 to chunk canary with typecasts in u_short, that is <code>p-&gt;canary = (u_short)d-&gt;canary1;</code></li>
 <li>Then, set all the valid bits in the bitmap. For our case, <code>i = p-&gt;total - 1;</code>, where p-&gt;total = 256 and i = 255 then it copies the 0xff to p-&gt;bits upto <code>sizeof(p-&gt;bits[0]) * (i / MALLOC_BITS)) - 1</code> which we have observed 30 for our case.</li>
 <li>Then it assigns some value to p-&gt;bits, where a bitmap specifing which chunks are still free to use, for better explanation on <strong>p-&gt;bits</strong>, for our case, i = 255, MALLOC_BITS = 16, so, it becomes,</li>
@@ -1214,8 +1207,7 @@ Defination for <code>insert(struct dir_info *d, void *p, size_t sz, void *f)</co
 <span style="color:#ae81ff">593</span>         d<span style="color:#f92672">-&gt;</span>regions_free<span style="color:#f92672">--</span>;
 <span style="color:#ae81ff">594</span>         <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
 <span style="color:#ae81ff">595</span> }
-</code></pre></div><p>code snippet #15</p>
-<ul>
+</code></pre></div><ul>
 <li>we can see that initially it checks for whether the slots is too filled, which means more than 75% (&gt;75%), if yes then it calls <code>omalloc_grow(d);</code> and returns 1, if no then means it is less 75% (&lt;75%) then it decrements <strong>d-&gt;regions_total</strong> by <strong>1</strong> and assign it to mask variable. Then it calculates, index, through anding (&amp;) a <strong>hash(p)</strong> function and <strong>mask</strong>. Defination of <strong>hash(p)</strong> function given below:</li>
 </ul>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#ae81ff">254</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">inline</span> size_t
