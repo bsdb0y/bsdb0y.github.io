@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>security on bsdb0y</title>
+    <link>https://bsdb0y.github.io/tags/security/</link>
+    <description>Recent content in security on bsdb0y</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 02 Oct 2018 00:00:00 +0000</lastBuildDate><atom:link href="https://bsdb0y.github.io/tags/security/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>OpenBSD - short intro on &#34;execpromises&#34; in the pledge(2)</title>
+      <link>https://bsdb0y.github.io/posts/openbsd-intro-to-update-on-pledge/</link>
+      <pubDate>Tue, 02 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/posts/openbsd-intro-to-update-on-pledge/</guid>
+      <description>Hi there,
+Today, we will be looking at the latest update for pledge(2) on OpenBSD and also about usage and howto.
+In the previous post about pledge(2) system call, we understood the implementation of pledge(2) and also under the hood working of pledge(2), that is, the kernel level working of the pledge(2)
+On 11 December 2017, **Theo de Raadt** said: List: openbsd-tech Subject: pledge execpromises From: Theo de Raadt Date: 2017-12-11 21:20:51 Message-ID: 6735.</description>
+      <content>&lt;p&gt;Hi there,&lt;/p&gt;
+&lt;p&gt;Today, we will be looking at the latest update for pledge(2) on OpenBSD and also about usage and howto.&lt;/p&gt;
+&lt;p&gt;In the previous &lt;a href=&#34;https://bsdb0y.github.io/posts/pledge-a-openbsd-defensive-approach&#34;&gt;post&lt;/a&gt; about pledge(2) system call, we understood the implementation of pledge(2) and also under the hood working of pledge(2), that is, the kernel level working of the pledge(2)&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-txt&#34; data-lang=&#34;txt&#34;&gt;On 11 December 2017, **Theo de Raadt** said:
+
+        List: openbsd-tech
+        Subject: pledge execpromises
+        From: Theo de Raadt 
+        Date: 2017-12-11 21:20:51
+        Message-ID: 6735.1513027251 () cvs ! openbsd ! org
+
+        This will probably be committed in the next day or so.
+
+        The 2nd argument of pledge() becomes execpromises, which is what
+        will gets activated after execve.
+
+        There is also a small new feature called “error”, which causes
+        violating system calls to return -1 with ENOSYS rather than killing
+        the process. This must be used with EXTREME CAUTION because libraries
+        and programs are full of unchecked system calls. If you carry on past
+        one of these failures, your program is in uncharted territory and
+        risks of exploitation become high.
+
+        “error” is being introduced for a different reason: The pre-exec
+        process’s expectation of what the post-exec process will do might
+        mismatch, so “error” allows things like starting an editor which has
+        no network access or maybe other restrictions in the future...
+
+    cvsweb.openbsd.org
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;OpenBSD 6.2-stable&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;old pledge(2):&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;pledge&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;promises, &lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;paths[]);
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;updated pledge(2):&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;pledge&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;promises, &lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;execpromises);
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;In the updated pledge(2), the second parameter is for &lt;code&gt;execpromises&lt;/code&gt; which are used to provide promises on child process which is invoked using the combination of execve(2)&lt;/p&gt;
+&lt;p&gt;execve() system call:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;execve&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;file, &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; argv[], &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; envp[]);
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Description of exec-family syscalls:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-txt&#34; data-lang=&#34;txt&#34;&gt;Like all of the exec functions, execve replaces the calling process image with a new process image. This has the effect of running a new program with the process ID of the calling process. Note that a new process is not started; the new process image simply overlays the original process image. The execve function is most commonly used to overlay a process image that has been created by a call to the fork function.
+
+Return value:
+
+A successful call to execve does not have a return value because the new process image overlays the calling process image. However, a -1 is returned if the call to execve is unsuccessful.
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;consider following example implementation&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// cat test_parent1.c
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt; (&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; argc, &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;**&lt;/span&gt;argv)
+{
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt;(pledge(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;stdio exec&amp;#34;&lt;/span&gt;,&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;stdio rpath&amp;#34;&lt;/span&gt;) &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;)
+    {
+        err(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;,&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;parent pledge&amp;#34;&lt;/span&gt;);
+    }
+
+    printf (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Parent: Hello, World!&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;);
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;arg[] &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; { &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;./child&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt; };
+    execve(arg[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;], &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;arg[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;], NULL);
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;;
+}
+
+&lt;span style=&#34;color:#75715e&#34;&gt;// cat test_child1.c
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;stdlib.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt; (&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; argc, &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;**&lt;/span&gt;argv)
+{
+    printf(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;child process&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;);
+
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt;(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;) {}
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# gcc -o parent test_parent1.c&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;# gcc -o child test_child1.c&lt;/span&gt;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;# ./parent &amp;amp;&lt;/span&gt;
+&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;1&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;80962&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;# Parent: Hello, World!&lt;/span&gt;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;# dmesg|grep 80962&lt;/span&gt;
+process_name:  child    pid:  &lt;span style=&#34;color:#ae81ff&#34;&gt;80962&lt;/span&gt;    ps_pledge:  &lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt;
+process_name:  child    pid:  &lt;span style=&#34;color:#ae81ff&#34;&gt;80962&lt;/span&gt;    ps_pledge:  &lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;As from above code, we have seen that pledge value of the new execve image is 9, that is;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#cat sys/pledge.h&lt;/span&gt;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_RPATH 0x0000000000000001ULL /* allow open for read */&lt;/span&gt;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_STDIO 0x0000000000000008ULL /* operate on own pid */&lt;/span&gt;
+
+pledge &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; new execve image:
+
+&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;RPATH&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;              &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;STDIO&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;                &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;NEW PLEDGE&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; 
+0x0000000000000001 | 0x0000000000000008 &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; 0x0000000000000009
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;So, I think it is better to use fork(2) with the combination of execve(2), so that, execve(2) will overlay forked process’s image, not parent’s image&lt;/p&gt;
+&lt;p&gt;This update on the pledge(2) system call is the one step further towards improving OS security in OpenBSD&lt;/p&gt;
+&lt;p&gt;If something is missing or not correct, please feel free to update.&lt;/p&gt;
+</content>
+    </item>
+    
+    <item>
+      <title>pledge(2): OpenBSD&#39;s defensive approach to OS Security</title>
+      <link>https://bsdb0y.github.io/posts/pledge-a-openbsd-defensive-approach/</link>
+      <pubDate>Wed, 01 Aug 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/posts/pledge-a-openbsd-defensive-approach/</guid>
+      <description>Hello there,
+I would like to introduce you all to the pledge(2) which is used to restrict the system operations and supported only on OpenBSD
+I am learning about OpenBSD kernel internals and development and would like to share some tips on how to learn about OpenBSD kernel internals and developmen.
+Let me first share with you all about our friends, they will be helping us in learning about BSD kernel internals:</description>
+      <content>&lt;p&gt;Hello there,&lt;/p&gt;
+&lt;p&gt;I would like to introduce you all to the pledge(2) which is used to restrict the system operations and supported only on OpenBSD&lt;/p&gt;
+&lt;p&gt;I am learning about OpenBSD kernel internals and development and would like to share some tips on how to learn about OpenBSD kernel internals and developmen.&lt;/p&gt;
+&lt;p&gt;Let me first share with you all about our friends, they will be helping us in learning about BSD kernel internals:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;the book &amp;ldquo;The design and implementation of the BSD operating system&amp;rdquo; by Kirk McKusick&lt;/li&gt;
+&lt;li&gt;OpenBSD source code&lt;/li&gt;
+&lt;li&gt;man pages and few presentations-papers on OpenBSD&lt;/li&gt;
+&lt;li&gt;ask in mailing lists and OpenBSD Facebook group.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;what-is-pledge2&#34;&gt;What is pledge(2)?&lt;/h5&gt;
+&lt;p&gt;&amp;ldquo;pledge&amp;rdquo; refers to &amp;ldquo;a solemn promise or undertaking&amp;rdquo;&lt;/p&gt;
+&lt;p&gt;So, as in OpenBSD context:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Calling pledge(2) in a program means the program is promissing to the kernel that it will only use the resources which it informs about prior using them&lt;br&gt;
+&lt;br&gt;
+For example:
+&lt;code&gt;if a user-space program promises kernel to use only IO family calls then it can not perform/call any other family calls like network, process, etc. if it will try to call the other calls without prior informing to kernel then the kernel will abort() the process.&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;How does it make a program more secure?&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;By limiting the operations of a program. For example:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;we write a program named &amp;ldquo;abc&amp;rdquo; that only needed the stdio to just print something to stdout&lt;/li&gt;
+&lt;li&gt;then we have to add pledge to use only stdio.&lt;/li&gt;
+&lt;li&gt;then, a malicious user found out that there is a vulnerability in our program which one can exploit to get into shell.&lt;/li&gt;
+&lt;li&gt;exploiting our program to open a shell will result in the kernel killing the process with SIGABRT, which can not be catch/ignore and generate a log in the &lt;code&gt;dmesg&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;this happens because opening a shell out of current program needs others family operations like we need fork(2) which resides in &amp;ldquo;proc&amp;rdquo; and execution is in &amp;ldquo;exec&amp;rdquo; then for network activities &amp;ldquo;net&amp;rdquo; but these are not promissed to kernel so calling apis from such family will be forbidden and leads to abort()&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;but after discussing with the developers, they mentioned that &lt;code&gt;pledge(2)&lt;/code&gt; is not a &lt;code&gt;system call filter&lt;/code&gt;. So, it is not used to restrict system calls.&lt;/p&gt;
+&lt;p&gt;pledge(2) works on subset promise families like stdio, dns, inet, proc, net etc. but not directly on system calls like read, write, fork, etc.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;pledge(&amp;quot;read&amp;quot;, NULL)&lt;/code&gt;: incorrect way of using pledge(2)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;pledge(&amp;quot;stdio inet&amp;quot;, NULL)&lt;/code&gt;: correct way of using pledge(2)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;and, based on the discussion with the developers they mentioned that &lt;code&gt;pledge(2) works on behavioral approach not just like 1:1 approach with the system calls&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;On 11 December 2017, Theo de Raadt said:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-txt&#34; data-lang=&#34;txt&#34;&gt;List: openbsd-tech
+Subject: pledge execpromises
+From: Theo de Raadt 
+Date: 2017-12-11 21:20:51
+Message-ID: 6735.1513027251 () cvs ! openbsd ! org
+
+This will probably be committed in the next day or so.
+
+The 2nd argument of pledge() becomes execpromises, which is what
+will gets activated after execve.
+
+There is also a small new feature called &amp;#34;error&amp;#34;, which causes
+violating system calls to return -1 with ENOSYS rather than killing
+the process. This must be used with EXTREME CAUTION because libraries
+and programs are full of unchecked system calls. If you carry on past
+one of these failures, your program is in uncharted territory and
+risks of exploitation become high.
+
+&amp;#34;error&amp;#34; is being introduced for a different reason: The pre-exec
+process&amp;#39;s expectation of what the post-exec process will do might
+mismatch, so &amp;#34;error&amp;#34; allows things like starting an editor which has
+no network access or maybe other restrictions in the future...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;previously it was:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;pledge&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;promises, &lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;paths[]);
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;and now it is,&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;pledge&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;promises, &lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;execpromises);
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;as per OpenBSD 6.2 stable and at the time of writing the blog, developers are still using &lt;code&gt;pledge(const char *promises, const char *paths[])&lt;/code&gt; so we will be focussing on the same&lt;/p&gt;
+&lt;h5 id=&#34;how-to-use-pledge-in-a-program&#34;&gt;How to use pledge() in a program?&lt;/h5&gt;
+&lt;p&gt;Let&amp;rsquo;s take a simple hello world example:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 1
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 2
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 3
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 4
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 5
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 6
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 7
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 8
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 9
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;10
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;
+&lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() {
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt;(pledge(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;stdio&amp;#34;&lt;/span&gt;,NULL) &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;) {
+        err(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;,&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;pledge&amp;#34;&lt;/span&gt;);
+    }
+printf(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Pledged&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;);
+&lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;In the above example, the program takes pledge that it will only use stdio operations.&lt;/p&gt;
+&lt;p&gt;Now, if the above program tries to open network socket(2) or any other operation like fork(2), then the kernel will kill this program with SIGABRT signal.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s take another example:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 1
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 2
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 3
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 4
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 5
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 6
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 7
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 8
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 9
+&lt;/span&gt;&lt;span style=&#34;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;10
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;
+&lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() {
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt;(pledge(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&amp;#34;&lt;/span&gt;,NULL) &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;) {
+        err(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;,&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;pledge&amp;#34;&lt;/span&gt;);
+    }
+printf(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Pledged&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;);
+&lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;Now, in this case, there is nothing in the first parameter of pledge(2), so, according to OpenBSD pledge man page,&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-txt&#34; data-lang=&#34;txt&#34;&gt;A promises value of &amp;#34;&amp;#34; restricts the process to the _exit(2)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# cat sampe.c&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#include &amp;lt;unistd.h&amp;gt;&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#include &amp;lt;stdio.h&amp;gt;&lt;/span&gt;
+int
+main&lt;span style=&#34;color:#f92672&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;pledge&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;stdio&amp;#34;&lt;/span&gt;,NULL&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; -1&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;
+        err&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;1,&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;pledge&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;;
+    &lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;
+    printf&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Pledged\n&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; 0;
+&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;# ./testing&lt;/span&gt;
+Pledged
+&lt;span style=&#34;color:#75715e&#34;&gt;#&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;# vim sampe.c&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;# gcc -o testing_reduced sampe.c&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;# cat sampe.c&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#include &amp;lt;unistd.h&amp;gt;&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#include &amp;lt;stdio.h&amp;gt;&lt;/span&gt;
+int
+main&lt;span style=&#34;color:#f92672&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;pledge&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&amp;#34;&lt;/span&gt;,NULL&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; -1&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;
+        err&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;1,&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;pledge&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;;
+    &lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;
+    printf&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Pledged\n&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; 0;
+&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;# ./testing_reduced&lt;/span&gt;
+Abort trap &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;core dumped&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;little-introduction-about-the-working-of-pledge2-from-the-kernel-perspective&#34;&gt;Little introduction about the working of pledge(2) from the kernel perspective&lt;/h5&gt;
+&lt;p&gt;This part was a little difficult to understand at first.
+I am very thankful to OpenBSD developers: &lt;strong&gt;&lt;em&gt;Marc Espie&lt;/em&gt;&lt;/strong&gt;, &lt;strong&gt;&lt;em&gt;Benny Löfgren&lt;/em&gt;&lt;/strong&gt;, &lt;strong&gt;&lt;em&gt;Bob Beck&lt;/em&gt;&lt;/strong&gt;, &lt;strong&gt;&lt;em&gt;Stuart Henderson&lt;/em&gt;&lt;/strong&gt; and &lt;strong&gt;&lt;em&gt;Otto Moerbeek&lt;/em&gt;&lt;/strong&gt; for giving their precious time and resolving queries related to kernel level working of pledge(2).&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;pledge(&amp;quot;stdio&amp;quot;, NULL);&lt;/code&gt; or &lt;code&gt;pledge(&amp;quot;stdio inet proc route dns&amp;quot;, NULL)&lt;/code&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;this full string in pledge(2) is splitted into separate words like &amp;ldquo;stdio&amp;rdquo; or &amp;ldquo;&amp;lsquo;stdio&amp;rsquo;, &amp;lsquo;inet&amp;rsquo;, &amp;lsquo;proc&amp;rsquo;, &amp;lsquo;route&amp;rsquo;, &amp;lsquo;dns&amp;rsquo;&amp;rdquo;.&lt;/li&gt;
+&lt;li&gt;then, these splitted words perform lookup operation from &lt;code&gt;pledgereq[]&lt;/code&gt; array and if found then their specific flags will return.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Following &lt;code&gt;pledgereq[]&lt;/code&gt; array:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; {
+	&lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;name;
+	&lt;span style=&#34;color:#66d9ef&#34;&gt;uint64_t&lt;/span&gt; flags;
+} pledgereq[] &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; {
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;audio&amp;#34;&lt;/span&gt;,		PLEDGE_AUDIO },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;bpf&amp;#34;&lt;/span&gt;,		PLEDGE_BPF },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;chown&amp;#34;&lt;/span&gt;,		PLEDGE_CHOWN &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; PLEDGE_CHOWNUID },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cpath&amp;#34;&lt;/span&gt;,		PLEDGE_CPATH },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;disklabel&amp;#34;&lt;/span&gt;,		PLEDGE_DISKLABEL },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;dns&amp;#34;&lt;/span&gt;,		PLEDGE_DNS },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;dpath&amp;#34;&lt;/span&gt;,		PLEDGE_DPATH },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;drm&amp;#34;&lt;/span&gt;,		PLEDGE_DRM },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;error&amp;#34;&lt;/span&gt;,		PLEDGE_ERROR },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;exec&amp;#34;&lt;/span&gt;,		PLEDGE_EXEC },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;fattr&amp;#34;&lt;/span&gt;,		PLEDGE_FATTR &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; PLEDGE_CHOWN },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;flock&amp;#34;&lt;/span&gt;,		PLEDGE_FLOCK },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;getpw&amp;#34;&lt;/span&gt;,		PLEDGE_GETPW },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;id&amp;#34;&lt;/span&gt;,			PLEDGE_ID },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;inet&amp;#34;&lt;/span&gt;,		PLEDGE_INET },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;mcast&amp;#34;&lt;/span&gt;,		PLEDGE_MCAST },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;pf&amp;#34;&lt;/span&gt;,			PLEDGE_PF },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;proc&amp;#34;&lt;/span&gt;,		PLEDGE_PROC },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;prot_exec&amp;#34;&lt;/span&gt;,		PLEDGE_PROTEXEC },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;ps&amp;#34;&lt;/span&gt;,			PLEDGE_PS },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;recvfd&amp;#34;&lt;/span&gt;,		PLEDGE_RECVFD },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;route&amp;#34;&lt;/span&gt;,		PLEDGE_ROUTE },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rpath&amp;#34;&lt;/span&gt;,		PLEDGE_RPATH },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;sendfd&amp;#34;&lt;/span&gt;,		PLEDGE_SENDFD },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;settime&amp;#34;&lt;/span&gt;,		PLEDGE_SETTIME },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;stdio&amp;#34;&lt;/span&gt;,		PLEDGE_STDIO },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;tape&amp;#34;&lt;/span&gt;,		PLEDGE_TAPE },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;tmppath&amp;#34;&lt;/span&gt;,		PLEDGE_TMPPATH },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;tty&amp;#34;&lt;/span&gt;,		PLEDGE_TTY },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;unix&amp;#34;&lt;/span&gt;,		PLEDGE_UNIX },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;unveil&amp;#34;&lt;/span&gt;,		PLEDGE_UNVEIL },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;vminfo&amp;#34;&lt;/span&gt;,		PLEDGE_VMINFO },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;vmm&amp;#34;&lt;/span&gt;,		PLEDGE_VMM },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;wpath&amp;#34;&lt;/span&gt;,		PLEDGE_WPATH },
+	{ &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;wroute&amp;#34;&lt;/span&gt;,		PLEDGE_WROUTE },
+};
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;pledgereq&lt;/code&gt; array contains macro for every promises; for example, &lt;code&gt;stdio&lt;/code&gt; relates to &lt;code&gt;PLEDGE_STDIO&lt;/code&gt;. Now, these macros expand into their specific hex pledge values, like &lt;code&gt;PLEDGE_STDIO&lt;/code&gt; expands to &lt;code&gt;0x0000000000000008ULL&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;For other macros and their expansions as mentioned below:&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;sys/cdefs.h;&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;/*
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; * pledge(2) requests
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; */&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_ALWAYS	0xffffffffffffffffULL
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_RPATH	0x0000000000000001ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* allow open for read */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_WPATH	0x0000000000000002ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* allow open for write */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_CPATH	0x0000000000000004ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* allow creat, mkdir, unlink etc */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_STDIO	0x0000000000000008ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* operate on own pid */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_TMPPATH	0x0000000000000010ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* for mk*temp() */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_DNS	0x0000000000000020ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* DNS services */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_INET	0x0000000000000040ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* AF_INET/AF_INET6 sockets */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_FLOCK	0x0000000000000080ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* file locking */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_UNIX	0x0000000000000100ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* AF_UNIX sockets */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_ID	0x0000000000000200ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* allow setuid, setgid, etc */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_TAPE	0x0000000000000400ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* Tape ioctl */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_GETPW	0x0000000000000800ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* YP enables if ypbind.lock */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_PROC	0x0000000000001000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* fork, waitpid, etc */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_SETTIME	0x0000000000002000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* able to set/adj time/freq */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_FATTR	0x0000000000004000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* allow explicit file st_* mods */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_PROTEXEC	0x0000000000008000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* allow use of PROT_EXEC */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_TTY	0x0000000000010000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* tty setting */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_SENDFD	0x0000000000020000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* AF_UNIX CMSG fd sending */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_RECVFD	0x0000000000040000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* AF_UNIX CMSG fd receiving */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_EXEC	0x0000000000080000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* execve, child is free of pledge */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_ROUTE	0x0000000000100000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* routing lookups */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_MCAST	0x0000000000200000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* multicast joins */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_VMINFO	0x0000000000400000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* vminfo listings */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_PS	0x0000000000800000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* ps listings */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_DISKLABEL 0x0000000002000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* disklabels */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_PF	0x0000000004000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* pf ioctls */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_AUDIO	0x0000000008000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* audio ioctls */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_DPATH	0x0000000010000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* mknod &amp;amp; mkfifo */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_DRM	0x0000000020000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* drm ioctls */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_VMM	0x0000000040000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* vmm ioctls */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_CHOWN	0x0000000080000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* chown(2) family */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_CHOWNUID	0x0000000100000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* allow owner/group changes */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_BPF	0x0000000200000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* bpf ioctl */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_ERROR	0x0000000400000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* ENOSYS instead of kill */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_WROUTE	0x0000000800000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* interface address ioctls */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_UNVEIL	0x0000001000000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* allow unveil() */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;/*
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; * Bits outside PLEDGE_USERSET are used by the kernel itself
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; * to track program behaviours which have been observed.
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; */&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_USERSET	0x0fffffffffffffffULL
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_STATLIE	0x4000000000000000ULL
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define PLEDGE_YPACTIVE	0x8000000000000000ULL	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* YP use detected and allowed */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;now, all &lt;code&gt;PLEDGE_*&lt;/code&gt; macros will perform &lt;code&gt;or&lt;/code&gt;(&amp;quot;&lt;code&gt;|&lt;/code&gt;&amp;quot;) operation with each other and as per the promises in the pledge(2) from (user-space)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;pseudo algorithm for better understanding given below:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;uint64_t&lt;/span&gt; flags&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; content_of_PLEDGE_macro from [&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;stdio&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;inet&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;proc&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;dns&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;proc&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;route&amp;#34;&lt;/span&gt;]
+
+        flags &lt;span style=&#34;color:#f92672&#34;&gt;|=&lt;/span&gt; content_of_PLEDGE_macro
+
+ps_pledge &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; flags
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Calculation of pledge_bit (pledge value) in kernel mode, (only for demonstration and understanding the concept better):&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-python&#34; data-lang=&#34;python&#34;&gt;test&lt;span style=&#34;color:#a6e22e&#34;&gt;@openbsd&lt;/span&gt;:&lt;span style=&#34;color:#f92672&#34;&gt;~&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;$&lt;/span&gt; cat pledge_python&lt;span style=&#34;color:#f92672&#34;&gt;.&lt;/span&gt;py
+&lt;span style=&#34;color:#f92672&#34;&gt;import&lt;/span&gt; sys
+
+PLEDGE_ALWAYS    &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0xffffffffffffffff&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;#/* pledge always */&lt;/span&gt;
+PLEDGE_RPATH     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000001&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;#/* allow open for read */&lt;/span&gt;
+PLEDGE_WPATH     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000002&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;#/* allow open for write */&lt;/span&gt;
+PLEDGE_CPATH     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000004&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;#/* allow creat, mkdir, unlink etc */&lt;/span&gt;
+PLEDGE_STDIO     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000008&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;#/* operate on own pid */&lt;/span&gt;
+PLEDGE_TMPPATH   &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000010&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;#/* for mk*temp() */&lt;/span&gt;
+PLEDGE_DNS       &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000020&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* DNS services */&lt;/span&gt;
+PLEDGE_INET      &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000040&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* AF_INET/AF_INET6 sockets */&lt;/span&gt;
+PLEDGE_FLOCK     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000080&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* file locking */&lt;/span&gt;
+PLEDGE_UNIX      &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000100&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* AF_UNIX sockets */&lt;/span&gt;
+PLEDGE_ID        &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000200&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* allow setuid, setgid, etc */&lt;/span&gt;
+PLEDGE_TAPE      &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000400&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* Tape ioctl */&lt;/span&gt;
+PLEDGE_GETPW     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000000800&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* YP enables if ypbind.lock */&lt;/span&gt;
+PLEDGE_PROC      &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000001000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* fork, waitpid, etc */&lt;/span&gt;
+PLEDGE_SETTIME   &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000002000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* able to set/adj time/freq */&lt;/span&gt;
+PLEDGE_FATTR     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000004000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* allow explicit file st_* mods */&lt;/span&gt;
+PLEDGE_PROTEXEC  &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000008000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* allow use of PROT_EXEC */&lt;/span&gt;
+PLEDGE_TTY       &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000010000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* tty setting */&lt;/span&gt;
+PLEDGE_SENDFD    &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000020000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* AF_UNIX CMSG fd sending */&lt;/span&gt;
+PLEDGE_RECVFD    &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000040000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* AF_UNIX CMSG fd receiving */&lt;/span&gt;
+PLEDGE_EXEC      &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000080000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* execve, child is free of pledge */&lt;/span&gt;
+PLEDGE_ROUTE     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000100000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* routing lookups */&lt;/span&gt;
+PLEDGE_MCAST     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000200000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* multicast joins */&lt;/span&gt;
+PLEDGE_VMINFO    &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000400000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* vminfo listings */&lt;/span&gt;
+PLEDGE_PS        &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000000800000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* ps listings */&lt;/span&gt;
+PLEDGE_DISKLABEL &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000002000000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;#/* disklabels */&lt;/span&gt;
+PLEDGE_PF        &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000004000000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* pf ioctls */&lt;/span&gt;
+PLEDGE_AUDIO     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000008000000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* audio ioctls */&lt;/span&gt;
+PLEDGE_DPATH     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000010000000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* mknod &amp;amp; mkfifo */&lt;/span&gt;
+PLEDGE_DRM       &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000020000000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* drm ioctls */&lt;/span&gt;
+PLEDGE_VMM       &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000040000000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* vmm ioctls */&lt;/span&gt;
+PLEDGE_CHOWN     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000080000000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* chown(2) family */&lt;/span&gt;
+PLEDGE_CHOWNUID  &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000100000000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* allow owner/group changes */&lt;/span&gt;
+PLEDGE_BPF       &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000200000000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* bpf ioctl */&lt;/span&gt;
+PLEDGE_ERROR     &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;0x0000000400000000&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# /* ENOSYS instead of kill */&lt;/span&gt;
+
+pledgereq &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; {   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;audio&amp;#34;&lt;/span&gt;     :  PLEDGE_AUDIO,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;bpf&amp;#34;&lt;/span&gt;       :  PLEDGE_BPF,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;chown&amp;#34;&lt;/span&gt;     :  PLEDGE_CHOWN &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; PLEDGE_CHOWNUID,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cpath&amp;#34;&lt;/span&gt;     :  PLEDGE_CPATH,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;disklabel&amp;#34;&lt;/span&gt; :  PLEDGE_DISKLABEL,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;dns&amp;#34;&lt;/span&gt;       :  PLEDGE_DNS,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;dpath&amp;#34;&lt;/span&gt;     :  PLEDGE_DPATH,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;drm&amp;#34;&lt;/span&gt;       :  PLEDGE_DRM,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;exec&amp;#34;&lt;/span&gt;      :  PLEDGE_EXEC,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;fattr&amp;#34;&lt;/span&gt;     :  PLEDGE_FATTR &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; PLEDGE_CHOWN,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;flock&amp;#34;&lt;/span&gt;     :  PLEDGE_FLOCK,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;getpw&amp;#34;&lt;/span&gt;     :  PLEDGE_GETPW,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;id&amp;#34;&lt;/span&gt;        :  PLEDGE_ID,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;inet&amp;#34;&lt;/span&gt;      :  PLEDGE_INET,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;mcast&amp;#34;&lt;/span&gt;     :  PLEDGE_MCAST,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;pf&amp;#34;&lt;/span&gt;        :  PLEDGE_PF,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;proc&amp;#34;&lt;/span&gt;      :  PLEDGE_PROC,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;prot_exec&amp;#34;&lt;/span&gt; :  PLEDGE_PROTEXEC,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;ps&amp;#34;&lt;/span&gt;        :  PLEDGE_PS,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;recvfd&amp;#34;&lt;/span&gt;    :  PLEDGE_RECVFD,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;route&amp;#34;&lt;/span&gt;     :  PLEDGE_ROUTE,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rpath&amp;#34;&lt;/span&gt;     :  PLEDGE_RPATH,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;sendfd&amp;#34;&lt;/span&gt;    :  PLEDGE_SENDFD,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;settime&amp;#34;&lt;/span&gt;   :  PLEDGE_SETTIME,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;stdio&amp;#34;&lt;/span&gt;     :  PLEDGE_STDIO,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;tape&amp;#34;&lt;/span&gt;      :  PLEDGE_TAPE,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;tmppath&amp;#34;&lt;/span&gt;   :  PLEDGE_TMPPATH,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;tty&amp;#34;&lt;/span&gt;       :  PLEDGE_TTY,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;unix&amp;#34;&lt;/span&gt;      :  PLEDGE_UNIX,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;vminfo&amp;#34;&lt;/span&gt;    :  PLEDGE_VMINFO,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;vmm&amp;#34;&lt;/span&gt;       :  PLEDGE_VMM,
+                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;wpath&amp;#34;&lt;/span&gt;     :  PLEDGE_WPATH,
+            }
+
+&lt;span style=&#34;color:#66d9ef&#34;&gt;def&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;sys_pledge&lt;/span&gt;(promises,path):
+    flags &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; len(promises) &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;:
+        print &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;ABRT (SIGABRT)&amp;#34;&lt;/span&gt;
+        sys&lt;span style=&#34;color:#f92672&#34;&gt;.&lt;/span&gt;exit(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;)
+    promises_list &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; promises&lt;span style=&#34;color:#f92672&#34;&gt;.&lt;/span&gt;split()
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; perm &lt;span style=&#34;color:#f92672&#34;&gt;in&lt;/span&gt; promises_list:
+        &lt;span style=&#34;color:#66d9ef&#34;&gt;try&lt;/span&gt;:
+            perms &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; pledgereq[perm]
+        &lt;span style=&#34;color:#66d9ef&#34;&gt;except&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Exception&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;as&lt;/span&gt; e:
+            print(str(e) &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;: Undefined promise(s) made&amp;#34;&lt;/span&gt;)
+            sys&lt;span style=&#34;color:#f92672&#34;&gt;.&lt;/span&gt;exit(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;)
+
+        flags &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; flags &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; pledgereq[perm]
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; flags
+
+&lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; __name__ &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;__main__&amp;#39;&lt;/span&gt;:
+
+    pledge_bits &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; sys_pledge(sys&lt;span style=&#34;color:#f92672&#34;&gt;.&lt;/span&gt;argv[&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;],&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;NULL&amp;#34;&lt;/span&gt;);
+
+    print &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;pledge_bits :&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; str(hex(pledge_bits))
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Output:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;test@openbsd:~$ python pledge_python.py &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;stdio&amp;#34;&lt;/span&gt;
+pledge_bits :0x8
+test@openbsd:~$
+test@openbsd:~$ python pledge_python.py &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;stdio inet proc route dns&amp;#34;&lt;/span&gt;
+pledge_bits :0x101068
+test@openbsd:~$
+test@openbsd:~$ python pledge_python.py &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;stdio abcd&amp;#34;&lt;/span&gt;
+&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;abcd&amp;#39;&lt;/span&gt;: Undefined promise&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;s&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; made
+test@openbsd:~$
+test@openbsd:~$ python pledge_python.py &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&amp;#34;&lt;/span&gt;
+ABRT &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;SIGABRT&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;there are lots of features and more detailed internals pending to cover which we will be discussing some other time in future&lt;/p&gt;
+&lt;p&gt;but I will suggest and encourage everyone to read the user and kernel code of the pledge(2) to get more understanding about the internals - &lt;a href=&#34;https://github.com/openbsd/src/blob/master/sys/kern/kern_pledge.c&#34;&gt;sys/kern/kern_pledge.c&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;One of the interesting part about pledge(2) is that the pledge(2) does check that you never go in increasing the pledge flags once a process gets pledged. So, it works mainly in decreasing order.&lt;/p&gt;
+&lt;p&gt;Finally!! If something is missing or not correct, please feel free to update.&lt;/p&gt;
+</content>
+    </item>
+    
+  </channel>
+</rss>

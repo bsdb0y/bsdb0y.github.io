@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+    <title>OpenBSD Kernel Internals — Creation of process from user-space to kernel space :: bsdb0y</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Have you ever thought of what is happening internally whenever we execute any command from the command line? In this post we will be looking in the internals of a process life phases" />
+<meta name="keywords" content="" />
+<meta name="robots" content="noodp" />
+<link rel="canonical" href="https://bsdb0y.github.io/posts/openbsd-kernel-internals-creation-of-process-from-user-space-to-kernel-space/" />
+
+
+
+
+<link rel="stylesheet" href="https://bsdb0y.github.io/assets/style.css">
+
+  <link rel="stylesheet" href="https://bsdb0y.github.io/assets/blue.css">
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="https://bsdb0y.github.io/img/apple-touch-icon-192x192.png">
+
+  <link rel="shortcut icon" href="https://bsdb0y.github.io/img/favicon/blue.png">
+
+
+
+<meta name="twitter:card" content="summary" />
+
+  
+    <meta name="twitter:site" content="" />
+  
+    <meta name="twitter:creator" content="bsdb0y" />
+
+
+
+<meta property="og:locale" content="en" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="OpenBSD Kernel Internals — Creation of process from user-space to kernel space">
+<meta property="og:description" content="Have you ever thought of what is happening internally whenever we execute any command from the command line? In this post we will be looking in the internals of a process life phases" />
+<meta property="og:url" content="https://bsdb0y.github.io/posts/openbsd-kernel-internals-creation-of-process-from-user-space-to-kernel-space/" />
+<meta property="og:site_name" content="bsdb0y" />
+
+  <meta property="og:image" content="https://bsdb0y.github.io/">
+
+<meta property="og:image:width" content="2048">
+<meta property="og:image:height" content="1024">
+
+
+  <meta property="article:published_time" content="2018-10-25 00:00:00 &#43;0000 UTC" />
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+<body class="blue">
+
+
+<div class="container center headings--one-size">
+
+  <header class="header">
+  <div class="header__inner">
+    <div class="header__logo">
+      <a href="/">
+  <div class="logo">
+    bsdb0y
+  </div>
+</a>
+
+    </div>
+    
+      <div class="menu-trigger">menu</div>
+    
+  </div>
+  
+    <nav class="menu">
+  <ul class="menu__inner menu__inner--desktop">
+    
+      
+        
+          <li><a href="/about">About</a></li>
+        
+      
+        
+          <li><a href="/bugs">Bugs</a></li>
+        
+      
+      
+    
+
+    
+  </ul>
+
+  <ul class="menu__inner menu__inner--mobile">
+    
+      
+        <li><a href="/about">About</a></li>
+      
+    
+      
+        <li><a href="/bugs">Bugs</a></li>
+      
+    
+    
+  </ul>
+</nav>
+
+  
+</header>
+
+
+  <div class="content">
+    
+<div class="post">
+  <h1 class="post-title">
+    <a href="https://bsdb0y.github.io/posts/openbsd-kernel-internals-creation-of-process-from-user-space-to-kernel-space/">OpenBSD Kernel Internals — Creation of process from user-space to kernel space</a></h1>
+  <div class="post-meta">
+    
+      <span class="post-date">
+        2018-10-25
+        
+      </span>
+    
+    
+      <span class="post-author">:: bsdb0y</span>
+    
+    
+      <span class="post-reading-time">:: 20 min read (4068 words)</span>
+    
+  </div>
+
+  
+  <span class="post-tags">
+    
+    #<a href="https://bsdb0y.github.io/tags/openbsd/">openbsd</a>&nbsp;
+    
+    #<a href="https://bsdb0y.github.io/tags/process/">process</a>&nbsp;
+    
+    #<a href="https://bsdb0y.github.io/tags/kernel/">kernel</a>&nbsp;
+    
+    #<a href="https://bsdb0y.github.io/tags/internals/">internals</a>&nbsp;
+    
+  </span>
+  
+  
+
+
+  
+
+  <div class="post-content"><div>
+        <p>Hi there,</p>
+<h5 id="have-you-ever-thought-what-happens-internally-when-we-execute-any-commandexecutable-from-the-command-line">Have you ever thought what happens internally when we execute any command/executable from the command line?<a href="#have-you-ever-thought-what-happens-internally-when-we-execute-any-commandexecutable-from-the-command-line" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h5>
+<p>We will be diving in to the internals and the process to see exactly what happens then let’s discuss about the process creation in OpenBSD operating system from user-space level to kernel space. We will execute the <code>ls</code> command from the command line and then trace it through the debugger to see the magic.</p>
+<p>Following are the basic lifecycle of a process,</p>
+<ul>
+<li>creation</li>
+<li>execution</li>
+<li>exit</li>
+</ul>
+<p>We will be focussing only the creation part in this post.
+Used gdb debugger to debug the process and analyze the source code internals.</p>
+<p>Without wasting much time&hellip;
+Whenever we execute any command from the cli, for example <code>ls</code>, the parent process is &ldquo;ksh&rdquo; because the default shell on OpenBSD is <strong>ksh</strong> which invokes <strong>ls</strong> command or any other command.</p>
+<p>So, mostly every process is created by <code>sys_fork()</code>, system call responsible for creating new process (child process) and it internally calls <a href="https://man.openbsd.org/fork1.9"><code>fork1(9)</code></a> function
+<a href="https://man.openbsd.org/fork1.9">fork1(9)</a> — OpenBSD kernel developer’s manual</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;sys/types.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;sys/proc.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">fork1</span>(<span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">*</span>p1, <span style="color:#66d9ef">int</span> flags, <span style="color:#66d9ef">void</span> (<span style="color:#f92672">*</span>func)(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>), <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>arg, register_t <span style="color:#f92672">*</span>retval, <span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">**</span>rnewprocp);
+</code></pre></div><p><a href="https://man.openbsd.org/fork1.9">fork1(9)</a> creates a new process out of <code>p1</code>, which should be the current thread. This function is used primarily to implement the <a href="https://man.openbsd.org/fork.2">fork(2)</a> and <a href="https://man.openbsd.org/vfork.2">vfork(2)</a> system calls, as well as the <a href="https://man.openbsd.org/kthread_create.9">kthread_create(9)</a> function.</p>
+<p>Life cycle of a process (in brief):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">“ls” → fork(2) → sys_fork() → fork1() → sys_execve() → sys_exit() → exit1()
+</code></pre></div><p>Working of <code>fork1()</code>
+After “ls” from user-space it goes to fork() from libc then from there to sys_fork().</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">sys_fork</span>(<span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">*</span>p, <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>v, register_t <span style="color:#f92672">*</span>retval)
+{
+    <span style="color:#66d9ef">int</span> flags;
+
+    flags <span style="color:#f92672">=</span> FORK_FORK;
+    <span style="color:#66d9ef">if</span> (p<span style="color:#f92672">-&gt;</span>p_p<span style="color:#f92672">-&gt;</span>ps_ptmask <span style="color:#f92672">&amp;</span> PTRACE_FORK)
+        flags <span style="color:#f92672">|=</span> FORK_PTRACE;
+    <span style="color:#66d9ef">return</span> fork1(p, flags, fork_return, NULL, retval, NULL);
+}
+</code></pre></div><p>FORK_FORK: It is a macro which defines that the call is done by the fork(2). Used only for statistics.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">#define FORK_FORK 0x00000001
+</code></pre></div><ul>
+<li>So, the value of &ldquo;flags&rdquo; variable is set to 1 , because the call is done by fork(2)</li>
+<li>check for PTRACE and if enable then update the flags with FORK_PTRACE else leave it and return to the fork1()</li>
+</ul>
+<p>fork1() initial code</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">fork1</span>(<span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">*</span>curp, <span style="color:#66d9ef">int</span> flags, <span style="color:#66d9ef">void</span> (<span style="color:#f92672">*</span>func)(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>), <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>arg,
+    register_t <span style="color:#f92672">*</span>retval, <span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">**</span>rnewprocp)
+{
+    <span style="color:#66d9ef">struct</span> process <span style="color:#f92672">*</span>curpr <span style="color:#f92672">=</span> curp<span style="color:#f92672">-&gt;</span>p_p;
+    <span style="color:#66d9ef">struct</span> process <span style="color:#f92672">*</span>pr;
+    <span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">*</span>p;
+    uid_t uid <span style="color:#f92672">=</span> curp<span style="color:#f92672">-&gt;</span>p_ucred<span style="color:#f92672">-&gt;</span>cr_ruid;
+    <span style="color:#66d9ef">struct</span> vmspace <span style="color:#f92672">*</span>vm;
+    <span style="color:#66d9ef">int</span> count;
+    vaddr_t uaddr;
+    <span style="color:#66d9ef">int</span> error;
+    <span style="color:#66d9ef">struct</span>  ptrace_state <span style="color:#f92672">*</span>newptstat <span style="color:#f92672">=</span> NULL;
+
+    KASSERT((flags <span style="color:#f92672">&amp;</span> <span style="color:#f92672">~</span>(FORK_FORK <span style="color:#f92672">|</span> FORK_VFORK <span style="color:#f92672">|</span> FORK_PPWAIT <span style="color:#f92672">|</span> FORK_PTRACE
+        <span style="color:#f92672">|</span> FORK_IDLE <span style="color:#f92672">|</span> FORK_SHAREVM <span style="color:#f92672">|</span> FORK_SHAREFILES <span style="color:#f92672">|</span> FORK_NOZOMBIE
+        <span style="color:#f92672">|</span> FORK_SYSTEM <span style="color:#f92672">|</span> FORK_SIGHAND)) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>);
+    KASSERT((flags <span style="color:#f92672">&amp;</span> FORK_SIGHAND) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">||</span> (flags <span style="color:#f92672">&amp;</span> FORK_SHAREVM));
+    KASSERT(func <span style="color:#f92672">!=</span> NULL);
+
+    <span style="color:#66d9ef">if</span> ((error <span style="color:#f92672">=</span> fork_check_maxthread(uid)))
+        <span style="color:#66d9ef">return</span> error;
+
+    <span style="color:#66d9ef">if</span> ((nprocesses <span style="color:#f92672">&gt;=</span> maxprocess <span style="color:#f92672">-</span> <span style="color:#ae81ff">5</span> <span style="color:#f92672">&amp;&amp;</span> uid <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span>) <span style="color:#f92672">||</span>
+        nprocesses <span style="color:#f92672">&gt;=</span> maxprocess) {
+        <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">struct</span> timeval lasttfm;
+
+        <span style="color:#66d9ef">if</span> (ratecheck(<span style="color:#f92672">&amp;</span>lasttfm, <span style="color:#f92672">&amp;</span>fork_tfmrate))
+            tablefull(<span style="color:#e6db74">&#34;process&#34;</span>);
+        nthreads<span style="color:#f92672">--</span>;
+        <span style="color:#66d9ef">return</span> EAGAIN;
+    }
+    nprocesses<span style="color:#f92672">++</span>;
+...
+...
+...
+</code></pre></div><ul>
+<li>From the above code-snippet, <code>curp-&gt;p_p-&gt;ps_comm</code> is <code>“ksh”</code>, which is a parent process that will fork “ls”</li>
+<li>Initially some process structures, then, setting <code>uid = curp-&gt;p_ucred-&gt;cr_ruid</code></li>
+<li>Then, the structure for process address space information</li>
+<li>Then, some variables and ptrace_state structure and then the condition which is checking for flag values using KASSERT.</li>
+<li><code>fork_check_maxthread(uid)</code>: it is used to the check or track the number of threads invoked by the specific uid
+<ul>
+<li>It checks the number of threads invoked by specific uid shouldn’t be greater than the number of maximum threads allowed or for maxthread - 5 because the last 5 process from the maxthread is reserved for the root</li>
+<li>If it is greater than defined maxthread or maxthread — 5, it will print the messagetablefullonce every 10 seconds. Else, it will increment the number of threads</li>
+</ul>
+</li>
+</ul>
+<p>Defination of <code>fork_check_maxthread(uid)</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">fork_check_maxthread</span>(uid_t uid)
+{
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Although process entries are dynamically created, we still keep
+</span><span style="color:#75715e">     * a global limit on the maximum number we will create. We reserve
+</span><span style="color:#75715e">     * the last 5 processes to root. The variable nprocesses is the
+</span><span style="color:#75715e">     * current number of processes, maxprocess is the limit.  Similar
+</span><span style="color:#75715e">     * rules for threads (struct proc): we reserve the last 5 to root;
+</span><span style="color:#75715e">     * the variable nthreads is the current number of procs, maxthread is
+</span><span style="color:#75715e">     * the limit.
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">if</span> ((nthreads <span style="color:#f92672">&gt;=</span> maxthread <span style="color:#f92672">-</span> <span style="color:#ae81ff">5</span> <span style="color:#f92672">&amp;&amp;</span> uid <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span>) <span style="color:#f92672">||</span> nthreads <span style="color:#f92672">&gt;=</span> maxthread) {
+        <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">struct</span> timeval lasttfm;
+
+        <span style="color:#66d9ef">if</span> (ratecheck(<span style="color:#f92672">&amp;</span>lasttfm, <span style="color:#f92672">&amp;</span>fork_tfmrate))
+            tablefull(<span style="color:#e6db74">&#34;proc&#34;</span>);
+        <span style="color:#66d9ef">return</span> EAGAIN;
+    }
+    nthreads<span style="color:#f92672">++</span>;
+
+    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+}
+</code></pre></div><p>Now, after <code>fork_check_thread()</code>, similar code logic is implemented for tracking process as visible from the <code>fork1(9)</code> defination</p>
+<p><code>fork1(9)</code> defination continued&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">...
+...
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Increment the count of processes running with this uid.
+</span><span style="color:#75715e">     * Don&#39;t allow a nonprivileged user to exceed their current limit.
+</span><span style="color:#75715e">     */</span>
+    count <span style="color:#f92672">=</span> chgproccnt(uid, <span style="color:#ae81ff">1</span>);
+    <span style="color:#66d9ef">if</span> (uid <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">&amp;&amp;</span> count <span style="color:#f92672">&gt;</span> lim_cur(RLIMIT_NPROC)) {
+        (<span style="color:#66d9ef">void</span>)chgproccnt(uid, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>);
+        nprocesses<span style="color:#f92672">--</span>;
+        nthreads<span style="color:#f92672">--</span>;
+        <span style="color:#66d9ef">return</span> EAGAIN;
+    }
+
+    uaddr <span style="color:#f92672">=</span> uvm_uarea_alloc();
+    <span style="color:#66d9ef">if</span> (uaddr <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) {
+        (<span style="color:#66d9ef">void</span>)chgproccnt(uid, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>);
+        nprocesses<span style="color:#f92672">--</span>;
+        nthreads<span style="color:#f92672">--</span>;
+        <span style="color:#66d9ef">return</span> (ENOMEM);
+    }
+
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * From now on, we&#39;re committed to the fork and cannot fail.
+</span><span style="color:#75715e">     */</span>
+    p <span style="color:#f92672">=</span> thread_new(curp, uaddr);
+    pr <span style="color:#f92672">=</span> process_new(p, curpr, flags);
+
+    p<span style="color:#f92672">-&gt;</span>p_fd     <span style="color:#f92672">=</span> pr<span style="color:#f92672">-&gt;</span>ps_fd;
+    p<span style="color:#f92672">-&gt;</span>p_vmspace    <span style="color:#f92672">=</span> pr<span style="color:#f92672">-&gt;</span>ps_vmspace;
+    <span style="color:#66d9ef">if</span> (pr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">&amp;</span> PS_SYSTEM)
+        atomic_setbits_int(<span style="color:#f92672">&amp;</span>p<span style="color:#f92672">-&gt;</span>p_flag, P_SYSTEM);
+
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_PPWAIT) {
+        atomic_setbits_int(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_flags, PS_PPWAIT);
+        atomic_setbits_int(<span style="color:#f92672">&amp;</span>curpr<span style="color:#f92672">-&gt;</span>ps_flags, PS_ISPWAIT);
+    }
+...
+...
+
+</code></pre></div><ul>
+<li>It is changing the count of threads for a specific user via <code>chgproccnt(uid,1)</code> and the defination given below:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/*
+</span><span style="color:#75715e"> * Change the count associated with number of threads
+</span><span style="color:#75715e"> * a given user is using.
+</span><span style="color:#75715e"> */</span>
+<span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">chgproccnt</span>(uid_t uid, <span style="color:#66d9ef">int</span> diff)
+{
+    <span style="color:#66d9ef">struct</span> uidinfo <span style="color:#f92672">*</span>uip;
+    <span style="color:#66d9ef">long</span> count;
+
+    uip <span style="color:#f92672">=</span> uid_find(uid);
+    count <span style="color:#f92672">=</span> (uip<span style="color:#f92672">-&gt;</span>ui_proccnt <span style="color:#f92672">+=</span> diff);
+    uid_release(uip);
+    <span style="color:#66d9ef">if</span> (count <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span>)
+        panic(<span style="color:#e6db74">&#34;chgproccnt: procs &lt; 0&#34;</span>);
+    <span style="color:#66d9ef">return</span> count;
+}
+</code></pre></div><ul>
+<li>
+<p><code>struct uidinfo</code> structure maintains every uid resource consumption counts including the process count and socket buffer space usage.</p>
+</li>
+<li>
+<p><code>uid_find(uid)</code> function looks up and returns the <code>uidinfo</code> structure for uid. If no uidinfo structure exists for <code>uid</code>, a new structure will be allocated and initialized.</p>
+<ul>
+<li>Then, it increments the number of processes, that is, <code>ui_proccnt</code> by diff then returns count.</li>
+</ul>
+</li>
+<li>
+<p>coming back to <code>fork1(9)</code> code after <code>chgproccnt()</code>, it checks for the non-privileged &ldquo;uid&rdquo; and also checks for the number of process is greater than the soft limit of resources which is <code>0x7fffffffffffffff</code> based on the observation through debugging.</p>
+</li>
+<li>
+<p>If non-privileged is allowed and the count is increased by the maximum resource limit, it will decrease the count via chgproccnt() by passing -1 as diff parameter and also decrease the number of processes and threads.</p>
+</li>
+<li>
+<p>Next, <code>uvm_uarea_alloc()</code> function allocates a thread&rsquo;s <code>uarea</code>, the memory where its kernel stack and PCB are stored.</p>
+</li>
+<li>
+<p>Now, it checks if the &ldquo;uaddr&rdquo; variable doesn’t contain any thread’s address, if it is zero, then it decrements the count of the number of process and thread.</p>
+</li>
+<li>
+<p>there are some important functions:</p>
+<ul>
+<li><code>thread_new(struct proc *parent, vaddr_t uaddr)</code></li>
+<li><code>process_new(struct proc *p, struct process *parent, int flags)</code></li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/*
+</span><span style="color:#75715e">* Allocate and initialize a thread (proc) structure, given the parent thread.
+</span><span style="color:#75715e">*/</span>
+<span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">*</span>
+<span style="color:#a6e22e">thread_new</span>(<span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">*</span>parent, vaddr_t uaddr)
+{
+   <span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">*</span>p; 
+
+   p <span style="color:#f92672">=</span> pool_get(<span style="color:#f92672">&amp;</span>proc_pool, PR_WAITOK);
+   p<span style="color:#f92672">-&gt;</span>p_stat <span style="color:#f92672">=</span> SIDL;           <span style="color:#75715e">/* protect against others */</span>
+   p<span style="color:#f92672">-&gt;</span>p_flag <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+   p<span style="color:#f92672">-&gt;</span>p_limit <span style="color:#f92672">=</span> NULL;
+
+   <span style="color:#75715e">/*
+</span><span style="color:#75715e">    * Make a proc table entry for the new process.
+</span><span style="color:#75715e">    * Start by zeroing the section of proc that is zero-initialized,
+</span><span style="color:#75715e">    * then copy the section that is copied directly from the parent.
+</span><span style="color:#75715e">    */</span>
+   memset(<span style="color:#f92672">&amp;</span>p<span style="color:#f92672">-&gt;</span>p_startzero, <span style="color:#ae81ff">0</span>,
+       (caddr_t)<span style="color:#f92672">&amp;</span>p<span style="color:#f92672">-&gt;</span>p_endzero <span style="color:#f92672">-</span> (caddr_t)<span style="color:#f92672">&amp;</span>p<span style="color:#f92672">-&gt;</span>p_startzero);
+   memcpy(<span style="color:#f92672">&amp;</span>p<span style="color:#f92672">-&gt;</span>p_startcopy, <span style="color:#f92672">&amp;</span>parent<span style="color:#f92672">-&gt;</span>p_startcopy,
+       (caddr_t)<span style="color:#f92672">&amp;</span>p<span style="color:#f92672">-&gt;</span>p_endcopy <span style="color:#f92672">-</span> (caddr_t)<span style="color:#f92672">&amp;</span>p<span style="color:#f92672">-&gt;</span>p_startcopy);
+   crhold(p<span style="color:#f92672">-&gt;</span>p_ucred);
+   p<span style="color:#f92672">-&gt;</span>p_addr <span style="color:#f92672">=</span> (<span style="color:#66d9ef">struct</span> user <span style="color:#f92672">*</span>)uaddr;
+
+   <span style="color:#75715e">/*
+</span><span style="color:#75715e">    * Initialize the timeouts.
+</span><span style="color:#75715e">    */</span>
+   timeout_set(<span style="color:#f92672">&amp;</span>p<span style="color:#f92672">-&gt;</span>p_sleep_to, endtsleep, p);
+
+   <span style="color:#75715e">/*
+</span><span style="color:#75715e">    * set priority of child to be that of parent
+</span><span style="color:#75715e">    * XXX should move p_estcpu into the region of struct proc which gets
+</span><span style="color:#75715e">    * copied.
+</span><span style="color:#75715e">    */</span>
+   scheduler_fork_hook(parent, p);
+
+<span style="color:#75715e">#ifdef WITNESS
+</span><span style="color:#75715e"></span>   p<span style="color:#f92672">-&gt;</span>p_sleeplocks <span style="color:#f92672">=</span> NULL;
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">#if NKCOV &gt; 0
+</span><span style="color:#75715e"></span>   p<span style="color:#f92672">-&gt;</span>p_kd <span style="color:#f92672">=</span> NULL;
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>
+   <span style="color:#66d9ef">return</span> p;
+}
+       }
+</code></pre></div><ul>
+<li>in the <code>thread_new()</code> function, we will get our user-space process, that is, in our case “ls”. The process gets retrieved from the pool of processess, that is, proc_pool via <code>pool_get()</code> function.</li>
+<li>then, we set the state of the thread to be SIDL , which means that the process/thread is being created by fork, then set <code>p→p_flag = 0</code></li>
+<li>then, it zeroes the section of &ldquo;proc&rdquo;. the below code snippet from &ldquo;sys/proc.h&rdquo;</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* The following fields are all zeroed upon creation in fork. */</span>
+<span style="color:#75715e">#define p_startzero p_dupfd
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> p_dupfd;     <span style="color:#75715e">/* Sideways return value from filedescopen. XXX */</span>
+
+    <span style="color:#66d9ef">long</span>    p_thrslpid; <span style="color:#75715e">/* for thrsleep syscall */</span>
+
+    <span style="color:#75715e">/* scheduling */</span>
+    u_int   p_estcpu;       <span style="color:#75715e">/* [s] Time averaged val of p_cpticks */</span>
+    <span style="color:#66d9ef">int</span> p_cpticks;   <span style="color:#75715e">/* Ticks of cpu time. */</span>
+    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">volatile</span> <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>p_wchan;   <span style="color:#75715e">/* [s] Sleep address. */</span>
+    <span style="color:#66d9ef">struct</span>  timeout p_sleep_to;<span style="color:#75715e">/* timeout for tsleep() */</span>
+    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>p_wmesg;        <span style="color:#75715e">/* [s] Reason for sleep. */</span>
+    fixpt_t p_pctcpu;       <span style="color:#75715e">/* [s] %cpu for this thread */</span>
+    u_int   p_slptime;      <span style="color:#75715e">/* [s] Time since last blocked. */</span>
+    u_int   p_uticks;       <span style="color:#75715e">/* Statclock hits in user mode. */</span>
+    u_int   p_sticks;       <span style="color:#75715e">/* Statclock hits in system mode. */</span>
+    u_int   p_iticks;       <span style="color:#75715e">/* Statclock hits processing intr. */</span>
+    <span style="color:#66d9ef">struct</span>  cpu_info <span style="color:#f92672">*</span> <span style="color:#66d9ef">volatile</span> p_cpu; <span style="color:#75715e">/* [s] CPU we&#39;re running on. */</span>
+
+    <span style="color:#66d9ef">struct</span>  rusage p_ru;        <span style="color:#75715e">/* Statistics */</span>
+    <span style="color:#66d9ef">struct</span>  tusage p_tu;        <span style="color:#75715e">/* accumulated times. */</span>
+    <span style="color:#66d9ef">struct</span>  timespec p_rtime;   <span style="color:#75715e">/* Real time. */</span>
+
+    <span style="color:#66d9ef">int</span>  p_siglist;     <span style="color:#75715e">/* Signals arrived but not delivered. */</span>
+
+<span style="color:#75715e">/* End area that is zeroed on creation. */</span>
+</code></pre></div><ul>
+<li>in above code snippet, all the variables will be zeroed via memset() upon creation in the fork.</li>
+<li>then, they are copying the section from <code>parent→p_startcopy</code> to <code>p→p_startcopy</code> using memcpy. Following are the field members that will be copied.</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#define p_startcopy p_sigmask
+</span><span style="color:#75715e"></span>    sigset_t p_sigmask; <span style="color:#75715e">/* Current signal mask. */</span>
+
+    u_char  p_priority; <span style="color:#75715e">/* [s] Process priority. */</span>
+    u_char  p_usrpri;   <span style="color:#75715e">/* [s] User-prio based on p_estcpu &amp; ps_nice. */</span>
+    <span style="color:#66d9ef">int</span> p_pledge_syscall;   <span style="color:#75715e">/* Cache of current syscall */</span>
+
+    <span style="color:#66d9ef">struct</span>  ucred <span style="color:#f92672">*</span>p_ucred;     <span style="color:#75715e">/* cached credentials */</span>
+    <span style="color:#66d9ef">struct</span>  sigaltstack p_sigstk;   <span style="color:#75715e">/* sp &amp; on stack state variable */</span>
+
+    u_long  p_prof_addr;    <span style="color:#75715e">/* tmp storage for profiling addr until AST */</span>
+    u_long  p_prof_ticks;   <span style="color:#75715e">/* tmp storage for profiling ticks until AST */</span>
+
+<span style="color:#75715e">/* End area that is copied on creation. */</span>
+<span style="color:#75715e">#define p_endcopy   p_addr
+</span></code></pre></div><ul>
+<li>coming back to <code>thread_new()</code>, <code>crhold(p-&gt;p_ucred)</code> functions will increment the reference count in <code>struct ucred</code> structure, that is, <code>p-&gt;p_ucred-&gt;cr_ref++</code>.</li>
+<li>then, typecast the thread’s addr, that is, <code>(struct user *)uaddr</code> and save it in kernel’s virtual addr of u-area.</li>
+<li>Now, it will initialize the timeout.</li>
+</ul>
+<p>dummy function to show the <code>timeout_set</code> function working. <code>timeout_set(timeout, b, argument);</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">void</span>
+<span style="color:#a6e22e">timeout_set</span>(<span style="color:#66d9ef">struct</span> timeout <span style="color:#f92672">*</span>new, <span style="color:#66d9ef">void</span> (<span style="color:#f92672">*</span>fn)(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>), <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>arg)
+{
+        new<span style="color:#f92672">-&gt;</span>to_func <span style="color:#f92672">=</span> fn;
+        new<span style="color:#f92672">-&gt;</span>to_arg <span style="color:#f92672">=</span> arg;
+        new<span style="color:#f92672">-&gt;</span>to_flags <span style="color:#f92672">=</span> TIMEOUT_INITIALIZED;
+}
+</code></pre></div><ul>
+<li>this function will initialize the timeout struture and call the function b with argument.</li>
+<li>scheduler_fork_hook(parent, p): It is a macro which will update the <code>p_estcpu</code> of child from parent’s p_estcpu.</li>
+<li><code>p_estcpu</code> holds an estimate of the amount of CPU that the process has used recently</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* Inherit the parent’s scheduler history */</span>
+<span style="color:#75715e">#define scheduler_fork_hook(parent, child) do {    \
+</span><span style="color:#75715e"> (child)-&gt;p_estcpu = (parent)-&gt;p_estcpu;           \
+</span><span style="color:#75715e">} while (0)
+</span></code></pre></div><ul>
+<li>then, return the newly created thread <code>p</code> .</li>
+<li>another important function is <code>process_new()</code> which creates the process in a similar fashion like <code>thread_new()</code>.</li>
+</ul>
+<p>Defination of <code>process_new()</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/*
+</span><span style="color:#75715e"> * Allocate and initialize a new process.
+</span><span style="color:#75715e"> */</span>
+<span style="color:#66d9ef">struct</span> process <span style="color:#f92672">*</span>
+<span style="color:#a6e22e">process_new</span>(<span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">*</span>p, <span style="color:#66d9ef">struct</span> process <span style="color:#f92672">*</span>parent, <span style="color:#66d9ef">int</span> flags)
+{
+    <span style="color:#66d9ef">struct</span> process <span style="color:#f92672">*</span>pr;
+
+    pr <span style="color:#f92672">=</span> pool_get(<span style="color:#f92672">&amp;</span>process_pool, PR_WAITOK);
+
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Make a process structure for the new process.
+</span><span style="color:#75715e">     * Start by zeroing the section of proc that is zero-initialized,
+</span><span style="color:#75715e">     * then copy the section that is copied directly from the parent.
+</span><span style="color:#75715e">     */</span>
+    memset(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_startzero, <span style="color:#ae81ff">0</span>,
+        (caddr_t)<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_endzero <span style="color:#f92672">-</span> (caddr_t)<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_startzero);
+    memcpy(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_startcopy, <span style="color:#f92672">&amp;</span>parent<span style="color:#f92672">-&gt;</span>ps_startcopy,
+        (caddr_t)<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_endcopy <span style="color:#f92672">-</span> (caddr_t)<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_startcopy);
+
+    process_initialize(pr, p);
+    pr<span style="color:#f92672">-&gt;</span>ps_pid <span style="color:#f92672">=</span> allocpid();
+    lim_fork(parent, pr);
+
+    <span style="color:#75715e">/* post-copy fixups */</span>
+    pr<span style="color:#f92672">-&gt;</span>ps_pptr <span style="color:#f92672">=</span> parent;
+
+    <span style="color:#75715e">/* bump references to the text vnode (for sysctl) */</span>
+    pr<span style="color:#f92672">-&gt;</span>ps_textvp <span style="color:#f92672">=</span> parent<span style="color:#f92672">-&gt;</span>ps_textvp;
+    <span style="color:#66d9ef">if</span> (pr<span style="color:#f92672">-&gt;</span>ps_textvp)
+        vref(pr<span style="color:#f92672">-&gt;</span>ps_textvp);
+
+    <span style="color:#75715e">/* copy unveil if unveil is active */</span>
+    unveil_copy(parent, pr);
+
+    pr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">=</span> parent<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">&amp;</span>
+        (PS_SUGID <span style="color:#f92672">|</span> PS_SUGIDEXEC <span style="color:#f92672">|</span> PS_PLEDGE <span style="color:#f92672">|</span> PS_EXECPLEDGE <span style="color:#f92672">|</span> PS_WXNEEDED);
+    <span style="color:#66d9ef">if</span> (parent<span style="color:#f92672">-&gt;</span>ps_session<span style="color:#f92672">-&gt;</span>s_ttyvp <span style="color:#f92672">!=</span> NULL)
+        pr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">|=</span> parent<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">&amp;</span> PS_CONTROLT;
+...
+...
+}
+</code></pre></div><ul>
+<li>the initials of the code of <code>process_new()</code> is similar to <code>thread_new()</code> like select process from process_pool via <code>pool_get()</code> then zeroing using memset and copying using memcpy.</li>
+<li>Next, the initialization of process using <code>process_initialize()</code>, defination as given below:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/*
+</span><span style="color:#75715e"> * Initialize common bits of a process structure, given the initial thread.
+</span><span style="color:#75715e"> */</span>
+<span style="color:#66d9ef">void</span>
+<span style="color:#a6e22e">process_initialize</span>(<span style="color:#66d9ef">struct</span> process <span style="color:#f92672">*</span>pr, <span style="color:#66d9ef">struct</span> proc <span style="color:#f92672">*</span>p)
+{
+    <span style="color:#75715e">/* initialize the thread links */</span>
+    pr<span style="color:#f92672">-&gt;</span>ps_mainproc <span style="color:#f92672">=</span> p;
+    TAILQ_INIT(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_threads);
+    TAILQ_INSERT_TAIL(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_threads, p, p_thr_link);
+    pr<span style="color:#f92672">-&gt;</span>ps_refcnt <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+    p<span style="color:#f92672">-&gt;</span>p_p <span style="color:#f92672">=</span> pr;
+
+    <span style="color:#75715e">/* give the process the same creds as the initial thread */</span>
+    pr<span style="color:#f92672">-&gt;</span>ps_ucred <span style="color:#f92672">=</span> p<span style="color:#f92672">-&gt;</span>p_ucred;
+    crhold(pr<span style="color:#f92672">-&gt;</span>ps_ucred);
+    KASSERT(p<span style="color:#f92672">-&gt;</span>p_ucred<span style="color:#f92672">-&gt;</span>cr_ref <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">2</span>);   <span style="color:#75715e">/* new thread and new process */</span>
+
+    LIST_INIT(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_children);
+    LIST_INIT(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_ftlist);
+    LIST_INIT(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_kqlist);
+    LIST_INIT(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_sigiolst);
+
+    mtx_init(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_mtx, IPL_MPFLOOR);
+
+    timeout_set(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_realit_to, realitexpire, pr);
+    timeout_set(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_rucheck_to, rucheck, pr);
+}
+</code></pre></div><ul>
+<li><code>process_initialize()</code> internals:
+<ul>
+<li><code>ps_mainproc</code> : It is the original and main thread in the process. It’s only special for handling of <code>p_xstat</code>, some signals and ptrace behaviours that need to be fixed.</li>
+<li>Copy initial thread, that is, p to <code>pr-&gt;mainproc</code></li>
+<li>Initialize the queue with referenced by head. Here, head is <code>pr→ps_threads</code>. Then, Insert &ldquo;elm&rdquo; at the TAIL of the queue. Here, elm is p .</li>
+<li>set the number of references to 1, that is, <code>pr-&gt;ps_refcnt = 1</code></li>
+<li>copy the process pr to the process of initial thread.</li>
+<li>set the same creds for process as the initial thread.</li>
+<li>condition check for the new thread and the new process via KASSERT.</li>
+<li>Initialize the List referenced by head. Here, head is <code>pr-&gt;ps_children</code></li>
+<li>Again, initialize timeout. (for detail, see thead_new)</li>
+</ul>
+</li>
+<li>after the process initialization, pid allocation takes place. <code>ps→ps_pid = allocpid();</code> where <code>allocpid()</code> returns unused pid</li>
+<li><code>allocpid()</code> internally calls the <code>arc4random_uniform()</code> which further calls <code>arc4random()</code> then through <code>arc4random()</code> a completely randomized number is returned which is used as pid.</li>
+<li>then, for the availability of pid (or for unused pid) it verifies that whether the new pid is already taken or not by any process. It verifies this one by one in the process, process groups, and zombie process by using function <code>ispidtaken(pid_t pid)</code> which internally calls following functions:
+<ul>
+<li>prfind(pid_t pid) : Locate a process by number</li>
+<li>pgfind(pid_t pgid) : Locate a process group by number</li>
+<li>zombiefind(pid_t pid :Locate a zombie process by number</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/*
+</span><span style="color:#75715e"> * Checks for current use of a pid, either as a pid or pgid.
+</span><span style="color:#75715e"> */</span>
+pid_t oldpids[<span style="color:#ae81ff">128</span>];
+<span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">ispidtaken</span>(pid_t pid)
+{
+    <span style="color:#66d9ef">uint32_t</span> i;
+
+    <span style="color:#66d9ef">for</span> (i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> nitems(oldpids); i<span style="color:#f92672">++</span>)
+        <span style="color:#66d9ef">if</span> (pid <span style="color:#f92672">==</span> oldpids[i])
+            <span style="color:#66d9ef">return</span> (<span style="color:#ae81ff">1</span>);
+
+    <span style="color:#66d9ef">if</span> (prfind(pid) <span style="color:#f92672">!=</span> NULL)
+        <span style="color:#66d9ef">return</span> (<span style="color:#ae81ff">1</span>);
+    <span style="color:#66d9ef">if</span> (pgfind(pid) <span style="color:#f92672">!=</span> NULL)
+        <span style="color:#66d9ef">return</span> (<span style="color:#ae81ff">1</span>);
+    <span style="color:#66d9ef">if</span> (zombiefind(pid) <span style="color:#f92672">!=</span> NULL)
+        <span style="color:#66d9ef">return</span> (<span style="color:#ae81ff">1</span>);
+    <span style="color:#66d9ef">return</span> (<span style="color:#ae81ff">0</span>);
+}
+
+<span style="color:#75715e">/* Find an unused pid */</span>
+pid_t
+<span style="color:#a6e22e">allocpid</span>(<span style="color:#66d9ef">void</span>)
+{
+    <span style="color:#66d9ef">static</span> pid_t lastpid;
+    pid_t pid;
+
+    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>randompid) {
+        <span style="color:#75715e">/* only used early on for system processes */</span>
+        pid <span style="color:#f92672">=</span> <span style="color:#f92672">++</span>lastpid;
+    } <span style="color:#66d9ef">else</span> {
+        <span style="color:#75715e">/* Find an unused pid satisfying lastpid &lt; pid &lt;= PID_MAX */</span>
+        <span style="color:#66d9ef">do</span> {
+            pid <span style="color:#f92672">=</span> arc4random_uniform(PID_MAX <span style="color:#f92672">-</span> lastpid) <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">+</span>
+                lastpid;
+        } <span style="color:#66d9ef">while</span> (ispidtaken(pid));
+    }
+
+    <span style="color:#66d9ef">return</span> pid;
+}
+</code></pre></div><ul>
+<li>store the pointer to parent process in <code>pr→ps_pptr</code></li>
+<li>Increment the number of references count in process limit structure, that is, struct plimit</li>
+<li>Store the vnode of executable of parent into <code>pr→ps_textvp</code> ,that is,<code>pr→ps_textvp = parent→ps_textvp;</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">if</span> (pr<span style="color:#960050;background-color:#1e0010">→</span>ps_textvp)
+        vref(pr<span style="color:#960050;background-color:#1e0010">→</span>ps_textvp); <span style="color:#75715e">/* vref --&gt; vnode reference */</span>
+</code></pre></div><p>Above code snippet means, if valid vnode found then increment the v_usecount++ variable inside the struct vnode structure of the executable.
+Now, the calculation for setting up process flags:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">pr<span style="color:#960050;background-color:#1e0010">→</span>ps_flags <span style="color:#f92672">=</span> parent <span style="color:#960050;background-color:#1e0010">→</span>ps_flags <span style="color:#f92672">&amp;</span> (PS_SUGID <span style="color:#f92672">|</span> PS_SUGIDEXEC <span style="color:#f92672">|</span> PS_PLEDGE <span style="color:#f92672">|</span> PS_EXECPLEDGE <span style="color:#f92672">|</span> PS_WXNEEDED);
+pr <span style="color:#960050;background-color:#1e0010">→</span>ps_flags <span style="color:#f92672">=</span> parent <span style="color:#960050;background-color:#1e0010">→</span>ps_flags <span style="color:#f92672">&amp;</span> (<span style="color:#ae81ff">0x10</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">0x20</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">0x100000</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">0x400000</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">0x200000</span>)
+<span style="color:#66d9ef">if</span> (vnode of controlling terminal <span style="color:#f92672">!=</span> NULL)
+        pr<span style="color:#960050;background-color:#1e0010">→</span>ps_flags <span style="color:#f92672">|=</span> parent<span style="color:#960050;background-color:#1e0010">→</span>ps_flags <span style="color:#f92672">&amp;</span> PS_CONTROLT;
+</code></pre></div><p><code>process_new()</code> continued&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Duplicate sub-structures as needed.
+</span><span style="color:#75715e">     * Increase reference counts on shared objects.
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_SHAREFILES)
+        pr<span style="color:#f92672">-&gt;</span>ps_fd <span style="color:#f92672">=</span> fdshare(parent);
+    <span style="color:#66d9ef">else</span>
+        pr<span style="color:#f92672">-&gt;</span>ps_fd <span style="color:#f92672">=</span> fdcopy(parent);
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_SIGHAND)
+        pr<span style="color:#f92672">-&gt;</span>ps_sigacts <span style="color:#f92672">=</span> sigactsshare(parent);
+    <span style="color:#66d9ef">else</span>
+        pr<span style="color:#f92672">-&gt;</span>ps_sigacts <span style="color:#f92672">=</span> sigactsinit(parent);
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_SHAREVM)
+        pr<span style="color:#f92672">-&gt;</span>ps_vmspace <span style="color:#f92672">=</span> uvmspace_share(parent);
+    <span style="color:#66d9ef">else</span>
+        pr<span style="color:#f92672">-&gt;</span>ps_vmspace <span style="color:#f92672">=</span> uvmspace_fork(parent);
+
+    <span style="color:#66d9ef">if</span> (parent<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">&amp;</span> PS_PROFIL)
+        startprofclock(pr);
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_PTRACE)
+        pr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">|=</span> parent<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">&amp;</span> PS_TRACED;
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_NOZOMBIE)
+        pr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">|=</span> PS_NOZOMBIE;
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_SYSTEM)
+        pr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">|=</span> PS_SYSTEM;
+
+    <span style="color:#75715e">/* mark as embryo to protect against others */</span>
+    pr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">|=</span> PS_EMBRYO;
+
+    <span style="color:#75715e">/* Force visibility of all of the above changes */</span>
+    membar_producer();
+
+    <span style="color:#75715e">/* it&#39;s sufficiently inited to be globally visible */</span>
+    LIST_INSERT_HEAD(<span style="color:#f92672">&amp;</span>allprocess, pr, ps_list);
+
+    <span style="color:#66d9ef">return</span> pr;
+}
+</code></pre></div><p>if-else conditions explained:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">- if child_able_to_share_file_descriptor_table_with_parent:
+         pr-&gt;ps_fd = fdshare(parent)      /* share the table */
+  else
+         pr-&gt;ps_fd = fdcopy(parent)       /* copy the table */
+- if child_able_to_share_the_parent&#39;s_signal_actions:
+         pr-&gt;ps_sigacts = sigactsshare(parent) /* share */
+  else
+         pr-&gt;ps_sigacts = sigactsinit(parent)  /* copy */
+- if child_able_to_share_the_parent&#39;s addr space:
+         pr-&gt;ps_vmspace = uvmspace_share(parent)
+  else
+         pr-&gt;ps_vmspace = uvmspace_fork(parent)
+- if process_able_to_start_profiling:
+         smartprofclock(pr);    /* start profiling on a process */
+- if check_child_able_to_start_ptracing:
+         pr-&gt;ps_flags |= parent-&gt;ps_flags &amp; PS_PTRACED
+- if check_no_signal_or_zombie_at_exit:
+         pr-&gt;ps_flags |= PS_NOZOMBIE /*No signal or zombie at exit
+- if check_signals_stat_swaping:
+         pr-&gt;ps_flags |= PS_SYSTEM
+</code></pre></div><p>update the <code>pr→ps_flags</code> with <code>PS_EMBRYO</code> by ORing it, that is, <code>pr→ps_flags |= PS_EMBRYO /* New process, not yet fledged */</code></p>
+<p><code>membar_producer()</code> → Force visibility of all of the above changes.
+- All stores preceding the memory barrier will reach global visibility before any stores after the memory barrier reach global visibility.</p>
+<p>In short, as per my understanding and discussion with openbsd community, it means forcefully make visible changes globally.</p>
+<p>Insert the new element, that is, <code>pr</code> at the head of the list. Here, head is <code>allprocess</code>  and returns <code>pr</code></p>
+<p><code>fork1()</code> code continued&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">...
+...
+...
+    p<span style="color:#f92672">-&gt;</span>p_fd     <span style="color:#f92672">=</span> pr<span style="color:#f92672">-&gt;</span>ps_fd;
+    p<span style="color:#f92672">-&gt;</span>p_vmspace    <span style="color:#f92672">=</span> pr<span style="color:#f92672">-&gt;</span>ps_vmspace;
+    <span style="color:#66d9ef">if</span> (pr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">&amp;</span> PS_SYSTEM)
+        atomic_setbits_int(<span style="color:#f92672">&amp;</span>p<span style="color:#f92672">-&gt;</span>p_flag, P_SYSTEM);
+
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_PPWAIT) {
+        atomic_setbits_int(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_flags, PS_PPWAIT);
+        atomic_setbits_int(<span style="color:#f92672">&amp;</span>curpr<span style="color:#f92672">-&gt;</span>ps_flags, PS_ISPWAIT);
+    }
+
+<span style="color:#75715e">#ifdef KTRACE
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Copy traceflag and tracefile if enabled.
+</span><span style="color:#75715e">     * If not inherited, these were zeroed above.
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">if</span> (curpr<span style="color:#f92672">-&gt;</span>ps_traceflag <span style="color:#f92672">&amp;</span> KTRFAC_INHERIT)
+        ktrsettrace(pr, curpr<span style="color:#f92672">-&gt;</span>ps_traceflag, curpr<span style="color:#f92672">-&gt;</span>ps_tracevp,
+            curpr<span style="color:#f92672">-&gt;</span>ps_tracecred);
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Finish creating the child thread.  cpu_fork() will copy
+</span><span style="color:#75715e">     * and update the pcb and make the child ready to run.  If
+</span><span style="color:#75715e">     * this is a normal user fork, the child will exit directly
+</span><span style="color:#75715e">     * to user mode via child_return() on its first time slice
+</span><span style="color:#75715e">     * and will not return here.  If this is a kernel thread,
+</span><span style="color:#75715e">     * the specified entry point will be executed.
+</span><span style="color:#75715e">     */</span>
+    cpu_fork(curp, p, NULL, NULL, func, arg <span style="color:#f92672">?</span> arg : p);
+
+    vm <span style="color:#f92672">=</span> pr<span style="color:#f92672">-&gt;</span>ps_vmspace;
+
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_FORK) {
+        forkstat.cntfork<span style="color:#f92672">++</span>;
+        forkstat.sizfork <span style="color:#f92672">+=</span> vm<span style="color:#f92672">-&gt;</span>vm_dsize <span style="color:#f92672">+</span> vm<span style="color:#f92672">-&gt;</span>vm_ssize;
+    } <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_VFORK) {
+        forkstat.cntvfork<span style="color:#f92672">++</span>;
+        forkstat.sizvfork <span style="color:#f92672">+=</span> vm<span style="color:#f92672">-&gt;</span>vm_dsize <span style="color:#f92672">+</span> vm<span style="color:#f92672">-&gt;</span>vm_ssize;
+    } <span style="color:#66d9ef">else</span> {
+        forkstat.cntkthread<span style="color:#f92672">++</span>;
+    }
+
+    <span style="color:#66d9ef">if</span> (pr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">&amp;</span> PS_TRACED <span style="color:#f92672">&amp;&amp;</span> flags <span style="color:#f92672">&amp;</span> FORK_FORK)
+        newptstat <span style="color:#f92672">=</span> malloc(<span style="color:#66d9ef">sizeof</span>(<span style="color:#f92672">*</span>newptstat), M_SUBPROC, M_WAITOK);
+
+    p<span style="color:#f92672">-&gt;</span>p_tid <span style="color:#f92672">=</span> alloctid();
+
+    LIST_INSERT_HEAD(<span style="color:#f92672">&amp;</span>allproc, p, p_list);
+    LIST_INSERT_HEAD(TIDHASH(p<span style="color:#f92672">-&gt;</span>p_tid), p, p_hash);
+    LIST_INSERT_HEAD(PIDHASH(pr<span style="color:#f92672">-&gt;</span>ps_pid), pr, ps_hash);
+    LIST_INSERT_AFTER(curpr, pr, ps_pglist);
+    LIST_INSERT_HEAD(<span style="color:#f92672">&amp;</span>curpr<span style="color:#f92672">-&gt;</span>ps_children, pr, ps_sibling);
+</code></pre></div><p>Substructures <code>p→p_fd</code> and <code>p→p_vmspace</code> directly copied values of <code>pr→ps_fd</code> and <code>pr→ps_vmspace</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* substructures: */</span>
+<span style="color:#66d9ef">struct</span> filedesc <span style="color:#f92672">*</span>p_fd;      <span style="color:#75715e">/* copy of p_p-&gt;ps_fd */</span>
+<span style="color:#66d9ef">struct</span> vmspace <span style="color:#f92672">*</span>p_vmspace;  <span style="color:#75715e">/* copy of p_p-&gt;ps_vmspace */</span>             
+</code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">if (process_has_no_signals_stats_or_swapping) then atomically set bits using ```atomic_setbits_int(pr →ps_flags, PS_SYSTEM);```
+
+if (child_is_suspending_the_parent_process_until_the_child_is terminated (by calling _exit(2) or abnormally), or makes a call to execve(2)) then atomically set bits,
+```atomic_setbits_int(pr →ps_flags, PS_PPWAIT);```
+```atomic_setbits_int(pr →ps_flags, PS_ISPWAIT);```
+</code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#ifdef KTRACE
+</span><span style="color:#75715e"></span><span style="color:#75715e">/* Some KTRACE related things */</span>
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>cpu_fork(curp, p, NULL, NULL, func, arg <span style="color:#f92672">?</span>arg: p)
+
+<span style="color:#75715e">/*
+</span><span style="color:#75715e"> * Finish creating the child thread. cpu_fork() will copy
+</span><span style="color:#75715e"> * and update the pcb and make the child ready to run. The
+</span><span style="color:#75715e"> * child will exit directly to user mode via child_return()
+</span><span style="color:#75715e"> * on its first time slice and will not return here.
+</span><span style="color:#75715e"> */</span>
+</code></pre></div><p>to create or update PCB and make child ready to RUN.</p>
+<p>Address space <code>vm = pr→ps_vmspace</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">if (call is done by fork syscall); then
+    increment the number of fork() system calls.
+    update the vm_pages affected by fork() syscall with addition of data page and stack page. 
+else if (call is done by vfork() syscall); then
+    do as same as if it was fork syscall but for vfork system call. (see above if {for fork})
+else
+    increment the number of kernel threads created.
+
+If (process is being traced &amp;&amp; created by fork system call);then
+{
+    The malloc() function allocates the uninitialized memory in the kernel address space for an object whose size is specified by size, that is, here, sizeof(*newptstat). And, struct ptrace_state *newptstat
+}
+</code></pre></div><p>allocate thread ID, that is, <code>p→p_tid = alloctid();</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* Find an unused tid */</span>
+pid_t
+<span style="color:#a6e22e">alloctid</span>(<span style="color:#66d9ef">void</span>)
+{
+    pid_t tid;
+
+    <span style="color:#66d9ef">do</span> {
+        <span style="color:#75715e">/* (0 .. TID_MASK+1] */</span>
+        tid <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">+</span> (arc4random() <span style="color:#f92672">&amp;</span> TID_MASK);
+    } <span style="color:#66d9ef">while</span> (tfind(tid) <span style="color:#f92672">!=</span> NULL);
+
+    <span style="color:#66d9ef">return</span> (tid);
+}
+</code></pre></div><p>calling <code>arc4random()</code> directly and using <code>tfind</code> function for finding the thread ID by number</p>
+<ul>
+<li>inserts the new element <code>p</code> at the head of the allprocess list</li>
+<li>insert the new element <code>p</code> at the head of the thread hash list</li>
+<li>insert the new element <code>pr</code> at the head of the process hash list</li>
+<li>insert the new element <code>pr</code> after the curpr element</li>
+<li>insert the new element <code>pr</code> at the head of the children process  list</li>
+</ul>
+<p><code>fork1()</code> continued&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">
+    <span style="color:#66d9ef">if</span> (pr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">&amp;</span> PS_TRACED) {
+        pr<span style="color:#f92672">-&gt;</span>ps_oppid <span style="color:#f92672">=</span> curpr<span style="color:#f92672">-&gt;</span>ps_pid;
+        <span style="color:#66d9ef">if</span> (pr<span style="color:#f92672">-&gt;</span>ps_pptr <span style="color:#f92672">!=</span> curpr<span style="color:#f92672">-&gt;</span>ps_pptr)
+            proc_reparent(pr, curpr<span style="color:#f92672">-&gt;</span>ps_pptr);
+
+        <span style="color:#75715e">/*
+</span><span style="color:#75715e">         * Set ptrace status.
+</span><span style="color:#75715e">         */</span>
+        <span style="color:#66d9ef">if</span> (newptstat <span style="color:#f92672">!=</span> NULL) {
+            pr<span style="color:#f92672">-&gt;</span>ps_ptstat <span style="color:#f92672">=</span> newptstat;
+            newptstat <span style="color:#f92672">=</span> NULL;
+            curpr<span style="color:#f92672">-&gt;</span>ps_ptstat<span style="color:#f92672">-&gt;</span>pe_report_event <span style="color:#f92672">=</span> PTRACE_FORK;
+            pr<span style="color:#f92672">-&gt;</span>ps_ptstat<span style="color:#f92672">-&gt;</span>pe_report_event <span style="color:#f92672">=</span> PTRACE_FORK;
+            curpr<span style="color:#f92672">-&gt;</span>ps_ptstat<span style="color:#f92672">-&gt;</span>pe_other_pid <span style="color:#f92672">=</span> pr<span style="color:#f92672">-&gt;</span>ps_pid;
+            pr<span style="color:#f92672">-&gt;</span>ps_ptstat<span style="color:#f92672">-&gt;</span>pe_other_pid <span style="color:#f92672">=</span> curpr<span style="color:#f92672">-&gt;</span>ps_pid;
+        }
+    }
+
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * For new processes, set accounting bits and mark as complete.
+</span><span style="color:#75715e">     */</span>
+    getnanotime(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_start);
+    pr<span style="color:#f92672">-&gt;</span>ps_acflag <span style="color:#f92672">=</span> AFORK;
+    atomic_clearbits_int(<span style="color:#f92672">&amp;</span>pr<span style="color:#f92672">-&gt;</span>ps_flags, PS_EMBRYO);
+
+    <span style="color:#66d9ef">if</span> ((flags <span style="color:#f92672">&amp;</span> FORK_IDLE) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+        fork_thread_start(p, curp, flags);
+    <span style="color:#66d9ef">else</span>
+        p<span style="color:#f92672">-&gt;</span>p_cpu <span style="color:#f92672">=</span> arg;
+
+    free(newptstat, M_SUBPROC, <span style="color:#66d9ef">sizeof</span>(<span style="color:#f92672">*</span>newptstat));
+
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Notify any interested parties about the new process.
+</span><span style="color:#75715e">     */</span>
+    KNOTE(<span style="color:#f92672">&amp;</span>curpr<span style="color:#f92672">-&gt;</span>ps_klist, NOTE_FORK <span style="color:#f92672">|</span> pr<span style="color:#f92672">-&gt;</span>ps_pid);
+
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Update stats now that we know the fork was successful.
+</span><span style="color:#75715e">     */</span>
+    uvmexp.forks<span style="color:#f92672">++</span>;
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_PPWAIT)
+        uvmexp.forks_ppwait<span style="color:#f92672">++</span>;
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_SHAREVM)
+        uvmexp.forks_sharevm<span style="color:#f92672">++</span>;
+
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Pass a pointer to the new process to the caller.
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">if</span> (rnewprocp <span style="color:#f92672">!=</span> NULL)
+        <span style="color:#f92672">*</span>rnewprocp <span style="color:#f92672">=</span> p;
+</code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">If (isProcessPTRACED())
+{
+    then save the parent process id during ptracing, that is, 
+    pr→ps_oppid = curpr→ps_pid
+    If (pointer to parent process_of_child != pointer to parent process_of_current_process)
+    {
+        proc_reparent(pr, curpr→ps_pptr); /* Make current process the new parent of process child, that is, pr*/
+    }
+}
+</code></pre></div><p>Now, check whether <code>newptstat</code> contains some address, in our case, <code>newptstat</code> contains a kernel virtual address returned by malloc(9)</p>
+<p>If above condition is true, that is, newptstat != NULL . Then, set the ptrace status:</p>
+<ul>
+<li>
+<p>Set <code>newptstat</code> point to the ptrace state structure then make the <code>newptstat</code> point to NULL</p>
+</li>
+<li>
+<p>Update the ptrace status to the <code>curpr</code> process and also the <code>pr</code> process.</p>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">curpr-&gt;ps_ptstat-&gt;pe_report_event = PTRACE_FORK;
+pr-&gt;ps_ptstat-&gt;pe_report_event = PTRACE_FORK;
+curpr-&gt;ps_ptstat-&gt;pe_other_pid = pr-&gt;ps_pid;
+pr-&gt;ps_ptstat-&gt;pe_other_pid = curpr-&gt;ps_pid;
+</code></pre></div><p>for the new process set accounting bits and mark it as complete.</p>
+<ul>
+<li>get the nano time to start the process.</li>
+<li>Set accounting flags to AFORK which means forked but not execed.</li>
+<li>atomically clear the bits.</li>
+<li>Then, check for the new child is in the IDLE state or not, if yes then make it runnable and add it to the run queue by <code>fork_thread_start()</code></li>
+<li>If it is not in the IDLE state then put arg to the current CPU, running on</li>
+</ul>
+<p>Freeing the memory or kernel virtual address that is allocated by malloc for <code>newptstat</code> through free</p>
+<p>Notify any interested parties about the new process via KNOTE</p>
+<p>Now, update the stats counter for successfully forked</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">        uvmexp.forks++; /* --&gt;For forks */ 
+
+        if (flags &amp; FORK_PPWAIT)
+                uvmexp.forks_ppwait++; /* --&gt; counter for forks where parent waits */
+        if (flags &amp; FORK_SHAREVM)
+                uvmexp.forks_sharevm++; /* --&gt; counter for forks where vmspace is shared */
+</code></pre></div><p>Now, pass pointer of the new process to the caller.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">if</span> (rnewprocp <span style="color:#f92672">!=</span> NULL)
+        <span style="color:#f92672">*</span>rnewprocp <span style="color:#f92672">=</span> p;
+</code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Preserve synchronization semantics of vfork.  If waiting for
+</span><span style="color:#75715e">     * child to exec or exit, set PS_PPWAIT on child and PS_ISPWAIT
+</span><span style="color:#75715e">     * on ourselves, and sleep on our process for the latter flag
+</span><span style="color:#75715e">     * to go away.
+</span><span style="color:#75715e">     * XXX Need to stop other rthreads in the parent
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">if</span> (flags <span style="color:#f92672">&amp;</span> FORK_PPWAIT)
+        <span style="color:#66d9ef">while</span> (curpr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">&amp;</span> PS_ISPWAIT)
+            tsleep(curpr, PWAIT, <span style="color:#e6db74">&#34;ppwait&#34;</span>, <span style="color:#ae81ff">0</span>);
+
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * If we&#39;re tracing the child, alert the parent too.
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">if</span> ((flags <span style="color:#f92672">&amp;</span> FORK_PTRACE) <span style="color:#f92672">&amp;&amp;</span> (curpr<span style="color:#f92672">-&gt;</span>ps_flags <span style="color:#f92672">&amp;</span> PS_TRACED))
+        psignal(curp, SIGTRAP);
+
+    <span style="color:#75715e">/*
+</span><span style="color:#75715e">     * Return child pid to parent process
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">if</span> (retval <span style="color:#f92672">!=</span> NULL) {
+        retval[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> pr<span style="color:#f92672">-&gt;</span>ps_pid;
+        retval[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+    }
+    <span style="color:#66d9ef">return</span> (<span style="color:#ae81ff">0</span>);
+}
+</code></pre></div><ul>
+<li>setting the <code>PPWAIT</code> on child and the <code>PS_ISPWAIT</code> on ourselves, that is, the parent and then go to the sleep on our process via tsleep</li>
+<li>Check, If the child is started with tracing enables &amp;&amp; the current process is being traced then alert the parent by using SIGTRAP signal</li>
+<li>Now, return the child pid to the parent process</li>
+</ul>
+<p>then we can see in the debugger that after the fork1, it jumps to <code>sys/arch/amd64/amd64/trap.c</code> file for system call handling and for the setting frame.</p>
+<p>Some of the machine independent (MI) functions defined in <code>sys/sys/syscall_mi.h</code> file, like, <code>mi_syscall()</code>, <code>mi_syscall_return()</code> and <code>mi_child_return()</code>.</p>
+<p>after handling the system calls from &ldquo;trap.c&rdquo;, control pass to the <code>sys_execve()</code> system call</p>
+<p><strong>References:</strong></p>
+<ul>
+<li><a href="https://github.com/openbsd/src/tree/master/sys">OpenBSD Source Codes</a></li>
+<li><a href="https://atmnis.com/~proger/openkyiv/openkyiv2009_proger_sys.pdf">OpenBSD kernel Internals — The Hitchhiker’s Guide</a></li>
+<li><a href="https://man.openbsd.org/">OpenBSD manual pages</a></li>
+<li><a href="http://blog.pr4tt.com/2016/02/02/BSD-virtual-memory/">BSD Virtual Memory</a></li>
+<li><a href="http://netbsd.gw.com/cgi-bin/man-cgi?++NetBSD-current">NetBSD manual pages</a></li>
+<li><a href="https://www.freebsd.org/cgi/man.cgi?">FreeBSD manual pages</a></li>
+<li><a href="http://shop.oreilly.com/product/9780596005658.do">Understanding The Linux Kernel</a></li>
+<li><a href="https://bookgenerate.com/dl.php?id=0672329468">Linux Kernel Development - Robert Love</a></li>
+<li>Google :)</li>
+</ul>
+<p>Finally!! If something is missing or not correct, please feel free to update.
+<br>
+<br>
+<code>Happy Kernel Hacking</code></p>
+
+      </div></div>
+
+  
+  
+<div class="pagination">
+    <div class="pagination__title">
+        <span class="pagination__title-h">Read other posts</span>
+        <hr />
+    </div>
+    <div class="pagination__buttons">
+        
+        <span class="button previous">
+            <a href="https://bsdb0y.github.io/posts/tale_of_openbsd_memory_allocator_internals/">
+                <span class="button__icon">←</span>
+                <span class="button__text">Tale of OpenBSD secure memory allocator internals - malloc(3)</span>
+            </a>
+        </span>
+        
+        
+        <span class="button next">
+            <a href="https://bsdb0y.github.io/posts/openbsd-intro-to-update-on-pledge/">
+                <span class="button__text">OpenBSD - short intro on &#34;execpromises&#34; in the pledge(2)</span>
+                <span class="button__icon">→</span>
+            </a>
+        </span>
+        
+    </div>
+</div>
+
+  
+
+  
+
+</div>
+
+  </div>
+
+  
+    <footer class="footer">
+  <div class="footer__inner">
+    
+      <div class="copyright">
+        <span>Neeraj Pal</span>
+    
+        <span>:: Theme made by <a href="https://twitter.com/panr">panr</a></span>
+      </div>
+  </div>
+</footer>
+
+<script src="https://bsdb0y.github.io/assets/main.js"></script>
+<script src="https://bsdb0y.github.io/assets/prism.js"></script>
+
+
+
+
+
+
+
+  
+</div>
+
+</body>
+</html>

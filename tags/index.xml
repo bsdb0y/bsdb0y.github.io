@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on bsdb0y</title>
+    <link>https://bsdb0y.github.io/tags/</link>
+    <description>Recent content in Tags on bsdb0y</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 28 Mar 2020 00:00:00 +0000</lastBuildDate><atom:link href="https://bsdb0y.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>internals</title>
+      <link>https://bsdb0y.github.io/tags/internals/</link>
+      <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/tags/internals/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>malloc</title>
+      <link>https://bsdb0y.github.io/tags/malloc/</link>
+      <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/tags/malloc/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>openbsd</title>
+      <link>https://bsdb0y.github.io/tags/openbsd/</link>
+      <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/tags/openbsd/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>kernel</title>
+      <link>https://bsdb0y.github.io/tags/kernel/</link>
+      <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/tags/kernel/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>process</title>
+      <link>https://bsdb0y.github.io/tags/process/</link>
+      <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/tags/process/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>pledge</title>
+      <link>https://bsdb0y.github.io/tags/pledge/</link>
+      <pubDate>Tue, 02 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/tags/pledge/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>security</title>
+      <link>https://bsdb0y.github.io/tags/security/</link>
+      <pubDate>Tue, 02 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/tags/security/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>hugo</title>
+      <link>https://bsdb0y.github.io/tags/hugo/</link>
+      <pubDate>Fri, 20 Jul 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/tags/hugo/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>server</title>
+      <link>https://bsdb0y.github.io/tags/server/</link>
+      <pubDate>Fri, 20 Jul 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/tags/server/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>static-site</title>
+      <link>https://bsdb0y.github.io/tags/static-site/</link>
+      <pubDate>Fri, 20 Jul 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://bsdb0y.github.io/tags/static-site/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+  </channel>
+</rss>

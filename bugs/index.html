@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+    <title>Bugs &amp; Patches :: bsdb0y</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Following are the security issues found in various open source projects and list of CVEs
+Cooperated directly with MITRE in the process of evaluating and assigning the following CVEs. Additionally personally triaged them, evaluated their security impact and reported the issues to upstream developers with the suggested fixes, providing guidance with understanding the issue and often testing upstream provided fixes
+ md4c - Use of uninitialized value in md_analyze_line() - CVE-2021-30027 samurai - Null pointer dereference in writefile() - CVE-2021-30218 samurai - Null pointer dereference in printstatus() - CVE-2021-30219 discount - Stack overflow in islist() tidy-html5 - Heap Use-After-Free in CleanNode() schismtracker - Heap-based buffer overflow - Out-of-Bound Read in fmt_mtm_load_song() nsd - Buffer overflow (Out-of-Bound Write) in dname_to_string() dpic - Heap-based buffer overflow in storestring() dpic - Buffer overflow (Out-of-Bound Read) in yylex() dpic - Heap Use After Free in deletestringbox() [file: dpic." />
+<meta name="keywords" content="" />
+<meta name="robots" content="noodp" />
+<link rel="canonical" href="https://bsdb0y.github.io/bugs/" />
+
+
+
+
+<link rel="stylesheet" href="https://bsdb0y.github.io/assets/style.css">
+
+  <link rel="stylesheet" href="https://bsdb0y.github.io/assets/blue.css">
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="https://bsdb0y.github.io/img/apple-touch-icon-192x192.png">
+
+  <link rel="shortcut icon" href="https://bsdb0y.github.io/img/favicon/blue.png">
+
+
+
+<meta name="twitter:card" content="summary" />
+
+  
+    <meta name="twitter:site" content="" />
+  
+    <meta name="twitter:creator" content="" />
+
+
+
+<meta property="og:locale" content="en" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Bugs &amp; Patches">
+<meta property="og:description" content="Following are the security issues found in various open source projects and list of CVEs
+Cooperated directly with MITRE in the process of evaluating and assigning the following CVEs. Additionally personally triaged them, evaluated their security impact and reported the issues to upstream developers with the suggested fixes, providing guidance with understanding the issue and often testing upstream provided fixes
+ md4c - Use of uninitialized value in md_analyze_line() - CVE-2021-30027 samurai - Null pointer dereference in writefile() - CVE-2021-30218 samurai - Null pointer dereference in printstatus() - CVE-2021-30219 discount - Stack overflow in islist() tidy-html5 - Heap Use-After-Free in CleanNode() schismtracker - Heap-based buffer overflow - Out-of-Bound Read in fmt_mtm_load_song() nsd - Buffer overflow (Out-of-Bound Write) in dname_to_string() dpic - Heap-based buffer overflow in storestring() dpic - Buffer overflow (Out-of-Bound Read) in yylex() dpic - Heap Use After Free in deletestringbox() [file: dpic." />
+<meta property="og:url" content="https://bsdb0y.github.io/bugs/" />
+<meta property="og:site_name" content="bsdb0y" />
+
+  
+    <meta property="og:image" content="https://bsdb0y.github.io/img/favicon/blue.png">
+  
+
+<meta property="og:image:width" content="2048">
+<meta property="og:image:height" content="1024">
+
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+<body class="blue">
+
+
+<div class="container center headings--one-size">
+
+  <header class="header">
+  <div class="header__inner">
+    <div class="header__logo">
+      <a href="/">
+  <div class="logo">
+    bsdb0y
+  </div>
+</a>
+
+    </div>
+    
+      <div class="menu-trigger">menu</div>
+    
+  </div>
+  
+    <nav class="menu">
+  <ul class="menu__inner menu__inner--desktop">
+    
+      
+        
+          <li><a href="/about">About</a></li>
+        
+      
+        
+          <li><a href="/bugs">Bugs</a></li>
+        
+      
+      
+    
+
+    
+  </ul>
+
+  <ul class="menu__inner menu__inner--mobile">
+    
+      
+        <li><a href="/about">About</a></li>
+      
+    
+      
+        <li><a href="/bugs">Bugs</a></li>
+      
+    
+    
+  </ul>
+</nav>
+
+  
+</header>
+
+
+  <div class="content">
+    
+<div class="post">
+  <h1 class="post-title">
+    <a href="https://bsdb0y.github.io/bugs/">Bugs &amp; Patches</a></h1>
+  <div class="post-meta">
+    
+    
+    
+      <span class="post-reading-time">:: 3 min read (513 words)</span>
+    
+  </div>
+
+  
+  
+
+
+  
+
+  <div class="post-content"><div>
+        <p>Following are the security issues found in various open source projects and list of CVEs<br>
+Cooperated directly with MITRE in the process of evaluating and assigning the following CVEs. Additionally personally triaged them, evaluated their security impact and reported the issues to upstream developers with the suggested fixes, providing guidance with understanding the issue and often testing upstream provided fixes</p>
+<ul>
+<li>md4c - <a href="https://github.com/mity/md4c/issues/155">Use of uninitialized value</a> in md_analyze_line() - <a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-30027">CVE-2021-30027</a></li>
+<li>samurai - <a href="https://github.com/michaelforney/samurai/issues/67">Null pointer dereference</a> in writefile() - <a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-30218">CVE-2021-30218</a></li>
+<li>samurai - <a href="https://github.com/michaelforney/samurai/issues/68">Null pointer dereference</a> in printstatus() - <a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-30219">CVE-2021-30219</a></li>
+<li>discount - <a href="https://github.com/Orc/discount/issues/239">Stack overflow</a> in islist()</li>
+<li>tidy-html5 - <a href="https://github.com/htacg/tidy-html5/issues/946">Heap Use-After-Free</a> in CleanNode()</li>
+<li>schismtracker - <a href="https://github.com/schismtracker/schismtracker/issues/249">Heap-based buffer overflow - Out-of-Bound Read</a> in fmt_mtm_load_song()</li>
+<li>nsd - <a href="https://github.com/NLnetLabs/nsd/issues/168">Buffer overflow (Out-of-Bound Write)</a> in dname_to_string()</li>
+<li>dpic - <a href="https://gitlab.com/aplevich/dpic/-/issues/5">Heap-based buffer overflow</a> in storestring()</li>
+<li>dpic - <a href="https://gitlab.com/aplevich/dpic/-/issues/6">Buffer overflow (Out-of-Bound Read)</a> in yylex()</li>
+<li>dpic - <a href="https://gitlab.com/aplevich/dpic/-/issues/7">Heap Use After Free</a> in deletestringbox() [file: dpic.y:L5716]</li>
+<li>dpic - <a href="https://gitlab.com/aplevich/dpic/-/issues/8">Heap-based Buffer Overflow</a> in makevar()</li>
+<li>dpic - <a href="https://gitlab.com/aplevich/dpic/-/issues/9">Heap Use After Free</a> in cmpstring()</li>
+<li>dpic - <a href="https://gitlab.com/aplevich/dpic/-/issues/10">Heap Use After Free</a> in deletestringbox() [file: dpic.y:L5724]</li>
+<li>dpic - <a href="https://gitlab.com/aplevich/dpic/-/issues/11">Buffer overflow (Out-of-Bound Write)</a> in trimname()</li>
+<li>saschahauer/barebox - <a href="https://lore.barebox.org/barebox/CANi4_RUhZuWvG+v9R1Ae5BmCtHx-Bz_4Ay0BiuBYCrqXUAOBiw@mail.gmail.com/">Stack buffer overflow (Out-of-bound Write)</a> in nfs_start()</li>
+<li>saschahauer/barebox - <a href="https://lore.barebox.org/barebox/CANi4_RU6QrU-ciUTpkLzGxp4fbibn0Dhyo4xP1m0=Mxm5LA74g@mail.gmail.com/">Stack buffer overflow (Out of bound Read)</a> in __d_alloc()</li>
+<li>saschahauer/barebox - <a href="https://lore.barebox.org/barebox/20210507094324.GV19819@pengutronix.de/">Stack buffer overflow (Out-of-bound Write)</a> in barebox_printf()</li>
+</ul>
+<h2 id="freebsdhttpsbugsfreebsdorgbugzillabuglistcgibug_status__open__bug_status__closed__bug_statusnewbug_statusopenbug_statusin20progressbug_statusclosedbug_statusunconfirmedemail1neerajpal0940gmailcomemailreporter11emailtype1equalsquery_formatadvancedresolution---resolutionfixed-no-cves"><a href="https://bugs.freebsd.org/bugzilla/buglist.cgi?bug_status=__open__&amp;bug_status=__closed__&amp;bug_status=New&amp;bug_status=Open&amp;bug_status=In%20Progress&amp;bug_status=Closed&amp;bug_status=UNCONFIRMED&amp;email1=neerajpal09%40gmail.com&amp;emailreporter1=1&amp;emailtype1=equals&amp;query_format=advanced&amp;resolution=---&amp;resolution=FIXED">FreeBSD</a> (no cves)<a href="#freebsdhttpsbugsfreebsdorgbugzillabuglistcgibug_status__open__bug_status__closed__bug_statusnewbug_statusopenbug_statusin20progressbug_statusclosedbug_statusunconfirmedemail1neerajpal0940gmailcomemailreporter11emailtype1equalsquery_formatadvancedresolution---resolutionfixed-no-cves" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h2>
+<ul>
+<li>
+<p><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=244384">UFS FileSystem</a></p>
+<ul>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=244342">Kernel panic observed while plugging the UFS USB drive on FreeBSD13-CURRENT, FreeBSD 12.1-RELEASE r354233 and FreeBSD 12.1-STABLE r358121</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=244344">Kernel panic observed while plugging the UFS USB drive on FreeBSD13-CURRENT, FreeBSD 12.1-RELEASE r354233 and FreeBSD 12.1-STABLE r358121</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=244346">Kernel panic observed with crash signature &ldquo;vm_fault_lookup: fault on nofault entry, addr: 0xfffffe0032000000&rdquo; while plugging the UFS USB drive on FreeBSD13-CURRENT</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=244348">Kernel panic observed while plugging the UFS USB drive on FreeBSD13-CURRENT, FreeBSD 12.1-RELEASE r354233 and FreeBSD 12.1-STABLE r358121</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=244349">Kernel panic observed with crash signature &ldquo;wrong length 34560 for sectorsize 512&rdquo; while plugging the UFS USB drive on FreeBSD 13-CURRENT</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=244350">Kernel panic observed with crash signature &ldquo;getblk: size(75776) &gt; maxbcachebuf(65536)&rdquo; while mouting the UFS USB drive on FreeBSD13-CURRENT, FreeBSD 12.1-RELEASE r354233 and FreeBSD 12.1-STABLE r358121</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=244351">Kernel panic observed while plugging the UFS USB drive on FreeBSD13-CURRENT, FreeBSD 12.1-RELEASE r354233 and FreeBSD 12.1-STABLE r358121</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=244352">Kernel panic observed with crash signature &ldquo;ufs_dirbad: /mnt/test: bad dir ino 2 at offset 154: mangled entry&rdquo; while mouting the UFS USB drive on FreeBSD13-CURRENT, FreeBSD 12.1-RELEASE r354233 and FreeBSD 12.1-STABLE r358121</a></li>
+</ul>
+</li>
+<li>
+<p><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239973">Kernel Crash: due to device_get_ivars(9) returns NULL which leads to Null pointer dereference for multiple USB drivers</a></p>
+</li>
+<li>
+<p>ping(8)</p>
+<ul>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239974">Segmentation fault due to Out-of-Bounds Write</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239976">Integer truncation with otion &ldquo;-s&rdquo;</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239977">Integer Overflow with option &ldquo;-G&rdquo; and &ldquo;-g&rdquo;</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239978">Integer Overflow with option &ldquo;-h&rdquo;</a></li>
+<li><a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239975">Segmentation fault due to Out-of-Bounds Read</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="patches">Patches<a href="#patches" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h2>
+<ul>
+<li>
+<p>FreeBSD</p>
+<ul>
+<li>Approved and accepted <a href="https://svnweb.freebsd.org/base/head/sbin/ping/ping.c?r1=363102&amp;r2=363101&amp;pathrev=363102">patch</a> for the issue <a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239976">integer truncation with otion &ldquo;-s&rdquo;</a></li>
+<li>Submitted <a href="https://bugs.freebsd.org/bugzilla/attachment.cgi?bugid=239974&amp;action=viewall">fix</a> for the issue <a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239974">segmentation fault due to Out-of-Bounds Write</a></li>
+<li>Submitted <a href="https://bugs.freebsd.org/bugzilla/attachment.cgi?id=216784&amp;action=edit">fix</a> for the issue <a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239975">segmentation fault due to Out-of-Bounds Read</a></li>
+<li>Submitted <a href="https://bugs.freebsd.org/bugzilla/attachment.cgi?bugid=239977&amp;action=viewall">fix</a> for the issue <a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239977">integer overflow with option &ldquo;-G&rdquo; and &ldquo;-g&rdquo;</a></li>
+<li>Submitted <a href="https://bugs.freebsd.org/bugzilla/attachment.cgi?bugid=239978&amp;action=viewall">fix</a> for the issue <a href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239978">integer overflow with option &ldquo;-h&rdquo;</a></li>
+</ul>
+</li>
+<li>
+<p><a href="https://github.com/saschahauer/barebox">saschahauer/barebox</a> bootloader</p>
+<ul>
+<li><a href="https://github.com/saschahauer/barebox/commit/b1d6710dce6f2f5b7dff4d6f127a75acad8da9af">Removed Unreachable code: net/net.c: net_handle_arp()</a></li>
+<li>Submitted documentation <a href="https://lore.barebox.org/barebox/20210508190854.80250-1-neerajpal09@gmail.com/">patch</a> for running barebox bootloader in sandbox mode</li>
+</ul>
+</li>
+</ul>
+<h5 id="discussions-for-my-queries-and-issues-on-lunix-mailing-listshttpsmarcinfoa149745405500002r1w2">Discussions for my queries and issues on <a href="https://marc.info/?a=149745405500002&amp;r=1&amp;w=2">(L|U)nix mailing lists</a><a href="#discussions-for-my-queries-and-issues-on-lunix-mailing-listshttpsmarcinfoa149745405500002r1w2" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h5>
+
+      </div></div>
+
+  
+
+  
+
+</div>
+
+  </div>
+
+  
+    <footer class="footer">
+  <div class="footer__inner">
+    
+      <div class="copyright">
+        <span>Neeraj Pal</span>
+    
+        <span>:: Theme made by <a href="https://twitter.com/panr">panr</a></span>
+      </div>
+  </div>
+</footer>
+
+<script src="https://bsdb0y.github.io/assets/main.js"></script>
+<script src="https://bsdb0y.github.io/assets/prism.js"></script>
+
+
+
+
+
+
+
+  
+</div>
+
+</body>
+</html>

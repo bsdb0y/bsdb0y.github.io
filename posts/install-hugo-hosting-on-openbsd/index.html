@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+    <title>Installing Hugo and publishing Hugo web-pages on OpenBSD server :: bsdb0y</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Hi there,
+Today, we will looking at installation of hugo - a static site generator and deployment on OpenBSD server
+Installing hugo
+  Tested and deployed hugo generated site pages on OpenBSD 6.3-stable and at the time of writing this blog, hugo is not available in the ports on OpenBSD 6.3, so, we will be proceeding with installation from source.
+  Dependencies
+ go mage (make alternative for go)    Following are the steps to install mage from the source on OpenBSD 6." />
+<meta name="keywords" content="" />
+<meta name="robots" content="noodp" />
+<link rel="canonical" href="https://bsdb0y.github.io/posts/install-hugo-hosting-on-openbsd/" />
+
+
+
+
+<link rel="stylesheet" href="https://bsdb0y.github.io/assets/style.css">
+
+  <link rel="stylesheet" href="https://bsdb0y.github.io/assets/blue.css">
+
+
+
+
+
+
+<link rel="apple-touch-icon" href="https://bsdb0y.github.io/img/apple-touch-icon-192x192.png">
+
+  <link rel="shortcut icon" href="https://bsdb0y.github.io/img/favicon/blue.png">
+
+
+
+<meta name="twitter:card" content="summary" />
+
+  
+    <meta name="twitter:site" content="" />
+  
+    <meta name="twitter:creator" content="bsdb0y" />
+
+
+
+<meta property="og:locale" content="en" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Installing Hugo and publishing Hugo web-pages on OpenBSD server">
+<meta property="og:description" content="Hi there,
+Today, we will looking at installation of hugo - a static site generator and deployment on OpenBSD server
+Installing hugo
+  Tested and deployed hugo generated site pages on OpenBSD 6.3-stable and at the time of writing this blog, hugo is not available in the ports on OpenBSD 6.3, so, we will be proceeding with installation from source.
+  Dependencies
+ go mage (make alternative for go)    Following are the steps to install mage from the source on OpenBSD 6." />
+<meta property="og:url" content="https://bsdb0y.github.io/posts/install-hugo-hosting-on-openbsd/" />
+<meta property="og:site_name" content="bsdb0y" />
+
+  
+    <meta property="og:image" content="https://bsdb0y.github.io/img/favicon/blue.png">
+  
+
+<meta property="og:image:width" content="2048">
+<meta property="og:image:height" content="1024">
+
+
+  <meta property="article:published_time" content="2018-07-20 00:00:00 &#43;0000 UTC" />
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+<body class="blue">
+
+
+<div class="container center headings--one-size">
+
+  <header class="header">
+  <div class="header__inner">
+    <div class="header__logo">
+      <a href="/">
+  <div class="logo">
+    bsdb0y
+  </div>
+</a>
+
+    </div>
+    
+      <div class="menu-trigger">menu</div>
+    
+  </div>
+  
+    <nav class="menu">
+  <ul class="menu__inner menu__inner--desktop">
+    
+      
+        
+          <li><a href="/about">About</a></li>
+        
+      
+        
+          <li><a href="/bugs">Bugs</a></li>
+        
+      
+      
+    
+
+    
+  </ul>
+
+  <ul class="menu__inner menu__inner--mobile">
+    
+      
+        <li><a href="/about">About</a></li>
+      
+    
+      
+        <li><a href="/bugs">Bugs</a></li>
+      
+    
+    
+  </ul>
+</nav>
+
+  
+</header>
+
+
+  <div class="content">
+    
+<div class="post">
+  <h1 class="post-title">
+    <a href="https://bsdb0y.github.io/posts/install-hugo-hosting-on-openbsd/">Installing Hugo and publishing Hugo web-pages on OpenBSD server</a></h1>
+  <div class="post-meta">
+    
+      <span class="post-date">
+        2018-07-20
+        
+      </span>
+    
+    
+      <span class="post-author">:: bsdb0y</span>
+    
+    
+      <span class="post-reading-time">:: 3 min read (460 words)</span>
+    
+  </div>
+
+  
+  <span class="post-tags">
+    
+    #<a href="https://bsdb0y.github.io/tags/openbsd/">openbsd</a>&nbsp;
+    
+    #<a href="https://bsdb0y.github.io/tags/hugo/">hugo</a>&nbsp;
+    
+    #<a href="https://bsdb0y.github.io/tags/static-site/">static-site</a>&nbsp;
+    
+    #<a href="https://bsdb0y.github.io/tags/server/">server</a>&nbsp;
+    
+  </span>
+  
+  
+
+
+  
+
+  <div class="post-content"><div>
+        <p>Hi there,</p>
+<p>Today, we will looking at installation of <a href="">hugo</a> -  a static site generator and deployment on OpenBSD server</p>
+<p>Installing hugo</p>
+<ul>
+<li>
+<p>Tested and deployed hugo generated site pages on <strong>OpenBSD 6.3-stable</strong> and at the time of writing this blog, hugo is not available in the ports on <strong>OpenBSD 6.3</strong>, so, we will be proceeding with installation from source.</p>
+</li>
+<li>
+<p>Dependencies</p>
+<ul>
+<li>go</li>
+<li>mage (make alternative for go)</li>
+</ul>
+</li>
+<li>
+<p>Following are the steps to install <code>mage</code> from the source on OpenBSD 6.3:</p>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">go get github.com/magefile/mage
+cd <span style="color:#e6db74">${</span>GOPATH<span style="color:#66d9ef">:-</span>$HOME/go<span style="color:#e6db74">}</span>/src/github.com/magefile/mage
+go run bootstrap.go
+</code></pre></div><ul>
+<li>then, execute the following command to copy the mage binary to /usr/bin/ directory:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">doas cp $HOME/go/bin/mage /usr/bin/
+</code></pre></div><ul>
+<li>Download <code>hugo</code> from git:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">go get -d github.com/gohugoio/hugo
+cd <span style="color:#e6db74">${</span>GOPATH<span style="color:#66d9ef">:-</span>$HOME/go<span style="color:#e6db74">}</span>/src/github.com/gohugoio/hugo
+mage vendor
+mage install
+</code></pre></div><p>Now, execute the following command to copy the hugo binary to /usr/bin/ directory:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">doas cp $HOME/go/bin/hugo /usr/bin/
+</code></pre></div><p>Generating and hosting static pages using hugo locally</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#f92672">[</span>xxx@localhost ~<span style="color:#f92672">]</span>$ hugo new site ~/example-site
+Congratulations! Your new Hugo site is created in /home/feddy/example-site.
+
+Just a few more steps and you<span style="color:#e6db74">&#39;re ready to go:
+</span><span style="color:#e6db74">
+</span><span style="color:#e6db74">1\. Download a theme into the same-named folder.
+</span><span style="color:#e6db74">   Choose a theme from https://themes.gohugo.io/, or
+</span><span style="color:#e6db74">   create your own with the &#34;hugo new theme &#34; command.
+</span><span style="color:#e6db74">2\. Perhaps you want to add some content. You can add single files
+</span><span style="color:#e6db74">   with &#34;hugo new /.&#34;.
+</span><span style="color:#e6db74">3\. Start the built-in live server via &#34;hugo server&#34;.
+</span><span style="color:#e6db74">
+</span><span style="color:#e6db74">Visit https://gohugo.io/ for quickstart guide and full documentation.
+</span><span style="color:#e6db74">[xxx@localhost ~]$
+</span><span style="color:#e6db74">[xxx@localhost ~]$ cd example-site/
+</span><span style="color:#e6db74">[xxx@localhost example-site]$ git clone https://github.com/halogenica/beautifulhugo.git themes/beautifulhugo
+</span><span style="color:#e6db74">Cloning into &#39;</span>themes/beautifulhugo<span style="color:#960050;background-color:#1e0010">&#39;</span>...
+remote: Enumerating objects: 18, <span style="color:#66d9ef">done</span>.
+remote: Counting objects: 100% <span style="color:#f92672">(</span>18/18<span style="color:#f92672">)</span>, <span style="color:#66d9ef">done</span>.
+remote: Compressing objects: 100% <span style="color:#f92672">(</span>15/15<span style="color:#f92672">)</span>, <span style="color:#66d9ef">done</span>.
+remote: Total <span style="color:#ae81ff">1786</span> <span style="color:#f92672">(</span>delta 4<span style="color:#f92672">)</span>, reused <span style="color:#ae81ff">8</span> <span style="color:#f92672">(</span>delta 3<span style="color:#f92672">)</span>, pack-reused <span style="color:#ae81ff">1768</span>
+Receiving objects: 100% <span style="color:#f92672">(</span>1786/1786<span style="color:#f92672">)</span>, 2.45 MiB | 288.00 KiB/s, <span style="color:#66d9ef">done</span>.
+Resolving deltas: 100% <span style="color:#f92672">(</span>1053/1053<span style="color:#f92672">)</span>, <span style="color:#66d9ef">done</span>.
+<span style="color:#f92672">[</span>xxx@localhost example-site<span style="color:#f92672">]</span>$
+</code></pre></div><ul>
+<li>then, edit the config.toml file and add line theme = &ldquo;beautifulhugo&rdquo; and start hugo server:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hugo server -D
+</code></pre></div><p>or can also use hugo &ldquo;-t&rdquo; option from the command line,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hugo server -t beautifulhugo
+</code></pre></div><ul>
+<li>open the link in browser to access the geenrated web-page, <a href="http://localhost:1313">http://localhost:1313/</a></li>
+</ul>
+<p>Adding the first post using hugo</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hugo new posts/my-first-post.md
+</code></pre></div><p>for full the documentation please visit <a href="https://gohugo.io/documentation/">Hugo documentation</a></p>
+<p>Deployment of the newly generated static site on OpenBSD server</p>
+<ul>
+<li>did not find much on how to deploy the static website after creation of the static site, though, found several blogs and posts about using <code>git</code> and <code>git-hook</code> script for deployment and I feel following is an easy option
+after creating posts, make sure that <code>draft = true</code> has been removed from the posts which are going to publish.</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">rm -rf public/ &amp;&amp; hugo
+use scp or rsync to copy the contents of the public/ directory to the server, here, it is OpenBSD
+</code></pre></div><p>Then start the web server, and enjoy :)</p>
+<p>If something is missing or not correct, please feel free to update</p>
+
+      </div></div>
+
+  
+  
+<div class="pagination">
+    <div class="pagination__title">
+        <span class="pagination__title-h">Read other posts</span>
+        <hr />
+    </div>
+    <div class="pagination__buttons">
+        
+        <span class="button previous">
+            <a href="https://bsdb0y.github.io/posts/pledge-a-openbsd-defensive-approach/">
+                <span class="button__icon">←</span>
+                <span class="button__text">pledge(2): OpenBSD&#39;s defensive approach to OS Security</span>
+            </a>
+        </span>
+        
+        
+    </div>
+</div>
+
+  
+
+  
+
+</div>
+
+  </div>
+
+  
+    <footer class="footer">
+  <div class="footer__inner">
+    
+      <div class="copyright">
+        <span>Neeraj Pal</span>
+    
+        <span>:: Theme made by <a href="https://twitter.com/panr">panr</a></span>
+      </div>
+  </div>
+</footer>
+
+<script src="https://bsdb0y.github.io/assets/main.js"></script>
+<script src="https://bsdb0y.github.io/assets/prism.js"></script>
+
+
+
+
+
+
+
+  
+</div>
+
+</body>
+</html>
