@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   
-    <title>Knightctf 2023 writeup RE Category</title>
+    <title>Knightctf 2023 writeup RE Category :: bsdb0y</title>
   
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Hi there,
 Last weekend, I played a CTF for fun. Here are the writeups of the tasks that I solved (Reverse Engineering category)
-[RE 100] Help Jimmy [RE 150] The Activator [RE 150] The Defuser [RE 200] KrackMe 1.0 [RE 250] Fan [RE 250] Take RISC five times [RE 400] Stegorev [RE 100] Help Jimmy It was a 64-bit Linux elf binary having simple implementation where the player has to choose between going to Jungle or Sea and regardless of any decesion it&amp;rsquo;s endeded up being attacked by tigers or pirates or invalid choice and resulting not getting the flag." />
+[RE 100] Help Jimmy [RE 150] The Activator [RE 150] The Defuser [RE 200] KrackMe 1.0 [RE 250] Fan [RE 250] Take RISC five times [RE 400] Stegorev [RE 100] Help Jimmy It was a 64-bit Linux elf binary having a simple implementation where the player has to choose between going to Jungle or Sea and regardless of any decision, it ended up being attacked by tigers or pirates or an invalid choice and resulting in not getting the flag." />
 <meta name="keywords" content=", " />
 <meta name="robots" content="noodp" />
 
@@ -32,12 +32,17 @@ Last weekend, I played a CTF for fun. Here are the writeups of the tasks that I 
 
 
 
-  <link rel="shortcut icon" href="/img/theme-colors/orange.png">
-  <link rel="apple-touch-icon" href="/img/theme-colors/orange.png">
+  <link rel="shortcut icon" href="/img/theme-colors/blue.png">
+  <link rel="apple-touch-icon" href="/img/theme-colors/blue.png">
 
 
 
 <meta name="twitter:card" content="summary" />
+
+  
+    <meta name="twitter:site" content="" />
+  
+    <meta name="twitter:creator" content="" />
 
 
 
@@ -46,16 +51,16 @@ Last weekend, I played a CTF for fun. Here are the writeups of the tasks that I 
 <meta property="og:title" content="Knightctf 2023 writeup RE Category">
 <meta property="og:description" content="Hi there,
 Last weekend, I played a CTF for fun. Here are the writeups of the tasks that I solved (Reverse Engineering category)
-[RE 100] Help Jimmy [RE 150] The Activator [RE 150] The Defuser [RE 200] KrackMe 1.0 [RE 250] Fan [RE 250] Take RISC five times [RE 400] Stegorev [RE 100] Help Jimmy It was a 64-bit Linux elf binary having simple implementation where the player has to choose between going to Jungle or Sea and regardless of any decesion it&amp;rsquo;s endeded up being attacked by tigers or pirates or invalid choice and resulting not getting the flag." />
+[RE 100] Help Jimmy [RE 150] The Activator [RE 150] The Defuser [RE 200] KrackMe 1.0 [RE 250] Fan [RE 250] Take RISC five times [RE 400] Stegorev [RE 100] Help Jimmy It was a 64-bit Linux elf binary having a simple implementation where the player has to choose between going to Jungle or Sea and regardless of any decision, it ended up being attacked by tigers or pirates or an invalid choice and resulting in not getting the flag." />
 <meta property="og:url" content="/posts/knightctf-2023-writeup-re-category/" />
-<meta property="og:site_name" content="My New Hugo Site" />
+<meta property="og:site_name" content="Terminal" />
 
   
   
   <meta property="og:image" content="/">
 
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="627">
+<meta property="og:image:width" content="2048">
+<meta property="og:image:height" content="1024">
 
 
   <meta property="article:published_time" content="2023-01-28 13:52:32 &#43;0000 UTC" />
@@ -72,24 +77,61 @@ Last weekend, I played a CTF for fun. Here are the writeups of the tasks that I 
 
 
 </head>
-<body class="">
+<body class="blue">
 
 
-<div class="container headings--one-size">
+<div class="container center headings--one-size">
 
   <header class="header">
   <div class="header__inner">
     <div class="header__logo">
       <a href="/">
   <div class="logo">
-    Terminal
+    bsdb0y
   </div>
 </a>
 
     </div>
     
+      <ul class="menu menu--mobile">
+  <li class="menu__trigger">Menu&nbsp;▾</li>
+  <li>
+    <ul class="menu__dropdown">
+      
+        
+          <li><a href="/about">About</a></li>
+        
+      
+        
+          <li><a href="/bugs">Bugs</a></li>
+        
+      
+      
+    </ul>
+  </li>
+</ul>
+
+    
     
   </div>
+  
+    <nav class="navigation-menu">
+  <ul class="navigation-menu__inner menu--desktop">
+    
+      
+        
+          <li><a href="/about">About</a></li>
+        
+      
+        
+          <li><a href="/bugs">Bugs</a></li>
+        
+      
+      
+    
+  </ul>
+</nav>
+
   
 </header>
 
@@ -111,7 +153,7 @@ Last weekend, I played a CTF for fun. Here are the writeups of the tasks that I 
       <span class="post-author">bsdb0y</span>
     
     
-      <span class="post-reading-time">:: 2 min read (238 words)</span>
+      <span class="post-reading-time">:: 10 min read (2125 words)</span>
     
   </div>
 
@@ -135,39 +177,563 @@ Last weekend, I played a CTF for fun. Here are the writeups of the tasks that I 
         <p>Hi there,</p>
 <p>Last weekend, I played a CTF for fun. Here are the writeups of the tasks that I solved (Reverse Engineering category)</p>
 <ul>
-<li>[RE 100] Help Jimmy</li>
-<li>[RE 150] The Activator</li>
-<li>[RE 150] The Defuser</li>
-<li>[RE 200] KrackMe 1.0</li>
-<li>[RE 250] Fan</li>
-<li>[RE 250] Take RISC five times</li>
-<li>[RE 400] Stegorev</li>
+<li><a href="#re-100-help-jimmy">[RE 100] Help Jimmy</a></li>
+<li><a href="#re-150-the-activator">[RE 150] The Activator</a></li>
+<li><a href="#re-150-the-defuser">[RE 150] The Defuser</a></li>
+<li><a href="#re-200-krackme-10">[RE 200] KrackMe 1.0</a></li>
+<li><a href="#re-250-fan">[RE 250] Fan</a></li>
+<li><a href="#re-250-take-risc-five-times">[RE 250] Take RISC five times</a></li>
+<li><a href="#re-400-stegorev">[RE 400] Stegorev</a></li>
 </ul>
-<h4 id="re-100-help-jimmy">[RE 100] Help Jimmy<a href="#re-100-help-jimmy" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h4>
-<p>It was a 64-bit Linux elf binary having simple implementation where the player has to choose between going to Jungle or Sea and regardless of any decesion it&rsquo;s endeded up being attacked by tigers or pirates or invalid choice and resulting not getting the flag.</p>
-<p>This challenge wants to examine the assembly code instead of blindly following the decompiled code from Ghidra or any decompiler, so there is a missing <strong>CALL instrn</strong> after the assignments and that function call is responsible for the flag.</p>
-<p>Loaded the binary into <code>radare2</code> and decompile it with <code>r2ghidra</code> plugin which is more beneficial here as compare to traditional gdb to decompile and debug it.</p>
-<p><img src="/final_help_jimmy.png" alt="Assembly-decompiled code"></p>
+<h3 id="re-100-help-jimmy">[RE 100] Help Jimmy<a href="#re-100-help-jimmy" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h3>
+<p>It was a 64-bit Linux elf binary having a simple implementation where the player has to choose between going to Jungle or Sea and regardless of any decision, it ended up being attacked by tigers or pirates or an invalid choice and resulting in not getting the flag.</p>
+<p>This challenge wants to examine the assembly code instead of blindly following the decompiled code from Ghidra or any decompiler, so there is a missing <strong>CALL</strong> instrn after the assignments and that function call is responsible for the flag.</p>
+<p>Load the binary into <code>radare2</code> and decompile it with the <code>r2ghidra</code> plugin which is more beneficial here as compared to traditional gdb to decompile and debug it.</p>
+<p>radare2 disassembly:
+<img src="/posts/img/help_jimmy_1.png" alt="radare2 disassembly"></p>
+<p>radare2 - r2ghidra decompilation
+<img src="/posts/img/help_jimmy_2.png" alt="radare2 - r2ghidra decompilation"></p>
 <p>Pseudo code:</p>
-<pre tabindex="0"><code class="language-code" data-lang="code">var_10h._0_4_ = 5;
-var_10h._4_4_ = 5;
-if (var_10h._0_4_ != var_10h._4_4_) {
-    call_function();
-}
-</code></pre><p>Since, the solution for this challenge would be just modify any variable&rsquo;s value to get into the check and call the function or directly skip the check and <code>set rip to call_function</code> would also work.</p>
-<pre tabindex="0"><code class="language-code" data-lang="code">[0x55bfcefac629]&gt; dr eax
-0x00000005
-[0x55bfcefac629]&gt; dr eax=4
-0x00000005 -&gt;0x00000004
-[0x55bfcefac629]&gt; dc
-
-Well Done!
-You have found an alternate way for Jimmy!
-
-Flag:
-KCTF{y0u_may_ch00s3_to_look_7h3_other_way_but_y0u_can_n3v3r_say_4gain_that_y0u_did_n0t_know}
-</code></pre>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>var_10h._0_4_ <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;
+</span></span><span style="display:flex;"><span>var_10h._4_4_ <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (var_10h._0_4_ <span style="color:#f92672">!=</span> var_10h._4_4_) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">call_function</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>The solution for this challenge would be just modifying any variable’s value to get into the check and call the function or directly skipping the check and setting <code>rip</code> to <code>call_function</code> would also work.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">[</span>0x55bfcefac629<span style="color:#f92672">]</span>&gt; dr eax
+</span></span><span style="display:flex;"><span>0x00000005
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>0x55bfcefac629<span style="color:#f92672">]</span>&gt; dr eax<span style="color:#f92672">=</span><span style="color:#ae81ff">4</span>
+</span></span><span style="display:flex;"><span>0x00000005 -&gt;0x00000004
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>0x55bfcefac629<span style="color:#f92672">]</span>&gt; dc
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Well Done!
+</span></span><span style="display:flex;"><span>You have found an alternate way <span style="color:#66d9ef">for</span> Jimmy!
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Flag:
+</span></span><span style="display:flex;"><span>KCTF<span style="color:#f92672">{</span>y0u_may_ch00s3_to_look_7h3_other_way_but_y0u_can_n3v3r_say_4gain_that_y0u_did_n0t_know<span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="re-150-the-activator">[RE 150] The Activator<a href="#re-150-the-activator" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h3>
+<p>This challenge is somewhat similar to first challenge, that is, <code>Help Jimmy</code>. I have followed the same approach as internally it has similar pattern.</p>
+<p>There are lots of tools available to choose from and solve them, best way to learn is by doing manually then we can switch to tools. I have used radare2 and ghidra most of the time. In gdb/pwngdb/gef, we have to set the piebase and then look up the address from ghidra or ida then add them to piebase to get the address of the respective function. For example, to get the address of main(), load ghidra, set the base address to something like <code>0x555555554000</code> then go to the main() and note the address then set the same base with gdb then address mapping would be similar then put breakpoint and play with it.</p>
+<p>In radare2, we don&rsquo;t have to go through these processes manually, directly load the binary and analyze it then switch to main() and then <code>pdf</code> to get the disassembly. So, the following is the disassembly and decompilation of the code from the r2ghidra plugin.</p>
+<p>radare2 disassembly:- call function which prints the flag after comparision
+<img src="/posts/img/activator1.png" alt="activator_1"></p>
+<p>So, the approach would be nop out the check or after the input modify the <code>rip</code> value to the call instrn which will directly invoke the function and prints the flag.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">[</span>0x557615132860<span style="color:#f92672">]</span>&gt; db 0x557615132bc5
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>0x557615132860<span style="color:#f92672">]</span>&gt; dc
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>           -KOS-
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>KnightOS License Checker.
+</span></span><span style="display:flex;"><span>Enter KnightOS Activation Key: <span style="color:#ae81ff">1234</span>
+</span></span><span style="display:flex;"><span>INFO: hit breakpoint at: 0x557615132bc5
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>0x557615132bc5<span style="color:#f92672">]</span>&gt; dr rip<span style="color:#f92672">=</span>0x557615132bce
+</span></span><span style="display:flex;"><span>0x557615132bc5 -&gt;0x557615132bce
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>0x557615132bc5<span style="color:#f92672">]</span>&gt; dc
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>KCTF<span style="color:#f92672">{</span>Th47_License_ch3cker_w4S_similar_t0_Wind0ws_95_OSR_Activator_Right?<span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">(</span>3627<span style="color:#f92672">)</span> Process exited with status<span style="color:#f92672">=</span>0x0
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>0x7f70ba718ca1<span style="color:#f92672">]</span>&gt;
+</span></span></code></pre></div><h3 id="re-150-the-defuser">[RE 150] The Defuser<a href="#re-150-the-defuser" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h3>
+<p>This challenge is about the bomb that has to be defused within some time frame. While executing this challenge it has signals which kill the process after some timeframe.</p>
+<p>Following is the execution flow:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>bsdb0y@test:~/challs/knight/reverse$ ./defuser
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Time is ticking...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Defuse the bomb real quick <span style="color:#66d9ef">if</span> you want to save your Imaginarica!
+</span></span><span style="display:flex;"><span>I bet you won<span style="color:#e6db74">&#39;t be able to save it...
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Hahahahaha...
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Convince me to stop the explosion:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Hahahahaha LOSER!
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">The bomb has exploded.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">You shouldn&#39;</span>t have waste your time.
+</span></span><span style="display:flex;"><span>Remember, every second is valueable.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Terminated
+</span></span></code></pre></div><p>So, after examining the disassembly and decompilation code, we can see that there are some things given below:</p>
+<ul>
+<li>signals call</li>
+<li>alarm call</li>
+<li>setting parameter to 0x17b447b</li>
+<li>env variables</li>
+<li>
+<ul>
+<li>LAB_HOSTNAME=DEFUSER_PC</li>
+</ul>
+</li>
+<li>
+<ul>
+<li>LAB_USERNAME=FRITZ</li>
+</ul>
+</li>
+</ul>
+<p>Load the binary in radare2/gdb, set the environment variables to the value mentioned above and skip the signal/alarm calls then take the input from the user and step into the function at 0x2760. It expects the 1st argument to be <code>0x17b447b</code>, then continues and it prints the flag.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">[</span>0x5610de303596<span style="color:#f92672">]</span>&gt; dc
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>You have saved the country from a destruction.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Here is your reward:
+</span></span><span style="display:flex;"><span>KCTF<span style="color:#f92672">{</span>st0p_war_spr34d_10v3_and_p34c3<span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">(</span>3995<span style="color:#f92672">)</span> Process exited with status<span style="color:#f92672">=</span>0x0
+</span></span></code></pre></div><h3 id="re-200-krackme-10">[RE 200] KrackMe 1.0<a href="#re-200-krackme-10" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h3>
+<p>In this challenge, the flag was split into some strings then XORed with constant bytes then compared with static hardcoded strings. It had some checks on the command line argument, so provide 4 arguments to successfully get into the flag input state. So, for this, I had some approaches like:</p>
+<ul>
+<li>either extract all the strings and then write a python code to do the same operation as manually examined from the assembly.</li>
+<li>use angr to automate the flag-finding process and this binary was a perfect fit for the same.</li>
+</ul>
+<p>I have decided to use <code>angr</code> and the following is the script:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e">#!/usr/bin/python3</span>
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> angr
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> pdb
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> sys
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> claripy
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span>FLAG_LEN <span style="color:#f92672">=</span> <span style="color:#ae81ff">40</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">solve</span>(elf_binary):
+</span></span><span style="display:flex;"><span>    project <span style="color:#f92672">=</span> angr<span style="color:#f92672">.</span>Project(elf_binary, load_options<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#39;auto_load_libs&#39;</span>: <span style="color:#66d9ef">False</span>}) <span style="color:#75715e">#load up binary</span>
+</span></span><span style="display:flex;"><span>    arg_chrs <span style="color:#f92672">=</span> [claripy<span style="color:#f92672">.</span>BVS(<span style="color:#e6db74">&#39;arg_</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">&#39;</span> <span style="color:#f92672">%</span> i ,<span style="color:#ae81ff">8</span>) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(FLAG_LEN)] <span style="color:#75715e">#set a bit vector for argv[1]</span>
+</span></span><span style="display:flex;"><span>    arg <span style="color:#f92672">=</span> claripy<span style="color:#f92672">.</span>Concat(<span style="color:#f92672">*</span>arg_chrs) 
+</span></span><span style="display:flex;"><span>    initial_state <span style="color:#f92672">=</span> project<span style="color:#f92672">.</span>factory<span style="color:#f92672">.</span>entry_state(args<span style="color:#f92672">=</span>[elf_binary, <span style="color:#e6db74">&#34;q&#34;</span>, <span style="color:#e6db74">&#34;q&#34;</span>, <span style="color:#e6db74">&#34;q&#34;</span>, <span style="color:#e6db74">&#34;q&#34;</span>], stdin<span style="color:#f92672">=</span>arg) <span style="color:#75715e">#set entry state for execution</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># To debug - insert the breakpoints at runtime</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;&#39;&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    def stoca(state):
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        print(&#34;GOT HERE&#34;)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        import pdb; pdb.set_trace()
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    initial_state.inspect.b(&#39;instruction&#39;, instruction=0x401613, when=angr.BP_AFTER, action=stoca)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    initial_state.inspect.b(&#39;instruction&#39;, instruction=0x401667, when=angr.BP_AFTER, action=stoca)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    initial_state.inspect.b(&#39;instruction&#39;, instruction=0x401311, when=angr.BP_AFTER, action=stoca)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    #initial_state.inspect.b(&#39;instruction&#39;, instruction=0x4018d9, when=angr.BP_AFTER, action=stoca)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#39;&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> byte <span style="color:#f92672">in</span> arg<span style="color:#f92672">.</span>chop(<span style="color:#ae81ff">8</span>):
+</span></span><span style="display:flex;"><span>        initial_state<span style="color:#f92672">.</span>solver<span style="color:#f92672">.</span>add(byte <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0x7f</span>)
+</span></span><span style="display:flex;"><span>        initial_state<span style="color:#f92672">.</span>solver<span style="color:#f92672">.</span>add(byte <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0x20</span>)
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span>    simulation <span style="color:#f92672">=</span> project<span style="color:#f92672">.</span>factory<span style="color:#f92672">.</span>simgr(initial_state) <span style="color:#75715e">#get a simulation manager object under entry state</span>
+</span></span><span style="display:flex;"><span>    simulation<span style="color:#f92672">.</span>explore(find<span style="color:#f92672">=</span>is_successful)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> len(simulation<span style="color:#f92672">.</span>found) <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>: <span style="color:#75715e">#if we find that our &#39;found&#39; array is not empty then we have a solution!</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> solution_state <span style="color:#f92672">in</span> simulation<span style="color:#f92672">.</span>found: <span style="color:#75715e">#loop over each solution just for interest sake</span>
+</span></span><span style="display:flex;"><span>            print(<span style="color:#e6db74">&#34;[&gt;&gt;] </span><span style="color:#e6db74">{!r}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(solution_state<span style="color:#f92672">.</span>solver<span style="color:#f92672">.</span>eval(arg,cast_to<span style="color:#f92672">=</span>bytes))) <span style="color:#75715e">#print the goodness!</span>
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">is_successful</span>(state):
+</span></span><span style="display:flex;"><span>    output <span style="color:#f92672">=</span> state<span style="color:#f92672">.</span>posix<span style="color:#f92672">.</span>dumps(sys<span style="color:#f92672">.</span>stdout<span style="color:#f92672">.</span>fileno()) <span style="color:#75715e">#grab the screen output everytime Angr thinks we have a solution</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;Congratulations !!&#39;</span> <span style="color:#f92672">in</span> output: <span style="color:#75715e">#make sure it says &#39;Congratulations&#39;!</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span>
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__<span style="color:#f92672">==</span><span style="color:#e6db74">&#34;__main__&#34;</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> len(sys<span style="color:#f92672">.</span>argv) <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">2</span>:
+</span></span><span style="display:flex;"><span>        print(<span style="color:#e6db74">&#34;[*] need 1 arguments</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">Usage: </span><span style="color:#e6db74">%s</span><span style="color:#e6db74"> [binary path]&#34;</span>)
+</span></span><span style="display:flex;"><span>        sys<span style="color:#f92672">.</span>exit()
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span>    solve(sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">1</span>]) <span style="color:#75715e">#solve!</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>After executing the above angr script, here’s the output:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>bsdb0y@test:~/challs/knight/reverse$ ./reverse.py krackme_1.out
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:35:45,601 | cle.loader     | The main binary is a position-independent executable. It is being loaded with a base address of 0x400000.
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:35:45,643 | angr.simos.simos | stdin is constrained to <span style="color:#ae81ff">40</span> bytes <span style="color:#f92672">(</span>has_end<span style="color:#f92672">=</span>True<span style="color:#f92672">)</span>. If you are only providing the first <span style="color:#ae81ff">40</span> bytes instead of the entire stdin, please use stdin<span style="color:#f92672">=</span>SimFileStream<span style="color:#f92672">(</span>name<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;stdin&#39;</span>, content<span style="color:#f92672">=</span>your_first_n_bytes, has_end<span style="color:#f92672">=</span>False<span style="color:#f92672">)</span>.
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:03,538 | angr.storage.memory_mixins.default_filler_mixin | The program is accessing memory with an unspecified value. This could indicate unwanted behavior.
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:03,542 | angr.storage.memory_mixins.default_filler_mixin | angr will cope with this by generating an unconstrained symbolic variable and continuing. You can resolve this by:
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:03,543 | angr.storage.memory_mixins.default_filler_mixin | 1<span style="color:#f92672">)</span> setting a value to the initial state
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:03,545 | angr.storage.memory_mixins.default_filler_mixin | 2<span style="color:#f92672">)</span> adding the state option ZERO_FILL_UNCONSTRAINED_<span style="color:#f92672">{</span>MEMORY,REGISTERS<span style="color:#f92672">}</span>, to make unknown regions hold null
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:03,547 | angr.storage.memory_mixins.default_filler_mixin | 3<span style="color:#f92672">)</span> adding the state option SYMBOL_FILL_UNCONSTRAINED_<span style="color:#f92672">{</span>MEMORY,REGISTERS<span style="color:#f92672">}</span>, to suppress these messages.
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:03,550 | angr.storage.memory_mixins.default_filler_mixin | Filling memory at 0xffffffffffffffc0 with <span style="color:#ae81ff">64</span> unconstrained bytes referenced from 0x500038 <span style="color:#f92672">(</span>printf+0x0 in extern-address space <span style="color:#f92672">(</span>0x38<span style="color:#f92672">))</span>
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:03,555 | angr.storage.memory_mixins.default_filler_mixin | Filling memory at 0x0 with <span style="color:#ae81ff">65</span> unconstrained bytes referenced from 0x500038 <span style="color:#f92672">(</span>printf+0x0 in extern-address space <span style="color:#f92672">(</span>0x38<span style="color:#f92672">))</span>
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:26,106 | angr.storage.memory_mixins.default_filler_mixin | Filling memory at 0x7fffffffffefec9 with <span style="color:#ae81ff">23</span> unconstrained bytes referenced from 0x500028 <span style="color:#f92672">(</span>strlen+0x0 in extern-address space <span style="color:#f92672">(</span>0x28<span style="color:#f92672">))</span>
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:26,111 | angr.storage.memory_mixins.default_filler_mixin | Filling memory at 0x7fffffffffeff1b with <span style="color:#ae81ff">6</span> unconstrained bytes referenced from 0x500028 <span style="color:#f92672">(</span>strlen+0x0 in extern-address space <span style="color:#f92672">(</span>0x28<span style="color:#f92672">))</span>
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:28,008 | angr.storage.memory_mixins.default_filler_mixin | Filling memory at 0x7fffffffffefe19 with <span style="color:#ae81ff">7</span> unconstrained bytes referenced from 0x500028 <span style="color:#f92672">(</span>strlen+0x0 in extern-address space <span style="color:#f92672">(</span>0x28<span style="color:#f92672">))</span>
+</span></span><span style="display:flex;"><span>WARNING  | 2023-01-30 14:36:28,012 | angr.storage.memory_mixins.default_filler_mixin | Filling memory at 0x7fffffffffefe3b with <span style="color:#ae81ff">5</span> unconstrained bytes referenced from 0x500028 <span style="color:#f92672">(</span>strlen+0x0 in extern-address space <span style="color:#f92672">(</span>0x28<span style="color:#f92672">))</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>&gt;&gt;<span style="color:#f92672">]</span> b<span style="color:#e6db74">&#39;KCTF{kRaCk_M3_oNe_0_fLaG_c0xs_bAzar}&#39;</span>
+</span></span></code></pre></div><h3 id="re-250-fan">[RE 250] Fan<a href="#re-250-fan" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h3>
+<p>I liked this challenge, we are provided with python’s dis() output bytecode in the text file. For this challenge, I decided to manually re-implement the code from bytecode to python.</p>
+<p>Following the re-implementation of python bytecode:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">define_false</span>(s):
+</span></span><span style="display:flex;"><span>    lstr <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>    u <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    packed <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> s:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> c <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;[&#34;</span>:
+</span></span><span style="display:flex;"><span>            lstr<span style="color:#f92672">.</span>append((u, packed))
+</span></span><span style="display:flex;"><span>            packed <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>            u <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> c <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;]&#34;</span>:
+</span></span><span style="display:flex;"><span>            num, prev_string <span style="color:#f92672">=</span> lstr<span style="color:#f92672">.</span>pop()
+</span></span><span style="display:flex;"><span>            packed <span style="color:#f92672">=</span> prev_string <span style="color:#f92672">+</span> packed <span style="color:#f92672">*</span> num
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> c<span style="color:#f92672">.</span>isdigit():
+</span></span><span style="display:flex;"><span>            u <span style="color:#f92672">=</span> u <span style="color:#f92672">*</span> <span style="color:#ae81ff">10</span> <span style="color:#f92672">+</span> int(c)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        packed <span style="color:#f92672">+=</span> c
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> packed
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">define_true</span>(p):
+</span></span><span style="display:flex;"><span>    res <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> packed <span style="color:#f92672">in</span> p:
+</span></span><span style="display:flex;"><span>        res <span style="color:#f92672">+=</span> str(len(packed)) <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39;[:]&#39;</span> <span style="color:#f92672">+</span> packed
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> res
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">define_both</span>(p):
+</span></span><span style="display:flex;"><span>    unpacked <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> p:
+</span></span><span style="display:flex;"><span>        packed <span style="color:#f92672">=</span> i<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#39;)&#39;</span>)
+</span></span><span style="display:flex;"><span>        char <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> packed:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> j <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;&#39;</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>            j <span style="color:#f92672">+=</span> <span style="color:#e6db74">&#39;)&#39;</span>
+</span></span><span style="display:flex;"><span>            char <span style="color:#f92672">+=</span> eval(j)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        unpacked<span style="color:#f92672">.</span>append(char)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> unpacked
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;__main__&#39;</span>:
+</span></span><span style="display:flex;"><span>  s <span style="color:#f92672">=</span> [
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;chr(75)chr(67)chr(84)chr(70)chr(123)&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;chr(115)chr(105)chr(85)chr(85)chr(85)&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;chr(109)chr(69)chr(51)chr(115)chr(115)chr(105)&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;chr(105)chr(115)&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;chr(103)chr(48)chr(79)chr(97)chr(116)chr(125)&#39;</span>
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  print(define_false(define_true(define_both(s))))
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>bsdb0y@test:~/challs/knight/reverse$ python3 bytecode_reverse.py
+</span></span><span style="display:flex;"><span>:::::KCTF<span style="color:#f92672">{</span>:::::siUUU::::::mEssi::::::::::::::::::::::::::::::::is::::::gOat<span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="re-250-take-risc-five-times">[RE 250] Take RISC five times<a href="#re-250-take-risc-five-times" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h3>
+<p>This challenge has provided an assembly file for riscv, the assembly function <code>fun_risc_v</code> calling <code>reverse_str</code> function multiple times. So, modified the asm file a little like replace; with # and put <code>.globl</code> in front of the <code>fun_risc_v</code> label then called this function from c code.</p>
+<p>C code:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">extern</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">fun_risc_v</span>();
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">reverse_str</span>(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>str, <span style="color:#66d9ef">int</span> len) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>temp;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int</span> index;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (index <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; index <span style="color:#f92672">&lt;</span> len; index<span style="color:#f92672">--</span>) {
+</span></span><span style="display:flex;"><span>                temp[index] <span style="color:#f92672">=</span> str[index];
+</span></span><span style="display:flex;"><span>                str[index] <span style="color:#f92672">=</span> str[len <span style="color:#f92672">-</span> index <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>];
+</span></span><span style="display:flex;"><span>                str[len<span style="color:#f92672">-</span> index <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> temp[index];
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">void</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">fun_risc_v</span>();
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Compilation and linking with the RISC-V toolchain:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>riscv64-linux-gnu-gcc-12 main.c take-risc-five-times.S /usr/riscv64-linux-gnu/lib/ld-linux-riscv64-lp64d.so.1 -o main
+</span></span></code></pre></div><p>After the compilation, I am not able to execute it. I have tried <code>qemu-system-riscv64</code> with <code>--machine</code> targets but nothing works. So, instead of executing I have used ghidra to decompile it and check. So, from the code, I got the flag:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>  local_20 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x22563d53</span>;
+</span></span><span style="display:flex;"><span>  local_1c <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x46</span>;
+</span></span><span style="display:flex;"><span>  local_1b <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x54</span>;
+</span></span><span style="display:flex;"><span>  local_1a <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x43</span>;
+</span></span><span style="display:flex;"><span>  local_19 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x4b</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">reverse_str</span>(<span style="color:#f92672">&amp;</span>local_1c,<span style="color:#ae81ff">4</span>);
+</span></span><span style="display:flex;"><span>  local_18 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x7b</span>;
+</span></span><span style="display:flex;"><span>  local_17 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>  local_30 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x3c222325</span>;
+</span></span><span style="display:flex;"><span>  local_2c <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x33</span>;
+</span></span><span style="display:flex;"><span>  local_2b <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x6b</span>;
+</span></span><span style="display:flex;"><span>  local_2a <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x34</span>;
+</span></span><span style="display:flex;"><span>  local_29 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x74</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">reverse_str</span>(<span style="color:#f92672">&amp;</span>local_2c,<span style="color:#ae81ff">4</span>);
+</span></span><span style="display:flex;"><span>  local_28 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x5f</span>;
+</span></span><span style="display:flex;"><span>  local_27 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>  local_40 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x1b581a0a</span>;
+</span></span><span style="display:flex;"><span>  local_3c <span style="color:#f92672">=</span> <span style="color:#ae81ff">99</span>;
+</span></span><span style="display:flex;"><span>  local_3b <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x73</span>;
+</span></span><span style="display:flex;"><span>  local_3a <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x31</span>;
+</span></span><span style="display:flex;"><span>  local_39 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x72</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">reverse_str</span>(<span style="color:#f92672">&amp;</span>local_3c,<span style="color:#ae81ff">4</span>);
+</span></span><span style="display:flex;"><span>  local_38 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x5f</span>;
+</span></span><span style="display:flex;"><span>  local_37 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>  local_50 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x3775</span>;
+</span></span><span style="display:flex;"><span>  local_4c <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x72</span>;
+</span></span><span style="display:flex;"><span>  local_4b <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x30</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">reverse_str</span>(<span style="color:#f92672">&amp;</span>local_4c,<span style="color:#ae81ff">2</span>);
+</span></span><span style="display:flex;"><span>  local_4a <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x5f</span>;
+</span></span><span style="display:flex;"><span>  local_49 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>  local_5c <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x68</span>;
+</span></span><span style="display:flex;"><span>  local_5b <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x35</span>;
+</span></span><span style="display:flex;"><span>  local_5a <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x69</span>;
+</span></span><span style="display:flex;"><span>  local_59 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x72</span>;
+</span></span><span style="display:flex;"><span>  local_58 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x33</span>;
+</span></span><span style="display:flex;"><span>  local_57 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x70</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">reverse_str</span>(<span style="color:#f92672">&amp;</span>local_5c,<span style="color:#ae81ff">6</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">trap</span>();
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">trap</span>();
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">/* WARNING: Bad instruction - Truncating control flow here */</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">halt_baddata</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><blockquote>
+<p>Flag: KCTF{t4k3_r1sc_0r_p3ri5h}</p>
+</blockquote>
+<h3 id="re-400-stegorev">[RE 400] Stegorev<a href="#re-400-stegorev" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h3>
+<p>For this challenge, an image is provided so I have used the <code>stegseek</code> tool with <code>rockyou.txt</code> file to crack the password and extract the hidden ELF file.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>bsdb0y@ubuarm64:~/Downloads$ stegseek kctf-rng70.jpg rockyou.txt
+</span></span><span style="display:flex;"><span>StegSeek 0.6 - https://github.com/RickdeJager/StegSeek
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>i<span style="color:#f92672">]</span> Found passphrase: <span style="color:#e6db74">&#34;this.parentNode.offsetWidth) {this.width=this.parentNode.offsetWidth-10; this.style.cursor=&#39;hand&#39;;this.onload=null;}&#34;</span>&gt;<span style="color:#e6db74">&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">[i] Original filename: &#34;</span>stegorev-rng70<span style="color:#e6db74">&#34;.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">[i] Extracting to &#34;</span>kctf-rng70.jpg.out<span style="color:#e6db74">&#34;.
+</span></span></span></code></pre></div><p>while analyzing the extracted ELF file from stegseek, we can see that it checks whether the file named <code>ckrIupRS782prsdsf</code> is present in the pwd.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>[<span style="color:#ae81ff">0x5620da9a980f</span>]<span style="color:#f92672">&gt;</span> pdg
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// WARNING: Variable defined which should be unmapped: var_8h
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>ulong <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">void</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">char</span> cVar1;
+</span></span><span style="display:flex;"><span>    ulong uVar2;
+</span></span><span style="display:flex;"><span>    ulong var_a0h;
+</span></span><span style="display:flex;"><span>    ulong var_80h;
+</span></span><span style="display:flex;"><span>    ulong var_51h;
+</span></span><span style="display:flex;"><span>    ulong var_30h;
+</span></span><span style="display:flex;"><span>    ulong var_8h;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    sym.imp.std<span style="color:#f92672">::</span>allocator_char_<span style="color:#f92672">::</span><span style="color:#a6e22e">allocator__</span>(<span style="color:#f92672">&amp;</span>var_51h);
+</span></span><span style="display:flex;"><span>    sym.imp.std<span style="color:#f92672">::</span>__cxx11<span style="color:#f92672">::</span>basic_string_char__std<span style="color:#f92672">::</span>char_traits_char___std<span style="color:#f92672">::</span>allocator_char___<span style="color:#f92672">::</span>basic_string_char_const__std<span style="color:#f92672">::</span><span style="color:#a6e22e">allocator_char__const_</span>
+</span></span><span style="display:flex;"><span>              (<span style="color:#f92672">&amp;</span>var_80h, <span style="color:#e6db74">&#34;ckrIupRS782prsdsf&#34;</span>, <span style="color:#f92672">&amp;</span>var_51h);
+</span></span><span style="display:flex;"><span>    fcn<span style="color:#ae81ff">.5620</span>da9a9486(<span style="color:#f92672">&amp;</span>var_a0h, <span style="color:#f92672">&amp;</span>var_80h);
+</span></span><span style="display:flex;"><span>    fcn<span style="color:#ae81ff">.5620</span>da9a90a0(<span style="color:#f92672">&amp;</span>var_80h);
+</span></span><span style="display:flex;"><span>    fcn<span style="color:#ae81ff">.5620</span>da9a9140(<span style="color:#f92672">&amp;</span>var_51h);
+</span></span><span style="display:flex;"><span>    cVar1 <span style="color:#f92672">=</span> fcn<span style="color:#ae81ff">.5620</span>da9a9c13(<span style="color:#f92672">&amp;</span>var_a0h, <span style="color:#e6db74">&#34;The file maybe lost in the matrix. Try hard to find it&#34;</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (cVar1 <span style="color:#f92672">!=</span> <span style="color:#e6db74">&#39;\0&#39;</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// WARNING: Subroutine does not return
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        sym.imp.<span style="color:#a6e22e">exit</span>(<span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>decompilation of function <code>fcn.5620da9a9486(&amp;var_a0h, &amp;var_80h);</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>[<span style="color:#ae81ff">0x5620da9a980f</span>]<span style="color:#f92672">&gt;</span> pdg <span style="color:#960050;background-color:#1e0010">@</span>fcn<span style="color:#ae81ff">.5620</span>da9a9486
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// WARNING: Variable defined which should be unmapped: var_8h
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>ulong fcn<span style="color:#ae81ff">.5620</span>da9a9486(ulong arg1, ulong arg2)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">char</span> cVar1;
+</span></span><span style="display:flex;"><span>    ulong uVar2;
+</span></span><span style="display:flex;"><span>    ulong var_250h;
+</span></span><span style="display:flex;"><span>    ulong var_248h;
+</span></span><span style="display:flex;"><span>    ulong var_240h;
+</span></span><span style="display:flex;"><span>    ulong var_220h;
+</span></span><span style="display:flex;"><span>    ulong var_11h;
+</span></span><span style="display:flex;"><span>    ulong var_8h;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    sym.imp.std<span style="color:#f92672">::</span>basic_ifstream_char__std<span style="color:#f92672">::</span>char_traits_char___<span style="color:#f92672">::</span><span style="color:#a6e22e">basic_ifstream__</span>(<span style="color:#f92672">&amp;</span>var_220h);    <span style="color:#75715e">// =&gt; Here, var_220 belongs to file 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                                                                                                <span style="color:#75715e">// =&gt; &#34;ckrIupRS782prsdsf&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    sym.imp.std<span style="color:#f92672">::</span>basic_ifstream_char__std<span style="color:#f92672">::</span>char_traits_char___<span style="color:#f92672">::</span>open_std<span style="color:#f92672">::</span>__cxx11<span style="color:#f92672">::</span>basic_string_char__std<span style="color:#f92672">::</span>char_traits_char___std<span style="color:#f92672">::</span>allocator_char____const__std<span style="color:#f92672">::</span><span style="color:#a6e22e">_Ios_Openmode_</span>
+</span></span><span style="display:flex;"><span>              (<span style="color:#f92672">&amp;</span>var_220h, arg2, <span style="color:#ae81ff">8</span>);
+</span></span><span style="display:flex;"><span>    cVar1 <span style="color:#f92672">=</span> sym.imp.std<span style="color:#f92672">::</span>basic_ifstream_char__std<span style="color:#f92672">::</span>char_traits_char___<span style="color:#f92672">::</span><span style="color:#a6e22e">is_open__</span>(<span style="color:#f92672">&amp;</span>var_220h);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (cVar1 <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;\0&#39;</span>) {
+</span></span></code></pre></div><p>Later realized it is easily found by executing <code>strace</code>
+<img src="/posts/img/steg_reverse_1.png" alt=""></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>bsdb0y@test:~/challs/knight/reverse$ ./kctf-rng70.jpg.out
+</span></span><span style="display:flex;"><span>Flag:
+</span></span><span style="display:flex;"><span> ?<span style="color:#f92672">==</span>? JBVE~k_lRciOX*<span style="color:#f92672">=(</span>HG<span style="color:#f92672">=</span>,0KKEl
+</span></span><span style="display:flex;"><span>What <span style="color:#66d9ef">do</span> you want me to <span style="color:#66d9ef">return</span>? :<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>enter the <code>JBVE~k_lRciOX*=(HG=,0KKEl</code> string into the file <code>ckrIupRS782prsdsf</code> then it directly dumps the flag:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>bsdb0y@test:~/challs/knight/reverse$ echo <span style="color:#e6db74">&#34;JBVE~k_lRciOX*=(HG=,0KKEl&#34;</span> &gt; ckrIupRS782prsdsf
+</span></span><span style="display:flex;"><span>bsdb0y@test:~/challs/knight/reverse$ ./kctf-rng70.jpg.out
+</span></span><span style="display:flex;"><span>Flag: JBVE~k_lRciOX*<span style="color:#f92672">=(</span>HG<span style="color:#f92672">=</span>,0KKEl
+</span></span><span style="display:flex;"><span>KCTF<span style="color:#f92672">{</span>cRypT0_1S_su_hArd:e<span style="color:#f92672">}</span> ?<span style="color:#f92672">==</span>? JBVE~k_lRciOX*<span style="color:#f92672">=(</span>HG<span style="color:#f92672">=</span>,0KKEl
+</span></span><span style="display:flex;"><span>What <span style="color:#66d9ef">do</span> you want me to <span style="color:#66d9ef">return</span>? :<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>bsdb0y@test:~/challs/knight/reverse$
+</span></span></code></pre></div>
       </div></div>
+
+  
+    
+<div class="pagination">
+    <div class="pagination__title">
+        <span class="pagination__title-h">Read other posts</span>
+        <hr />
+    </div>
+    <div class="pagination__buttons">
+        
+        <span class="button previous">
+            <a href="/posts/install-hugo-hosting-on-openbs/">
+                <span class="button__icon">←</span>
+                <span class="button__text">Install Hugo Hosting on Openbs</span>
+            </a>
+        </span>
+        
+        
+    </div>
+</div>
 
   
 
