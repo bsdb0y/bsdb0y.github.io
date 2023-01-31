@@ -2,33 +2,40 @@
 <html lang="en">
 <head>
   
-    <title>pledge(2): OpenBSD&#39;s defensive approach to OS Security :: bsdb0y</title>
+    <title>pledge(2): OpenBSD’s defensive approach to OS Security :: Terminal</title>
   
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Hello there,
-I would like to introduce you all to the pledge(2) which is used to restrict the system operations and supported only on OpenBSD
-I am learning about OpenBSD kernel internals and development and would like to share some tips on how to learn about OpenBSD kernel internals and developmen.
-Let me first share with you all about our friends, they will be helping us in learning about BSD kernel internals:" />
-<meta name="keywords" content="" />
+I would like to introduce you all to the pledge(2) which is used to restrict the system operations and supported only on OpenBSD at the time of writing the blog.
+I am learning about OpenBSD kernel internals and development and would like to share some tips on how to learn about OpenBSD kernel internals and development.
+Following materials I followed while learning about BSD kernel internals:
+the book “The design and implementation of the BSD operating system” by Kirk McKusick OpenBSD source code man pages and few presentations-papers on OpenBSD ask in mailing lists and OpenBSD Facebook group." />
+<meta name="keywords" content=", " />
 <meta name="robots" content="noodp" />
-<link rel="canonical" href="https://bsdb0y.github.io/posts/pledge-a-openbsd-defensive-approach/" />
 
-
-
-
-<link rel="stylesheet" href="https://bsdb0y.github.io/assets/style.css">
-
-  <link rel="stylesheet" href="https://bsdb0y.github.io/assets/blue.css">
+<link rel="canonical" href="/posts/pledge-a-openbsd-defensive-approach/" />
 
 
 
 
 
 
-<link rel="apple-touch-icon" href="https://bsdb0y.github.io/img/apple-touch-icon-192x192.png">
+  
+  
+  
+  
+  
+  <link rel="stylesheet" href="/styles.css">
 
-  <link rel="shortcut icon" href="https://bsdb0y.github.io/img/favicon/blue.png">
+
+
+
+
+
+
+  <link rel="shortcut icon" href="/img/theme-colors/blue.png">
+  <link rel="apple-touch-icon" href="/img/theme-colors/blue.png">
 
 
 
@@ -37,29 +44,30 @@ Let me first share with you all about our friends, they will be helping us in le
   
     <meta name="twitter:site" content="" />
   
-    <meta name="twitter:creator" content="bsdb0y" />
+    <meta name="twitter:creator" content="" />
 
 
 
 <meta property="og:locale" content="en" />
 <meta property="og:type" content="article" />
-<meta property="og:title" content="pledge(2): OpenBSD&#39;s defensive approach to OS Security">
+<meta property="og:title" content="pledge(2): OpenBSD’s defensive approach to OS Security">
 <meta property="og:description" content="Hello there,
-I would like to introduce you all to the pledge(2) which is used to restrict the system operations and supported only on OpenBSD
-I am learning about OpenBSD kernel internals and development and would like to share some tips on how to learn about OpenBSD kernel internals and developmen.
-Let me first share with you all about our friends, they will be helping us in learning about BSD kernel internals:" />
-<meta property="og:url" content="https://bsdb0y.github.io/posts/pledge-a-openbsd-defensive-approach/" />
-<meta property="og:site_name" content="bsdb0y" />
+I would like to introduce you all to the pledge(2) which is used to restrict the system operations and supported only on OpenBSD at the time of writing the blog.
+I am learning about OpenBSD kernel internals and development and would like to share some tips on how to learn about OpenBSD kernel internals and development.
+Following materials I followed while learning about BSD kernel internals:
+the book “The design and implementation of the BSD operating system” by Kirk McKusick OpenBSD source code man pages and few presentations-papers on OpenBSD ask in mailing lists and OpenBSD Facebook group." />
+<meta property="og:url" content="/posts/pledge-a-openbsd-defensive-approach/" />
+<meta property="og:site_name" content="Terminal" />
 
   
-    <meta property="og:image" content="https://bsdb0y.github.io/img/favicon/blue.png">
   
+  <meta property="og:image" content="/">
 
-<meta property="og:image:width" content="2048">
-<meta property="og:image:height" content="1024">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
 
 
-  <meta property="article:published_time" content="2018-08-01 00:00:00 &#43;0000 UTC" />
+  <meta property="article:published_time" content="2018-08-01 18:24:39 &#43;0000 UTC" />
 
 
 
@@ -89,12 +97,30 @@ Let me first share with you all about our friends, they will be helping us in le
 
     </div>
     
-      <div class="menu-trigger">menu</div>
+      <ul class="menu menu--mobile">
+  <li class="menu__trigger">Menu&nbsp;▾</li>
+  <li>
+    <ul class="menu__dropdown">
+      
+        
+          <li><a href="/about">About</a></li>
+        
+      
+        
+          <li><a href="/bugs">Bugs</a></li>
+        
+      
+      
+    </ul>
+  </li>
+</ul>
+
+    
     
   </div>
   
-    <nav class="menu">
-  <ul class="menu__inner menu__inner--desktop">
+    <nav class="navigation-menu">
+  <ul class="navigation-menu__inner menu--desktop">
     
       
         
@@ -107,21 +133,6 @@ Let me first share with you all about our friends, they will be helping us in le
       
       
     
-
-    
-  </ul>
-
-  <ul class="menu__inner menu__inner--mobile">
-    
-      
-        <li><a href="/about">About</a></li>
-      
-    
-      
-        <li><a href="/bugs">Bugs</a></li>
-      
-    
-    
   </ul>
 </nav>
 
@@ -131,38 +142,39 @@ Let me first share with you all about our friends, they will be helping us in le
 
   <div class="content">
     
-<div class="post">
+<article class="post">
   <h1 class="post-title">
-    <a href="https://bsdb0y.github.io/posts/pledge-a-openbsd-defensive-approach/">pledge(2): OpenBSD&rsquo;s defensive approach to OS Security</a></h1>
+    <a href="/posts/pledge-a-openbsd-defensive-approach/">pledge(2): OpenBSD’s defensive approach to OS Security</a>
+  </h1>
   <div class="post-meta">
     
-      <span class="post-date">
-        2018-08-01
+      <time class="post-date">
+        2018-08-01 ::
         
-      </span>
+      </time>
     
     
-      <span class="post-author">:: bsdb0y</span>
+      <span class="post-author">bsdb0y</span>
     
     
-      <span class="post-reading-time">:: 10 min read (2094 words)</span>
+      <span class="post-reading-time">:: 11 min read (2220 words)</span>
     
   </div>
 
   
-  <span class="post-tags">
-    
-    #<a href="https://bsdb0y.github.io/tags/openbsd/">openbsd</a>&nbsp;
-    
-    #<a href="https://bsdb0y.github.io/tags/security/">security</a>&nbsp;
-    
-    #<a href="https://bsdb0y.github.io/tags/kernel/">kernel</a>&nbsp;
-    
-    #<a href="https://bsdb0y.github.io/tags/internals/">internals</a>&nbsp;
-    
-    #<a href="https://bsdb0y.github.io/tags/pledge/">pledge</a>&nbsp;
-    
-  </span>
+    <span class="post-tags">
+      
+      #<a href="/tags/openbsd/">openbsd</a>&nbsp;
+      
+      #<a href="/tags/kernel/">kernel</a>&nbsp;
+      
+      #<a href="/tags/security/">security</a>&nbsp;
+      
+      #<a href="/tags/internals/">internals</a>&nbsp;
+      
+      #<a href="/tags/pledge/">pledge</a>&nbsp;
+      
+    </span>
   
   
 
@@ -171,394 +183,478 @@ Let me first share with you all about our friends, they will be helping us in le
 
   <div class="post-content"><div>
         <p>Hello there,</p>
-<p>I would like to introduce you all to the pledge(2) which is used to restrict the system operations and supported only on OpenBSD</p>
-<p>I am learning about OpenBSD kernel internals and development and would like to share some tips on how to learn about OpenBSD kernel internals and developmen.</p>
-<p>Let me first share with you all about our friends, they will be helping us in learning about BSD kernel internals:</p>
+<p>I would like to introduce you all to the <code>pledge(2)</code> which is used to restrict the system operations and supported only on OpenBSD at the time of writing the blog.</p>
+<p>I am learning about OpenBSD kernel internals and development and would like to share some tips on how to learn about OpenBSD kernel internals and development.</p>
+<p>Following materials I followed while learning about BSD kernel internals:</p>
 <ul>
-<li>the book &ldquo;The design and implementation of the BSD operating system&rdquo; by Kirk McKusick</li>
+<li>the book “The design and implementation of the BSD operating system” by Kirk McKusick</li>
 <li>OpenBSD source code</li>
 <li>man pages and few presentations-papers on OpenBSD</li>
 <li>ask in mailing lists and OpenBSD Facebook group.</li>
 </ul>
-<h5 id="what-is-pledge2">What is pledge(2)?<a href="#what-is-pledge2" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h5>
-<p>&ldquo;pledge&rdquo; refers to &ldquo;a solemn promise or undertaking&rdquo;</p>
+<blockquote>
+<p>What is pledge(2)?</p>
+<p>“pledge” refers to “a solemn promise or undertaking”</p>
+</blockquote>
 <p>So, as in OpenBSD context:</p>
-<ul>
-<li>Calling pledge(2) in a program means the program is promissing to the kernel that it will only use the resources which it informs about prior using them<br>
-<br>
-For example:
-<code>if a user-space program promises kernel to use only IO family calls then it can not perform/call any other family calls like network, process, etc. if it will try to call the other calls without prior informing to kernel then the kernel will abort() the process.</code></li>
-</ul>
-<p>How does it make a program more secure?</p>
-<ul>
-<li>
+<p>Calling pledge(2) in a program means the program is promissing to the kernel that it will only use the resources which it informs about prior using them</p>
+<p>For example: if a user-space program promises kernel to use only IO family calls then it can not perform/call any other family calls like network, process, etc. if it will try to call the other calls without prior informing to kernel then the kernel will abort() the process.
+How does it make a program more secure?</p>
 <p>By limiting the operations of a program. For example:</p>
 <ul>
-<li>we write a program named &ldquo;abc&rdquo; that only needed the stdio to just print something to stdout</li>
+<li>we write a program named “abc” that only needed the stdio to just print something to stdout</li>
 <li>then we have to add pledge to use only stdio.</li>
 <li>then, a malicious user found out that there is a vulnerability in our program which one can exploit to get into shell.</li>
-<li>exploiting our program to open a shell will result in the kernel killing the process with SIGABRT, which can not be catch/ignore and generate a log in the <code>dmesg</code></li>
+<li>exploiting our program to open a shell will result in the kernel killing the process with SIGABRT, which can not be catch/ignore and generate a log in the dmesg</li>
+<li>this happens because opening a shell out of current program needs others family operations like we need fork(2) which resides in “proc” and execution is in “exec” then for network activities “net” but these are not promissed to kernel so calling apis from such family will be forbidden and leads to abort()</li>
 </ul>
-</li>
-<li>
-<p>this happens because opening a shell out of current program needs others family operations like we need fork(2) which resides in &ldquo;proc&rdquo; and execution is in &ldquo;exec&rdquo; then for network activities &ldquo;net&rdquo; but these are not promissed to kernel so calling apis from such family will be forbidden and leads to abort()</p>
-</li>
-</ul>
-<p>but after discussing with the developers, they mentioned that <code>pledge(2)</code> is not a <code>system call filter</code>. So, it is not used to restrict system calls.</p>
-<p>pledge(2) works on subset promise families like stdio, dns, inet, proc, net etc. but not directly on system calls like read, write, fork, etc.</p>
-<ul>
-<li><code>pledge(&quot;read&quot;, NULL)</code>: incorrect way of using pledge(2)</li>
-<li><code>pledge(&quot;stdio inet&quot;, NULL)</code>: correct way of using pledge(2)</li>
-</ul>
-<p>and, based on the discussion with the developers they mentioned that <code>pledge(2) works on behavioral approach not just like 1:1 approach with the system calls</code>.</p>
-<p>On 11 December 2017, Theo de Raadt said:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">List: openbsd-tech
-Subject: pledge execpromises
-From: Theo de Raadt 
-Date: 2017-12-11 21:20:51
-Message-ID: 6735.1513027251 () cvs ! openbsd ! org
-
-This will probably be committed in the next day or so.
-
-The 2nd argument of pledge() becomes execpromises, which is what
-will gets activated after execve.
-
-There is also a small new feature called &#34;error&#34;, which causes
-violating system calls to return -1 with ENOSYS rather than killing
-the process. This must be used with EXTREME CAUTION because libraries
-and programs are full of unchecked system calls. If you carry on past
-one of these failures, your program is in uncharted territory and
-risks of exploitation become high.
-
-&#34;error&#34; is being introduced for a different reason: The pre-exec
-process&#39;s expectation of what the post-exec process will do might
-mismatch, so &#34;error&#34; allows things like starting an editor which has
-no network access or maybe other restrictions in the future...
-</code></pre></div><p>previously it was:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">pledge</span>(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>promises, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>paths[]);
-</code></pre></div><p>and now it is,</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">pledge</span>(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>promises, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>execpromises);
-</code></pre></div><p>as per OpenBSD 6.2 stable and at the time of writing the blog, developers are still using <code>pledge(const char *promises, const char *paths[])</code> so we will be focussing on the same</p>
-<h5 id="how-to-use-pledge-in-a-program">How to use pledge() in a program?<a href="#how-to-use-pledge-in-a-program" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h5>
-<p>Let&rsquo;s take a simple hello world example:</p>
-<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
-<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+<p>after discussing with the developers, they mentioned that pledge(2) is not a system call filter. So, it is not used to restrict system calls, instead of that pledge(2) works on subset promise families like stdio, dns, inet, proc, net etc. but not directly on system calls like read, write, fork, etc.</p>
+<p><code>pledge(&quot;read&quot;, NULL)</code>: incorrect way of using pledge(2)
+<code>pledge(&quot;stdio inet&quot;, NULL)</code>: correct way of using pledge(2)
+and, based on the discussion with the developers they mentioned that pledge(2) works on behavioral approach not just like 1:1 approach with the system calls.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>On <span style="color:#ae81ff">11</span> December 2017, Theo de Raadt said:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>List: openbsd-tech
+</span></span><span style="display:flex;"><span>Subject: pledge execpromises
+</span></span><span style="display:flex;"><span>From: Theo de Raadt 
+</span></span><span style="display:flex;"><span>Date: 2017-12-11 21:20:51
+</span></span><span style="display:flex;"><span>Message-ID: 6735.1513027251 <span style="color:#f92672">()</span> cvs ! openbsd ! org
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>This will probably be committed in the next day or so.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>The 2nd argument of pledge<span style="color:#f92672">()</span> becomes execpromises, which is what
+</span></span><span style="display:flex;"><span>will gets activated after execve.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>There is also a small new feature called <span style="color:#e6db74">&#34;error&#34;</span>, which causes
+</span></span><span style="display:flex;"><span>violating system calls to <span style="color:#66d9ef">return</span> -1 with ENOSYS rather than killing
+</span></span><span style="display:flex;"><span>the process. This must be used with EXTREME CAUTION because libraries
+</span></span><span style="display:flex;"><span>and programs are full of unchecked system calls. If you carry on past
+</span></span><span style="display:flex;"><span>one of these failures, your program is in uncharted territory and
+</span></span><span style="display:flex;"><span>risks of exploitation become high.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;error&#34;</span> is being introduced <span style="color:#66d9ef">for</span> a different reason: The pre-exec
+</span></span><span style="display:flex;"><span>process<span style="color:#960050;background-color:#1e0010">&#39;</span>s expectation of what the post-exec process will <span style="color:#66d9ef">do</span> might
+</span></span><span style="display:flex;"><span>mismatch, so <span style="color:#e6db74">&#34;error&#34;</span> allows things like starting an editor which has
+</span></span><span style="display:flex;"><span>no network access or maybe other restrictions in the future...
+</span></span></code></pre></div><p>previously it was:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">pledge</span>(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>promises, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>paths[]);
+</span></span></code></pre></div><p>and now it is,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">pledge</span>(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>promises, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>execpromises);
+</span></span></code></pre></div><p>as per OpenBSD 6.2 stable and at the time of writing the blog, developers are still using <code>pledge(const char *promises, const char *paths[])</code> so our focus will be on the same</p>
+<p>How to use pledge() in a program?
+Let’s take a simple hello world example:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
 </span></code></pre></td>
 <td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span>
-<span style="color:#a6e22e">main</span>() {
-    <span style="color:#66d9ef">if</span>(pledge(<span style="color:#e6db74">&#34;stdio&#34;</span>,NULL) <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
-        err(<span style="color:#ae81ff">1</span>,<span style="color:#e6db74">&#34;pledge&#34;</span>);
-    }
-printf(<span style="color:#e6db74">&#34;Pledged</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
-<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
-}
-</code></pre></td></tr></table>
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">pledge</span>(<span style="color:#e6db74">&#34;stdio&#34;</span>,NULL) <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">err</span>(<span style="color:#ae81ff">1</span>,<span style="color:#e6db74">&#34;pledge&#34;</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;Pledged</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
 </div>
 </div><p>In the above example, the program takes pledge that it will only use stdio operations.</p>
 <p>Now, if the above program tries to open network socket(2) or any other operation like fork(2), then the kernel will kill this program with SIGABRT signal.</p>
-<p>Let&rsquo;s take another example:</p>
-<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
-<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+<p>Let’s take another example:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
 </span></code></pre></td>
 <td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span>
-<span style="color:#a6e22e">main</span>() {
-    <span style="color:#66d9ef">if</span>(pledge(<span style="color:#e6db74">&#34;&#34;</span>,NULL) <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
-        err(<span style="color:#ae81ff">1</span>,<span style="color:#e6db74">&#34;pledge&#34;</span>);
-    }
-printf(<span style="color:#e6db74">&#34;Pledged</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
-<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
-}
-</code></pre></td></tr></table>
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">pledge</span>(<span style="color:#e6db74">&#34;&#34;</span>,NULL) <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">err</span>(<span style="color:#ae81ff">1</span>,<span style="color:#e6db74">&#34;pledge&#34;</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;Pledged</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
 </div>
-</div><p>Now, in this case, there is nothing in the first parameter of pledge(2), so, according to OpenBSD pledge man page,</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">A promises value of &#34;&#34; restricts the process to the _exit(2)
-</code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># cat sampe.c</span>
-<span style="color:#75715e">#include &lt;unistd.h&gt;</span>
-<span style="color:#75715e">#include &lt;stdio.h&gt;</span>
-int
-main<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
-    <span style="color:#66d9ef">if</span><span style="color:#f92672">(</span>pledge<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;stdio&#34;</span>,NULL<span style="color:#f92672">)</span> <span style="color:#f92672">==</span> -1<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
-        err<span style="color:#f92672">(</span>1,<span style="color:#e6db74">&#34;pledge&#34;</span><span style="color:#f92672">)</span>;
-    <span style="color:#f92672">}</span>
-    printf<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Pledged\n&#34;</span><span style="color:#f92672">)</span>;
-    <span style="color:#66d9ef">return</span> 0;
-<span style="color:#f92672">}</span>
-<span style="color:#75715e"># ./testing</span>
-Pledged
-<span style="color:#75715e">#</span>
-<span style="color:#75715e"># vim sampe.c</span>
-<span style="color:#75715e"># gcc -o testing_reduced sampe.c</span>
-<span style="color:#75715e"># cat sampe.c</span>
-<span style="color:#75715e">#include &lt;unistd.h&gt;</span>
-<span style="color:#75715e">#include &lt;stdio.h&gt;</span>
-int
-main<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
-    <span style="color:#66d9ef">if</span><span style="color:#f92672">(</span>pledge<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;&#34;</span>,NULL<span style="color:#f92672">)</span> <span style="color:#f92672">==</span> -1<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
-        err<span style="color:#f92672">(</span>1,<span style="color:#e6db74">&#34;pledge&#34;</span><span style="color:#f92672">)</span>;
-    <span style="color:#f92672">}</span>
-    printf<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Pledged\n&#34;</span><span style="color:#f92672">)</span>;
-    <span style="color:#66d9ef">return</span> 0;
-<span style="color:#f92672">}</span>
-<span style="color:#75715e"># ./testing_reduced</span>
-Abort trap <span style="color:#f92672">(</span>core dumped<span style="color:#f92672">)</span>
-<span style="color:#75715e">#</span>
-</code></pre></div><h5 id="little-introduction-about-the-working-of-pledge2-from-the-kernel-perspective">Little introduction about the working of pledge(2) from the kernel perspective<a href="#little-introduction-about-the-working-of-pledge2-from-the-kernel-perspective" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h5>
-<p>This part was a little difficult to understand at first.
-I am very thankful to OpenBSD developers: <strong><em>Marc Espie</em></strong>, <strong><em>Benny Löfgren</em></strong>, <strong><em>Bob Beck</em></strong>, <strong><em>Stuart Henderson</em></strong> and <strong><em>Otto Moerbeek</em></strong> for giving their precious time and resolving queries related to kernel level working of pledge(2).</p>
-<p><code>pledge(&quot;stdio&quot;, NULL);</code> or <code>pledge(&quot;stdio inet proc route dns&quot;, NULL)</code></p>
-<ul>
-<li>this full string in pledge(2) is splitted into separate words like &ldquo;stdio&rdquo; or &ldquo;&lsquo;stdio&rsquo;, &lsquo;inet&rsquo;, &lsquo;proc&rsquo;, &lsquo;route&rsquo;, &lsquo;dns&rsquo;&rdquo;.</li>
-<li>then, these splitted words perform lookup operation from <code>pledgereq[]</code> array and if found then their specific flags will return.</li>
-</ul>
-<p>Following <code>pledgereq[]</code> array:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> {
-	<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>name;
-	<span style="color:#66d9ef">uint64_t</span> flags;
-} pledgereq[] <span style="color:#f92672">=</span> {
-	{ <span style="color:#e6db74">&#34;audio&#34;</span>,		PLEDGE_AUDIO },
-	{ <span style="color:#e6db74">&#34;bpf&#34;</span>,		PLEDGE_BPF },
-	{ <span style="color:#e6db74">&#34;chown&#34;</span>,		PLEDGE_CHOWN <span style="color:#f92672">|</span> PLEDGE_CHOWNUID },
-	{ <span style="color:#e6db74">&#34;cpath&#34;</span>,		PLEDGE_CPATH },
-	{ <span style="color:#e6db74">&#34;disklabel&#34;</span>,		PLEDGE_DISKLABEL },
-	{ <span style="color:#e6db74">&#34;dns&#34;</span>,		PLEDGE_DNS },
-	{ <span style="color:#e6db74">&#34;dpath&#34;</span>,		PLEDGE_DPATH },
-	{ <span style="color:#e6db74">&#34;drm&#34;</span>,		PLEDGE_DRM },
-	{ <span style="color:#e6db74">&#34;error&#34;</span>,		PLEDGE_ERROR },
-	{ <span style="color:#e6db74">&#34;exec&#34;</span>,		PLEDGE_EXEC },
-	{ <span style="color:#e6db74">&#34;fattr&#34;</span>,		PLEDGE_FATTR <span style="color:#f92672">|</span> PLEDGE_CHOWN },
-	{ <span style="color:#e6db74">&#34;flock&#34;</span>,		PLEDGE_FLOCK },
-	{ <span style="color:#e6db74">&#34;getpw&#34;</span>,		PLEDGE_GETPW },
-	{ <span style="color:#e6db74">&#34;id&#34;</span>,			PLEDGE_ID },
-	{ <span style="color:#e6db74">&#34;inet&#34;</span>,		PLEDGE_INET },
-	{ <span style="color:#e6db74">&#34;mcast&#34;</span>,		PLEDGE_MCAST },
-	{ <span style="color:#e6db74">&#34;pf&#34;</span>,			PLEDGE_PF },
-	{ <span style="color:#e6db74">&#34;proc&#34;</span>,		PLEDGE_PROC },
-	{ <span style="color:#e6db74">&#34;prot_exec&#34;</span>,		PLEDGE_PROTEXEC },
-	{ <span style="color:#e6db74">&#34;ps&#34;</span>,			PLEDGE_PS },
-	{ <span style="color:#e6db74">&#34;recvfd&#34;</span>,		PLEDGE_RECVFD },
-	{ <span style="color:#e6db74">&#34;route&#34;</span>,		PLEDGE_ROUTE },
-	{ <span style="color:#e6db74">&#34;rpath&#34;</span>,		PLEDGE_RPATH },
-	{ <span style="color:#e6db74">&#34;sendfd&#34;</span>,		PLEDGE_SENDFD },
-	{ <span style="color:#e6db74">&#34;settime&#34;</span>,		PLEDGE_SETTIME },
-	{ <span style="color:#e6db74">&#34;stdio&#34;</span>,		PLEDGE_STDIO },
-	{ <span style="color:#e6db74">&#34;tape&#34;</span>,		PLEDGE_TAPE },
-	{ <span style="color:#e6db74">&#34;tmppath&#34;</span>,		PLEDGE_TMPPATH },
-	{ <span style="color:#e6db74">&#34;tty&#34;</span>,		PLEDGE_TTY },
-	{ <span style="color:#e6db74">&#34;unix&#34;</span>,		PLEDGE_UNIX },
-	{ <span style="color:#e6db74">&#34;unveil&#34;</span>,		PLEDGE_UNVEIL },
-	{ <span style="color:#e6db74">&#34;vminfo&#34;</span>,		PLEDGE_VMINFO },
-	{ <span style="color:#e6db74">&#34;vmm&#34;</span>,		PLEDGE_VMM },
-	{ <span style="color:#e6db74">&#34;wpath&#34;</span>,		PLEDGE_WPATH },
-	{ <span style="color:#e6db74">&#34;wroute&#34;</span>,		PLEDGE_WROUTE },
-};
-</code></pre></div><ul>
-<li><code>pledgereq</code> array contains macro for every promises; for example, <code>stdio</code> relates to <code>PLEDGE_STDIO</code>. Now, these macros expand into their specific hex pledge values, like <code>PLEDGE_STDIO</code> expands to <code>0x0000000000000008ULL</code></li>
-<li>For other macros and their expansions as mentioned below:</li>
-</ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;sys/cdefs.h;&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span>
-<span style="color:#75715e">/*
-</span><span style="color:#75715e"> * pledge(2) requests
-</span><span style="color:#75715e"> */</span>
-<span style="color:#75715e">#define PLEDGE_ALWAYS	0xffffffffffffffffULL
-</span><span style="color:#75715e">#define PLEDGE_RPATH	0x0000000000000001ULL	</span><span style="color:#75715e">/* allow open for read */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_WPATH	0x0000000000000002ULL	</span><span style="color:#75715e">/* allow open for write */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_CPATH	0x0000000000000004ULL	</span><span style="color:#75715e">/* allow creat, mkdir, unlink etc */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_STDIO	0x0000000000000008ULL	</span><span style="color:#75715e">/* operate on own pid */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_TMPPATH	0x0000000000000010ULL	</span><span style="color:#75715e">/* for mk*temp() */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_DNS	0x0000000000000020ULL	</span><span style="color:#75715e">/* DNS services */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_INET	0x0000000000000040ULL	</span><span style="color:#75715e">/* AF_INET/AF_INET6 sockets */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_FLOCK	0x0000000000000080ULL	</span><span style="color:#75715e">/* file locking */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_UNIX	0x0000000000000100ULL	</span><span style="color:#75715e">/* AF_UNIX sockets */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_ID	0x0000000000000200ULL	</span><span style="color:#75715e">/* allow setuid, setgid, etc */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_TAPE	0x0000000000000400ULL	</span><span style="color:#75715e">/* Tape ioctl */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_GETPW	0x0000000000000800ULL	</span><span style="color:#75715e">/* YP enables if ypbind.lock */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_PROC	0x0000000000001000ULL	</span><span style="color:#75715e">/* fork, waitpid, etc */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_SETTIME	0x0000000000002000ULL	</span><span style="color:#75715e">/* able to set/adj time/freq */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_FATTR	0x0000000000004000ULL	</span><span style="color:#75715e">/* allow explicit file st_* mods */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_PROTEXEC	0x0000000000008000ULL	</span><span style="color:#75715e">/* allow use of PROT_EXEC */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_TTY	0x0000000000010000ULL	</span><span style="color:#75715e">/* tty setting */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_SENDFD	0x0000000000020000ULL	</span><span style="color:#75715e">/* AF_UNIX CMSG fd sending */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_RECVFD	0x0000000000040000ULL	</span><span style="color:#75715e">/* AF_UNIX CMSG fd receiving */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_EXEC	0x0000000000080000ULL	</span><span style="color:#75715e">/* execve, child is free of pledge */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_ROUTE	0x0000000000100000ULL	</span><span style="color:#75715e">/* routing lookups */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_MCAST	0x0000000000200000ULL	</span><span style="color:#75715e">/* multicast joins */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_VMINFO	0x0000000000400000ULL	</span><span style="color:#75715e">/* vminfo listings */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_PS	0x0000000000800000ULL	</span><span style="color:#75715e">/* ps listings */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_DISKLABEL 0x0000000002000000ULL	</span><span style="color:#75715e">/* disklabels */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_PF	0x0000000004000000ULL	</span><span style="color:#75715e">/* pf ioctls */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_AUDIO	0x0000000008000000ULL	</span><span style="color:#75715e">/* audio ioctls */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_DPATH	0x0000000010000000ULL	</span><span style="color:#75715e">/* mknod &amp; mkfifo */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_DRM	0x0000000020000000ULL	</span><span style="color:#75715e">/* drm ioctls */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_VMM	0x0000000040000000ULL	</span><span style="color:#75715e">/* vmm ioctls */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_CHOWN	0x0000000080000000ULL	</span><span style="color:#75715e">/* chown(2) family */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_CHOWNUID	0x0000000100000000ULL	</span><span style="color:#75715e">/* allow owner/group changes */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_BPF	0x0000000200000000ULL	</span><span style="color:#75715e">/* bpf ioctl */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_ERROR	0x0000000400000000ULL	</span><span style="color:#75715e">/* ENOSYS instead of kill */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_WROUTE	0x0000000800000000ULL	</span><span style="color:#75715e">/* interface address ioctls */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#define PLEDGE_UNVEIL	0x0000001000000000ULL	</span><span style="color:#75715e">/* allow unveil() */</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span>
-<span style="color:#75715e">/*
-</span><span style="color:#75715e"> * Bits outside PLEDGE_USERSET are used by the kernel itself
-</span><span style="color:#75715e"> * to track program behaviours which have been observed.
-</span><span style="color:#75715e"> */</span>
-<span style="color:#75715e">#define PLEDGE_USERSET	0x0fffffffffffffffULL
-</span><span style="color:#75715e">#define PLEDGE_STATLIE	0x4000000000000000ULL
-</span><span style="color:#75715e">#define PLEDGE_YPACTIVE	0x8000000000000000ULL	</span><span style="color:#75715e">/* YP use detected and allowed */</span><span style="color:#75715e">
-</span></code></pre></div><ul>
-<li>now, all <code>PLEDGE_*</code> macros will perform <code>or</code>(&quot;<code>|</code>&quot;) operation with each other and as per the promises in the pledge(2) from (user-space)</li>
-</ul>
-<p>pseudo algorithm for better understanding given below:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">uint64_t</span> flags<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
-<span style="color:#66d9ef">for</span> content_of_PLEDGE_macro from [<span style="color:#e6db74">&#34;stdio&#34;</span>, <span style="color:#e6db74">&#34;inet&#34;</span>, <span style="color:#e6db74">&#34;proc&#34;</span>, <span style="color:#e6db74">&#34;dns&#34;</span>, <span style="color:#e6db74">&#34;proc&#34;</span>, <span style="color:#e6db74">&#34;route&#34;</span>]
-
-        flags <span style="color:#f92672">|=</span> content_of_PLEDGE_macro
-
-ps_pledge <span style="color:#f92672">=</span> flags
-</code></pre></div><p>Calculation of pledge_bit (pledge value) in kernel mode, (only for demonstration and understanding the concept better):</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">test<span style="color:#a6e22e">@openbsd</span>:<span style="color:#f92672">~</span><span style="color:#960050;background-color:#1e0010">$</span> cat pledge_python<span style="color:#f92672">.</span>py
-<span style="color:#f92672">import</span> sys
-
-PLEDGE_ALWAYS    <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0xffffffffffffffff</span>  <span style="color:#75715e">#/* pledge always */</span>
-PLEDGE_RPATH     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000001</span>  <span style="color:#75715e">#/* allow open for read */</span>
-PLEDGE_WPATH     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000002</span>  <span style="color:#75715e">#/* allow open for write */</span>
-PLEDGE_CPATH     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000004</span>  <span style="color:#75715e">#/* allow creat, mkdir, unlink etc */</span>
-PLEDGE_STDIO     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000008</span>  <span style="color:#75715e">#/* operate on own pid */</span>
-PLEDGE_TMPPATH   <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000010</span>  <span style="color:#75715e">#/* for mk*temp() */</span>
-PLEDGE_DNS       <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000020</span>  <span style="color:#75715e"># /* DNS services */</span>
-PLEDGE_INET      <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000040</span>  <span style="color:#75715e"># /* AF_INET/AF_INET6 sockets */</span>
-PLEDGE_FLOCK     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000080</span>  <span style="color:#75715e"># /* file locking */</span>
-PLEDGE_UNIX      <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000100</span>  <span style="color:#75715e"># /* AF_UNIX sockets */</span>
-PLEDGE_ID        <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000200</span>  <span style="color:#75715e"># /* allow setuid, setgid, etc */</span>
-PLEDGE_TAPE      <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000400</span>  <span style="color:#75715e"># /* Tape ioctl */</span>
-PLEDGE_GETPW     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000800</span>  <span style="color:#75715e"># /* YP enables if ypbind.lock */</span>
-PLEDGE_PROC      <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000001000</span>  <span style="color:#75715e"># /* fork, waitpid, etc */</span>
-PLEDGE_SETTIME   <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000002000</span>  <span style="color:#75715e"># /* able to set/adj time/freq */</span>
-PLEDGE_FATTR     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000004000</span>  <span style="color:#75715e"># /* allow explicit file st_* mods */</span>
-PLEDGE_PROTEXEC  <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000008000</span>  <span style="color:#75715e"># /* allow use of PROT_EXEC */</span>
-PLEDGE_TTY       <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000010000</span>  <span style="color:#75715e"># /* tty setting */</span>
-PLEDGE_SENDFD    <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000020000</span>  <span style="color:#75715e"># /* AF_UNIX CMSG fd sending */</span>
-PLEDGE_RECVFD    <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000040000</span>  <span style="color:#75715e"># /* AF_UNIX CMSG fd receiving */</span>
-PLEDGE_EXEC      <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000080000</span>  <span style="color:#75715e"># /* execve, child is free of pledge */</span>
-PLEDGE_ROUTE     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000100000</span>  <span style="color:#75715e"># /* routing lookups */</span>
-PLEDGE_MCAST     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000200000</span>  <span style="color:#75715e"># /* multicast joins */</span>
-PLEDGE_VMINFO    <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000400000</span>  <span style="color:#75715e"># /* vminfo listings */</span>
-PLEDGE_PS        <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000800000</span>  <span style="color:#75715e"># /* ps listings */</span>
-PLEDGE_DISKLABEL <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000002000000</span>  <span style="color:#75715e">#/* disklabels */</span>
-PLEDGE_PF        <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000004000000</span>  <span style="color:#75715e"># /* pf ioctls */</span>
-PLEDGE_AUDIO     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000008000000</span>  <span style="color:#75715e"># /* audio ioctls */</span>
-PLEDGE_DPATH     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000010000000</span>  <span style="color:#75715e"># /* mknod &amp; mkfifo */</span>
-PLEDGE_DRM       <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000020000000</span>  <span style="color:#75715e"># /* drm ioctls */</span>
-PLEDGE_VMM       <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000040000000</span>  <span style="color:#75715e"># /* vmm ioctls */</span>
-PLEDGE_CHOWN     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000080000000</span>  <span style="color:#75715e"># /* chown(2) family */</span>
-PLEDGE_CHOWNUID  <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000100000000</span>  <span style="color:#75715e"># /* allow owner/group changes */</span>
-PLEDGE_BPF       <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000200000000</span>  <span style="color:#75715e"># /* bpf ioctl */</span>
-PLEDGE_ERROR     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000400000000</span>  <span style="color:#75715e"># /* ENOSYS instead of kill */</span>
-
-pledgereq <span style="color:#f92672">=</span> {   <span style="color:#e6db74">&#34;audio&#34;</span>     :  PLEDGE_AUDIO,
-                <span style="color:#e6db74">&#34;bpf&#34;</span>       :  PLEDGE_BPF,
-                <span style="color:#e6db74">&#34;chown&#34;</span>     :  PLEDGE_CHOWN <span style="color:#f92672">|</span> PLEDGE_CHOWNUID,
-                <span style="color:#e6db74">&#34;cpath&#34;</span>     :  PLEDGE_CPATH,
-                <span style="color:#e6db74">&#34;disklabel&#34;</span> :  PLEDGE_DISKLABEL,
-                <span style="color:#e6db74">&#34;dns&#34;</span>       :  PLEDGE_DNS,
-                <span style="color:#e6db74">&#34;dpath&#34;</span>     :  PLEDGE_DPATH,
-                <span style="color:#e6db74">&#34;drm&#34;</span>       :  PLEDGE_DRM,
-                <span style="color:#e6db74">&#34;exec&#34;</span>      :  PLEDGE_EXEC,
-                <span style="color:#e6db74">&#34;fattr&#34;</span>     :  PLEDGE_FATTR <span style="color:#f92672">|</span> PLEDGE_CHOWN,
-                <span style="color:#e6db74">&#34;flock&#34;</span>     :  PLEDGE_FLOCK,
-                <span style="color:#e6db74">&#34;getpw&#34;</span>     :  PLEDGE_GETPW,
-                <span style="color:#e6db74">&#34;id&#34;</span>        :  PLEDGE_ID,
-                <span style="color:#e6db74">&#34;inet&#34;</span>      :  PLEDGE_INET,
-                <span style="color:#e6db74">&#34;mcast&#34;</span>     :  PLEDGE_MCAST,
-                <span style="color:#e6db74">&#34;pf&#34;</span>        :  PLEDGE_PF,
-                <span style="color:#e6db74">&#34;proc&#34;</span>      :  PLEDGE_PROC,
-                <span style="color:#e6db74">&#34;prot_exec&#34;</span> :  PLEDGE_PROTEXEC,
-                <span style="color:#e6db74">&#34;ps&#34;</span>        :  PLEDGE_PS,
-                <span style="color:#e6db74">&#34;recvfd&#34;</span>    :  PLEDGE_RECVFD,
-                <span style="color:#e6db74">&#34;route&#34;</span>     :  PLEDGE_ROUTE,
-                <span style="color:#e6db74">&#34;rpath&#34;</span>     :  PLEDGE_RPATH,
-                <span style="color:#e6db74">&#34;sendfd&#34;</span>    :  PLEDGE_SENDFD,
-                <span style="color:#e6db74">&#34;settime&#34;</span>   :  PLEDGE_SETTIME,
-                <span style="color:#e6db74">&#34;stdio&#34;</span>     :  PLEDGE_STDIO,
-                <span style="color:#e6db74">&#34;tape&#34;</span>      :  PLEDGE_TAPE,
-                <span style="color:#e6db74">&#34;tmppath&#34;</span>   :  PLEDGE_TMPPATH,
-                <span style="color:#e6db74">&#34;tty&#34;</span>       :  PLEDGE_TTY,
-                <span style="color:#e6db74">&#34;unix&#34;</span>      :  PLEDGE_UNIX,
-                <span style="color:#e6db74">&#34;vminfo&#34;</span>    :  PLEDGE_VMINFO,
-                <span style="color:#e6db74">&#34;vmm&#34;</span>       :  PLEDGE_VMM,
-                <span style="color:#e6db74">&#34;wpath&#34;</span>     :  PLEDGE_WPATH,
-            }
-
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sys_pledge</span>(promises,path):
-    flags <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
-    <span style="color:#66d9ef">if</span> len(promises) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>:
-        print <span style="color:#e6db74">&#34;ABRT (SIGABRT)&#34;</span>
-        sys<span style="color:#f92672">.</span>exit(<span style="color:#ae81ff">1</span>)
-    promises_list <span style="color:#f92672">=</span> promises<span style="color:#f92672">.</span>split()
-    <span style="color:#66d9ef">for</span> perm <span style="color:#f92672">in</span> promises_list:
-        <span style="color:#66d9ef">try</span>:
-            perms <span style="color:#f92672">=</span> pledgereq[perm]
-        <span style="color:#66d9ef">except</span> <span style="color:#a6e22e">Exception</span> <span style="color:#66d9ef">as</span> e:
-            print(str(e) <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;: Undefined promise(s) made&#34;</span>)
-            sys<span style="color:#f92672">.</span>exit(<span style="color:#ae81ff">1</span>)
-
-        flags <span style="color:#f92672">=</span> flags <span style="color:#f92672">|</span> pledgereq[perm]
-    <span style="color:#66d9ef">return</span> flags
-
-<span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;__main__&#39;</span>:
-
-    pledge_bits <span style="color:#f92672">=</span> sys_pledge(sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">1</span>],<span style="color:#e6db74">&#34;NULL&#34;</span>);
-
-    print <span style="color:#e6db74">&#34;pledge_bits :&#34;</span> <span style="color:#f92672">+</span> str(hex(pledge_bits))
-</code></pre></div><p>Output:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">test@openbsd:~$ python pledge_python.py <span style="color:#e6db74">&#34;stdio&#34;</span>
-pledge_bits :0x8
-test@openbsd:~$
-test@openbsd:~$ python pledge_python.py <span style="color:#e6db74">&#34;stdio inet proc route dns&#34;</span>
-pledge_bits :0x101068
-test@openbsd:~$
-test@openbsd:~$ python pledge_python.py <span style="color:#e6db74">&#34;stdio abcd&#34;</span>
-<span style="color:#e6db74">&#39;abcd&#39;</span>: Undefined promise<span style="color:#f92672">(</span>s<span style="color:#f92672">)</span> made
-test@openbsd:~$
-test@openbsd:~$ python pledge_python.py <span style="color:#e6db74">&#34;&#34;</span>
-ABRT <span style="color:#f92672">(</span>SIGABRT<span style="color:#f92672">)</span>
-</code></pre></div><p>there are lots of features and more detailed internals pending to cover which we will be discussing some other time in future</p>
-<p>but I will suggest and encourage everyone to read the user and kernel code of the pledge(2) to get more understanding about the internals - <a href="https://github.com/openbsd/src/blob/master/sys/kern/kern_pledge.c">sys/kern/kern_pledge.c</a>.</p>
+</div><p>In the above code snippet, the first parameter of pledge(2) is empty and according to OpenBSD man page,
+<code>A promises value of &quot;&quot; restricts the process to the _exit(2)</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span><span style="color:#75715e"># cat sampe.c</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#include &lt;unistd.h&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#include &lt;stdio.h&gt;</span>
+</span></span><span style="display:flex;"><span>int
+</span></span><span style="display:flex;"><span>main<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span><span style="color:#f92672">(</span>pledge<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;stdio&#34;</span>,NULL<span style="color:#f92672">)</span> <span style="color:#f92672">==</span> -1<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        err<span style="color:#f92672">(</span>1,<span style="color:#e6db74">&#34;pledge&#34;</span><span style="color:#f92672">)</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    printf<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Pledged\n&#34;</span><span style="color:#f92672">)</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> 0;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># ./testing</span>
+</span></span><span style="display:flex;"><span>Pledged
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># vim sampe.c</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># gcc -o testing_reduced sampe.c</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># cat sampe.c</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#include &lt;unistd.h&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#include &lt;stdio.h&gt;</span>
+</span></span><span style="display:flex;"><span>int
+</span></span><span style="display:flex;"><span>main<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span><span style="color:#f92672">(</span>pledge<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;&#34;</span>,NULL<span style="color:#f92672">)</span> <span style="color:#f92672">==</span> -1<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        err<span style="color:#f92672">(</span>1,<span style="color:#e6db74">&#34;pledge&#34;</span><span style="color:#f92672">)</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    printf<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Pledged\n&#34;</span><span style="color:#f92672">)</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> 0;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># ./testing_reduced</span>
+</span></span><span style="display:flex;"><span>Abort trap <span style="color:#f92672">(</span>core dumped<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#</span>
+</span></span></code></pre></div><h3 id="introduction-on-the-working-of-pledge2---kernel-internals">Introduction on the working of pledge(2) - kernel internals<a href="#introduction-on-the-working-of-pledge2---kernel-internals" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h3>
+<p>This part was a little difficult to understand at first. I am very thankful to OpenBSD developers: <strong>Marc Espie</strong>, <strong>Benny Löfgren</strong>, <strong>Bob Beck</strong>, <strong>Stuart Henderson</strong> and <strong>Otto Moerbeek</strong> for giving their precious time and resolving queries related to kernel internals of pledge(2).</p>
+<p><code>pledge(&quot;stdio&quot;, NULL); or pledge(&quot;stdio inet proc route dns&quot;, NULL)</code></p>
+<p>the above string is split into separate words like &ldquo;stdio&rdquo; or &ldquo;&lsquo;stdio&rsquo;, &lsquo;inet&rsquo;, &lsquo;proc&rsquo;, &lsquo;route&rsquo;, &lsquo;dns&rsquo;&rdquo;
+after that these split words perform look-up operation from <code>pledgereq[]</code> array and if found then their respective flags will return
+Following <code>pledgereq[]</code> array:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>name;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">uint64_t</span> flags;
+</span></span><span style="display:flex;"><span>} pledgereq[] <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;audio&#34;</span>,		PLEDGE_AUDIO },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;bpf&#34;</span>,		PLEDGE_BPF },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;chown&#34;</span>,		PLEDGE_CHOWN <span style="color:#f92672">|</span> PLEDGE_CHOWNUID },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;cpath&#34;</span>,		PLEDGE_CPATH },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;disklabel&#34;</span>,		PLEDGE_DISKLABEL },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;dns&#34;</span>,		PLEDGE_DNS },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;dpath&#34;</span>,		PLEDGE_DPATH },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;drm&#34;</span>,		PLEDGE_DRM },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;error&#34;</span>,		PLEDGE_ERROR },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;exec&#34;</span>,		PLEDGE_EXEC },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;fattr&#34;</span>,		PLEDGE_FATTR <span style="color:#f92672">|</span> PLEDGE_CHOWN },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;flock&#34;</span>,		PLEDGE_FLOCK },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;getpw&#34;</span>,		PLEDGE_GETPW },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;id&#34;</span>,			PLEDGE_ID },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;inet&#34;</span>,		PLEDGE_INET },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;mcast&#34;</span>,		PLEDGE_MCAST },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;pf&#34;</span>,			PLEDGE_PF },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;proc&#34;</span>,		PLEDGE_PROC },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;prot_exec&#34;</span>,		PLEDGE_PROTEXEC },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;ps&#34;</span>,			PLEDGE_PS },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;recvfd&#34;</span>,		PLEDGE_RECVFD },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;route&#34;</span>,		PLEDGE_ROUTE },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;rpath&#34;</span>,		PLEDGE_RPATH },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;sendfd&#34;</span>,		PLEDGE_SENDFD },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;settime&#34;</span>,		PLEDGE_SETTIME },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;stdio&#34;</span>,		PLEDGE_STDIO },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;tape&#34;</span>,		PLEDGE_TAPE },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;tmppath&#34;</span>,		PLEDGE_TMPPATH },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;tty&#34;</span>,		PLEDGE_TTY },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;unix&#34;</span>,		PLEDGE_UNIX },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;unveil&#34;</span>,		PLEDGE_UNVEIL },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;vminfo&#34;</span>,		PLEDGE_VMINFO },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;vmm&#34;</span>,		PLEDGE_VMM },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;wpath&#34;</span>,		PLEDGE_WPATH },
+</span></span><span style="display:flex;"><span>	{ <span style="color:#e6db74">&#34;wroute&#34;</span>,		PLEDGE_WROUTE },
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>pledgereq array contains macro for every promises; for example, stdio relates to PLEDGE_STDIO. Now, these macros expand into their specific hex pledge values, like <code>PLEDGE_STDIO</code> expands to <code>0x0000000000000008ULL</code></p>
+<p>For other macros and their expansions as mentioned below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;sys/cdefs.h;&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * pledge(2) requests
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_ALWAYS	0xffffffffffffffffULL
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_RPATH	0x0000000000000001ULL	</span><span style="color:#75715e">/* allow open for read */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_WPATH	0x0000000000000002ULL	</span><span style="color:#75715e">/* allow open for write */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_CPATH	0x0000000000000004ULL	</span><span style="color:#75715e">/* allow creat, mkdir, unlink etc */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_STDIO	0x0000000000000008ULL	</span><span style="color:#75715e">/* operate on own pid */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_TMPPATH	0x0000000000000010ULL	</span><span style="color:#75715e">/* for mk*temp() */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_DNS	0x0000000000000020ULL	</span><span style="color:#75715e">/* DNS services */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_INET	0x0000000000000040ULL	</span><span style="color:#75715e">/* AF_INET/AF_INET6 sockets */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_FLOCK	0x0000000000000080ULL	</span><span style="color:#75715e">/* file locking */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_UNIX	0x0000000000000100ULL	</span><span style="color:#75715e">/* AF_UNIX sockets */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_ID	0x0000000000000200ULL	</span><span style="color:#75715e">/* allow setuid, setgid, etc */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_TAPE	0x0000000000000400ULL	</span><span style="color:#75715e">/* Tape ioctl */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_GETPW	0x0000000000000800ULL	</span><span style="color:#75715e">/* YP enables if ypbind.lock */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_PROC	0x0000000000001000ULL	</span><span style="color:#75715e">/* fork, waitpid, etc */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_SETTIME	0x0000000000002000ULL	</span><span style="color:#75715e">/* able to set/adj time/freq */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_FATTR	0x0000000000004000ULL	</span><span style="color:#75715e">/* allow explicit file st_* mods */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_PROTEXEC	0x0000000000008000ULL	</span><span style="color:#75715e">/* allow use of PROT_EXEC */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_TTY	0x0000000000010000ULL	</span><span style="color:#75715e">/* tty setting */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_SENDFD	0x0000000000020000ULL	</span><span style="color:#75715e">/* AF_UNIX CMSG fd sending */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_RECVFD	0x0000000000040000ULL	</span><span style="color:#75715e">/* AF_UNIX CMSG fd receiving */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_EXEC	0x0000000000080000ULL	</span><span style="color:#75715e">/* execve, child is free of pledge */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_ROUTE	0x0000000000100000ULL	</span><span style="color:#75715e">/* routing lookups */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_MCAST	0x0000000000200000ULL	</span><span style="color:#75715e">/* multicast joins */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_VMINFO	0x0000000000400000ULL	</span><span style="color:#75715e">/* vminfo listings */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_PS	0x0000000000800000ULL	</span><span style="color:#75715e">/* ps listings */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_DISKLABEL 0x0000000002000000ULL	</span><span style="color:#75715e">/* disklabels */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_PF	0x0000000004000000ULL	</span><span style="color:#75715e">/* pf ioctls */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_AUDIO	0x0000000008000000ULL	</span><span style="color:#75715e">/* audio ioctls */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_DPATH	0x0000000010000000ULL	</span><span style="color:#75715e">/* mknod &amp; mkfifo */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_DRM	0x0000000020000000ULL	</span><span style="color:#75715e">/* drm ioctls */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_VMM	0x0000000040000000ULL	</span><span style="color:#75715e">/* vmm ioctls */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_CHOWN	0x0000000080000000ULL	</span><span style="color:#75715e">/* chown(2) family */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_CHOWNUID	0x0000000100000000ULL	</span><span style="color:#75715e">/* allow owner/group changes */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_BPF	0x0000000200000000ULL	</span><span style="color:#75715e">/* bpf ioctl */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_ERROR	0x0000000400000000ULL	</span><span style="color:#75715e">/* ENOSYS instead of kill */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_WROUTE	0x0000000800000000ULL	</span><span style="color:#75715e">/* interface address ioctls */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_UNVEIL	0x0000001000000000ULL	</span><span style="color:#75715e">/* allow unveil() */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * Bits outside PLEDGE_USERSET are used by the kernel itself
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * to track program behaviours which have been observed.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_USERSET	0x0fffffffffffffffULL
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_STATLIE	0x4000000000000000ULL
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define PLEDGE_YPACTIVE	0x8000000000000000ULL	</span><span style="color:#75715e">/* YP use detected and allowed */</span><span style="color:#75715e">
+</span></span></span></code></pre></div><p>now, all PLEDGE_* macros will perform or(&quot;|&quot;) operation with each other and as per the promises in the pledge(2) from (user-space)
+pseudo algorithm for better understanding given below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">uint64_t</span> flags<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> content_of_PLEDGE_macro from [<span style="color:#e6db74">&#34;stdio&#34;</span>, <span style="color:#e6db74">&#34;inet&#34;</span>, <span style="color:#e6db74">&#34;proc&#34;</span>, <span style="color:#e6db74">&#34;dns&#34;</span>, <span style="color:#e6db74">&#34;proc&#34;</span>, <span style="color:#e6db74">&#34;route&#34;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        flags <span style="color:#f92672">|=</span> content_of_PLEDGE_macro
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ps_pledge <span style="color:#f92672">=</span> flags
+</span></span></code></pre></div><p>Calculation of pledge_bit (pledge value) in kernel mode, (only for demonstration and understanding the concept better):</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">71
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">72
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">73
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">74
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">75
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">76
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">77
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">78
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">79
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">80
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">81
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">82
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">83
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">84
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">85
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">86
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">87
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">88
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">89
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">90
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">91
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">92
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">93
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">94
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>test<span style="color:#a6e22e">@openbsd</span>:<span style="color:#f92672">~</span><span style="color:#960050;background-color:#1e0010">$</span> cat pledge_python<span style="color:#f92672">.</span>py
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> sys
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>PLEDGE_ALWAYS    <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0xffffffffffffffff</span>  <span style="color:#75715e">#/* pledge always */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_RPATH     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000001</span>  <span style="color:#75715e">#/* allow open for read */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_WPATH     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000002</span>  <span style="color:#75715e">#/* allow open for write */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_CPATH     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000004</span>  <span style="color:#75715e">#/* allow creat, mkdir, unlink etc */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_STDIO     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000008</span>  <span style="color:#75715e">#/* operate on own pid */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_TMPPATH   <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000010</span>  <span style="color:#75715e">#/* for mk*temp() */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_DNS       <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000020</span>  <span style="color:#75715e"># /* DNS services */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_INET      <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000040</span>  <span style="color:#75715e"># /* AF_INET/AF_INET6 sockets */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_FLOCK     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000080</span>  <span style="color:#75715e"># /* file locking */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_UNIX      <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000100</span>  <span style="color:#75715e"># /* AF_UNIX sockets */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_ID        <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000200</span>  <span style="color:#75715e"># /* allow setuid, setgid, etc */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_TAPE      <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000400</span>  <span style="color:#75715e"># /* Tape ioctl */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_GETPW     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000000800</span>  <span style="color:#75715e"># /* YP enables if ypbind.lock */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_PROC      <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000001000</span>  <span style="color:#75715e"># /* fork, waitpid, etc */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_SETTIME   <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000002000</span>  <span style="color:#75715e"># /* able to set/adj time/freq */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_FATTR     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000004000</span>  <span style="color:#75715e"># /* allow explicit file st_* mods */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_PROTEXEC  <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000008000</span>  <span style="color:#75715e"># /* allow use of PROT_EXEC */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_TTY       <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000010000</span>  <span style="color:#75715e"># /* tty setting */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_SENDFD    <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000020000</span>  <span style="color:#75715e"># /* AF_UNIX CMSG fd sending */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_RECVFD    <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000040000</span>  <span style="color:#75715e"># /* AF_UNIX CMSG fd receiving */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_EXEC      <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000080000</span>  <span style="color:#75715e"># /* execve, child is free of pledge */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_ROUTE     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000100000</span>  <span style="color:#75715e"># /* routing lookups */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_MCAST     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000200000</span>  <span style="color:#75715e"># /* multicast joins */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_VMINFO    <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000400000</span>  <span style="color:#75715e"># /* vminfo listings */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_PS        <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000000800000</span>  <span style="color:#75715e"># /* ps listings */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_DISKLABEL <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000002000000</span>  <span style="color:#75715e">#/* disklabels */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_PF        <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000004000000</span>  <span style="color:#75715e"># /* pf ioctls */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_AUDIO     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000008000000</span>  <span style="color:#75715e"># /* audio ioctls */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_DPATH     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000010000000</span>  <span style="color:#75715e"># /* mknod &amp; mkfifo */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_DRM       <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000020000000</span>  <span style="color:#75715e"># /* drm ioctls */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_VMM       <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000040000000</span>  <span style="color:#75715e"># /* vmm ioctls */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_CHOWN     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000080000000</span>  <span style="color:#75715e"># /* chown(2) family */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_CHOWNUID  <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000100000000</span>  <span style="color:#75715e"># /* allow owner/group changes */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_BPF       <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000200000000</span>  <span style="color:#75715e"># /* bpf ioctl */</span>
+</span></span><span style="display:flex;"><span>PLEDGE_ERROR     <span style="color:#f92672">=</span>  <span style="color:#ae81ff">0x0000000400000000</span>  <span style="color:#75715e"># /* ENOSYS instead of kill */</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>pledgereq <span style="color:#f92672">=</span> {   <span style="color:#e6db74">&#34;audio&#34;</span>     :  PLEDGE_AUDIO,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;bpf&#34;</span>       :  PLEDGE_BPF,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;chown&#34;</span>     :  PLEDGE_CHOWN <span style="color:#f92672">|</span> PLEDGE_CHOWNUID,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;cpath&#34;</span>     :  PLEDGE_CPATH,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;disklabel&#34;</span> :  PLEDGE_DISKLABEL,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;dns&#34;</span>       :  PLEDGE_DNS,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;dpath&#34;</span>     :  PLEDGE_DPATH,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;drm&#34;</span>       :  PLEDGE_DRM,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;exec&#34;</span>      :  PLEDGE_EXEC,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;fattr&#34;</span>     :  PLEDGE_FATTR <span style="color:#f92672">|</span> PLEDGE_CHOWN,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;flock&#34;</span>     :  PLEDGE_FLOCK,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;getpw&#34;</span>     :  PLEDGE_GETPW,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;id&#34;</span>        :  PLEDGE_ID,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;inet&#34;</span>      :  PLEDGE_INET,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;mcast&#34;</span>     :  PLEDGE_MCAST,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;pf&#34;</span>        :  PLEDGE_PF,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;proc&#34;</span>      :  PLEDGE_PROC,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;prot_exec&#34;</span> :  PLEDGE_PROTEXEC,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;ps&#34;</span>        :  PLEDGE_PS,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;recvfd&#34;</span>    :  PLEDGE_RECVFD,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;route&#34;</span>     :  PLEDGE_ROUTE,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;rpath&#34;</span>     :  PLEDGE_RPATH,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;sendfd&#34;</span>    :  PLEDGE_SENDFD,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;settime&#34;</span>   :  PLEDGE_SETTIME,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;stdio&#34;</span>     :  PLEDGE_STDIO,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;tape&#34;</span>      :  PLEDGE_TAPE,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;tmppath&#34;</span>   :  PLEDGE_TMPPATH,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;tty&#34;</span>       :  PLEDGE_TTY,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;unix&#34;</span>      :  PLEDGE_UNIX,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;vminfo&#34;</span>    :  PLEDGE_VMINFO,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;vmm&#34;</span>       :  PLEDGE_VMM,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;wpath&#34;</span>     :  PLEDGE_WPATH,
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sys_pledge</span>(promises,path):
+</span></span><span style="display:flex;"><span>    flags <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> len(promises) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span>        print <span style="color:#e6db74">&#34;ABRT (SIGABRT)&#34;</span>
+</span></span><span style="display:flex;"><span>        sys<span style="color:#f92672">.</span>exit(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>    promises_list <span style="color:#f92672">=</span> promises<span style="color:#f92672">.</span>split()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> perm <span style="color:#f92672">in</span> promises_list:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span>:
+</span></span><span style="display:flex;"><span>            perms <span style="color:#f92672">=</span> pledgereq[perm]
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">except</span> <span style="color:#a6e22e">Exception</span> <span style="color:#66d9ef">as</span> e:
+</span></span><span style="display:flex;"><span>            print(str(e) <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;: Undefined promise(s) made&#34;</span>)
+</span></span><span style="display:flex;"><span>            sys<span style="color:#f92672">.</span>exit(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        flags <span style="color:#f92672">=</span> flags <span style="color:#f92672">|</span> pledgereq[perm]
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> flags
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;__main__&#39;</span>:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    pledge_bits <span style="color:#f92672">=</span> sys_pledge(sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">1</span>],<span style="color:#e6db74">&#34;NULL&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    print <span style="color:#e6db74">&#34;pledge_bits :&#34;</span> <span style="color:#f92672">+</span> str(hex(pledge_bits))
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Output:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>test@openbsd:~$ python pledge_python.py <span style="color:#e6db74">&#34;stdio&#34;</span>
+</span></span><span style="display:flex;"><span>pledge_bits :0x8
+</span></span><span style="display:flex;"><span>test@openbsd:~$
+</span></span><span style="display:flex;"><span>test@openbsd:~$ python pledge_python.py <span style="color:#e6db74">&#34;stdio inet proc route dns&#34;</span>
+</span></span><span style="display:flex;"><span>pledge_bits :0x101068
+</span></span><span style="display:flex;"><span>test@openbsd:~$
+</span></span><span style="display:flex;"><span>test@openbsd:~$ python pledge_python.py <span style="color:#e6db74">&#34;stdio abcd&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;abcd&#39;</span>: Undefined promise<span style="color:#f92672">(</span>s<span style="color:#f92672">)</span> made
+</span></span><span style="display:flex;"><span>test@openbsd:~$
+</span></span><span style="display:flex;"><span>test@openbsd:~$ python pledge_python.py <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>ABRT <span style="color:#f92672">(</span>SIGABRT<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>there are lots of features and more detailed internals pending to cover which we will be discussing some other time in future</p>
+<p>but I will suggest and encourage everyone to read the user and kernel code of the pledge(2) to get more understanding about the internals <code>sys/kern/kern_pledge.c</code>.</p>
 <p>One of the interesting part about pledge(2) is that the pledge(2) does check that you never go in increasing the pledge flags once a process gets pledged. So, it works mainly in decreasing order.</p>
-<p>Finally!! If something is missing or not correct, please feel free to update.</p>
+<p>Finally!!</p>
+<p>If something is missing or not correct, please feel free to update.</p>
 
       </div></div>
 
   
-  
+    
 <div class="pagination">
     <div class="pagination__title">
         <span class="pagination__title-h">Read other posts</span>
@@ -567,15 +663,15 @@ ABRT <span style="color:#f92672">(</span>SIGABRT<span style="color:#f92672">)</s
     <div class="pagination__buttons">
         
         <span class="button previous">
-            <a href="https://bsdb0y.github.io/posts/openbsd-intro-to-update-on-pledge/">
+            <a href="/posts/openbsd-intro-to-update-on-pledge/">
                 <span class="button__icon">←</span>
-                <span class="button__text">OpenBSD - short intro on &#34;execpromises&#34; in the pledge(2)</span>
+                <span class="button__text">OpenBSD - short intro on “execpromises” in the pledge(2)</span>
             </a>
         </span>
         
         
         <span class="button next">
-            <a href="https://bsdb0y.github.io/posts/install-hugo-hosting-on-openbsd/">
+            <a href="/posts/install-hugo-hosting-on-openbsd/">
                 <span class="button__text">Installing Hugo and publishing Hugo web-pages on OpenBSD server</span>
                 <span class="button__icon">→</span>
             </a>
@@ -587,8 +683,10 @@ ABRT <span style="color:#f92672">(</span>SIGABRT<span style="color:#f92672">)</s
   
 
   
+    
 
-</div>
+  
+</article>
 
   </div>
 
@@ -597,17 +695,19 @@ ABRT <span style="color:#f92672">(</span>SIGABRT<span style="color:#f92672">)</s
   <div class="footer__inner">
     
       <div class="copyright">
-        <span>Neeraj Pal</span>
+        <span>© 2023 Powered by <a href="http://gohugo.io">Hugo</a></span>
     
-        <span>:: Theme made by <a href="https://twitter.com/panr">panr</a></span>
+      <span>:: <a href="https://github.com/panr/hugo-theme-terminal" target="_blank">Theme</a> made by <a href="https://github.com/panr" target="_blank">panr</a></span>
       </div>
   </div>
 </footer>
 
-<script src="https://bsdb0y.github.io/assets/main.js"></script>
-<script src="https://bsdb0y.github.io/assets/prism.js"></script>
 
 
+
+
+
+<script type="text/javascript" src="/bundle.min.js"></script>
 
 
 

@@ -1,108 +1,168 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tags on bsdb0y</title>
-    <link>https://bsdb0y.github.io/tags/</link>
-    <description>Recent content in Tags on bsdb0y</description>
+    <title>Tags on Terminal</title>
+    <link>/tags/</link>
+    <description>Recent content in Tags on Terminal</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 28 Mar 2020 00:00:00 +0000</lastBuildDate><atom:link href="https://bsdb0y.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 28 Jan 2023 13:52:32 +0000</lastBuildDate><atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>internals</title>
-      <link>https://bsdb0y.github.io/tags/internals/</link>
-      <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
+      <title>ctf</title>
+      <link>/tags/ctf/</link>
+      <pubDate>Sat, 28 Jan 2023 13:52:32 +0000</pubDate>
       
-      <guid>https://bsdb0y.github.io/tags/internals/</guid>
+      <guid>/tags/ctf/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>knightctf</title>
+      <link>/tags/knightctf/</link>
+      <pubDate>Sat, 28 Jan 2023 13:52:32 +0000</pubDate>
+      
+      <guid>/tags/knightctf/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>reversing</title>
+      <link>/tags/reversing/</link>
+      <pubDate>Sat, 28 Jan 2023 13:52:32 +0000</pubDate>
+      
+      <guid>/tags/reversing/</guid>
       <description></description>
       <content></content>
     </item>
     
     <item>
       <title>malloc</title>
-      <link>https://bsdb0y.github.io/tags/malloc/</link>
-      <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
+      <link>/tags/malloc/</link>
+      <pubDate>Sat, 28 Mar 2020 18:24:56 +0000</pubDate>
       
-      <guid>https://bsdb0y.github.io/tags/malloc/</guid>
+      <guid>/tags/malloc/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>memory</title>
+      <link>/tags/memory/</link>
+      <pubDate>Sat, 28 Mar 2020 18:24:56 +0000</pubDate>
+      
+      <guid>/tags/memory/</guid>
       <description></description>
       <content></content>
     </item>
     
     <item>
       <title>openbsd</title>
-      <link>https://bsdb0y.github.io/tags/openbsd/</link>
-      <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
+      <link>/tags/openbsd/</link>
+      <pubDate>Sat, 28 Mar 2020 18:24:56 +0000</pubDate>
       
-      <guid>https://bsdb0y.github.io/tags/openbsd/</guid>
+      <guid>/tags/openbsd/</guid>
       <description></description>
       <content></content>
     </item>
     
     <item>
-      <title>kernel</title>
-      <link>https://bsdb0y.github.io/tags/kernel/</link>
-      <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
+      <title>operating system</title>
+      <link>/tags/operating-system/</link>
+      <pubDate>Sat, 28 Mar 2020 18:24:56 +0000</pubDate>
       
-      <guid>https://bsdb0y.github.io/tags/kernel/</guid>
-      <description></description>
-      <content></content>
-    </item>
-    
-    <item>
-      <title>process</title>
-      <link>https://bsdb0y.github.io/tags/process/</link>
-      <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
-      
-      <guid>https://bsdb0y.github.io/tags/process/</guid>
-      <description></description>
-      <content></content>
-    </item>
-    
-    <item>
-      <title>pledge</title>
-      <link>https://bsdb0y.github.io/tags/pledge/</link>
-      <pubDate>Tue, 02 Oct 2018 00:00:00 +0000</pubDate>
-      
-      <guid>https://bsdb0y.github.io/tags/pledge/</guid>
+      <guid>/tags/operating-system/</guid>
       <description></description>
       <content></content>
     </item>
     
     <item>
       <title>security</title>
-      <link>https://bsdb0y.github.io/tags/security/</link>
-      <pubDate>Tue, 02 Oct 2018 00:00:00 +0000</pubDate>
+      <link>/tags/security/</link>
+      <pubDate>Sat, 28 Mar 2020 18:24:56 +0000</pubDate>
       
-      <guid>https://bsdb0y.github.io/tags/security/</guid>
+      <guid>/tags/security/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>systems</title>
+      <link>/tags/systems/</link>
+      <pubDate>Sat, 28 Mar 2020 18:24:56 +0000</pubDate>
+      
+      <guid>/tags/systems/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>internals</title>
+      <link>/tags/internals/</link>
+      <pubDate>Thu, 25 Oct 2018 18:24:23 +0000</pubDate>
+      
+      <guid>/tags/internals/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>kernel</title>
+      <link>/tags/kernel/</link>
+      <pubDate>Thu, 25 Oct 2018 18:24:23 +0000</pubDate>
+      
+      <guid>/tags/kernel/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>operating systems</title>
+      <link>/tags/operating-systems/</link>
+      <pubDate>Thu, 25 Oct 2018 18:24:23 +0000</pubDate>
+      
+      <guid>/tags/operating-systems/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>process</title>
+      <link>/tags/process/</link>
+      <pubDate>Thu, 25 Oct 2018 18:24:23 +0000</pubDate>
+      
+      <guid>/tags/process/</guid>
+      <description></description>
+      <content></content>
+    </item>
+    
+    <item>
+      <title>pledge</title>
+      <link>/tags/pledge/</link>
+      <pubDate>Tue, 02 Oct 2018 18:24:12 +0000</pubDate>
+      
+      <guid>/tags/pledge/</guid>
       <description></description>
       <content></content>
     </item>
     
     <item>
       <title>hugo</title>
-      <link>https://bsdb0y.github.io/tags/hugo/</link>
-      <pubDate>Fri, 20 Jul 2018 00:00:00 +0000</pubDate>
+      <link>/tags/hugo/</link>
+      <pubDate>Fri, 20 Jul 2018 18:23:58 +0000</pubDate>
       
-      <guid>https://bsdb0y.github.io/tags/hugo/</guid>
-      <description></description>
-      <content></content>
-    </item>
-    
-    <item>
-      <title>server</title>
-      <link>https://bsdb0y.github.io/tags/server/</link>
-      <pubDate>Fri, 20 Jul 2018 00:00:00 +0000</pubDate>
-      
-      <guid>https://bsdb0y.github.io/tags/server/</guid>
+      <guid>/tags/hugo/</guid>
       <description></description>
       <content></content>
     </item>
     
     <item>
       <title>static-site</title>
-      <link>https://bsdb0y.github.io/tags/static-site/</link>
-      <pubDate>Fri, 20 Jul 2018 00:00:00 +0000</pubDate>
+      <link>/tags/static-site/</link>
+      <pubDate>Fri, 20 Jul 2018 18:23:58 +0000</pubDate>
       
-      <guid>https://bsdb0y.github.io/tags/static-site/</guid>
+      <guid>/tags/static-site/</guid>
       <description></description>
       <content></content>
     </item>
