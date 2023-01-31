@@ -1,32 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta name="generator" content="Hugo 0.92.2" />
+	<meta name="generator" content="Hugo 0.110.0">
   
-    <title>bsdb0y</title>
+    <title>Terminal</title>
   
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="" />
+<meta name="description" content="A simple, retro theme for Hugo" />
 <meta name="keywords" content="" />
 <meta name="robots" content="noodp" />
-<link rel="canonical" href="https://bsdb0y.github.io/" />
 
-
-
-
-<link rel="stylesheet" href="https://bsdb0y.github.io/assets/style.css">
-
-  <link rel="stylesheet" href="https://bsdb0y.github.io/assets/blue.css">
+<link rel="canonical" href="/" />
 
 
 
 
 
 
-<link rel="apple-touch-icon" href="https://bsdb0y.github.io/img/apple-touch-icon-192x192.png">
+  
+  
+  
+  
+  
+  <link rel="stylesheet" href="/styles.css">
 
-  <link rel="shortcut icon" href="https://bsdb0y.github.io/img/favicon/blue.png">
+
+
+
+
+
+
+  <link rel="shortcut icon" href="/img/theme-colors/blue.png">
+  <link rel="apple-touch-icon" href="/img/theme-colors/blue.png">
 
 
 
@@ -41,23 +47,23 @@
 
 <meta property="og:locale" content="en" />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="bsdb0y">
-<meta property="og:description" content="" />
-<meta property="og:url" content="https://bsdb0y.github.io/" />
-<meta property="og:site_name" content="bsdb0y" />
+<meta property="og:title" content="Terminal">
+<meta property="og:description" content="A simple, retro theme for Hugo" />
+<meta property="og:url" content="/" />
+<meta property="og:site_name" content="Terminal" />
 
   
-    <meta property="og:image" content="https://bsdb0y.github.io/img/favicon/blue.png">
+    <meta property="og:image" content="/img/favicon/blue.png">
   
 
-<meta property="og:image:width" content="2048">
-<meta property="og:image:height" content="1024">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
 
 
 
 
 
-  <link href="/index.xml" rel="alternate" type="application/rss+xml" title="bsdb0y" />
+  <link href="/index.xml" rel="alternate" type="application/rss+xml" title="Terminal" />
 
 
 
@@ -84,12 +90,30 @@
 
     </div>
     
-      <div class="menu-trigger">menu</div>
+      <ul class="menu menu--mobile">
+  <li class="menu__trigger">Menu&nbsp;▾</li>
+  <li>
+    <ul class="menu__dropdown">
+      
+        
+          <li><a href="/about">About</a></li>
+        
+      
+        
+          <li><a href="/bugs">Bugs</a></li>
+        
+      
+      
+    </ul>
+  </li>
+</ul>
+
+    
     
   </div>
   
-    <nav class="menu">
-  <ul class="menu__inner menu__inner--desktop">
+    <nav class="navigation-menu">
+  <ul class="navigation-menu__inner menu--desktop">
     
       
         
@@ -101,21 +125,6 @@
         
       
       
-    
-
-    
-  </ul>
-
-  <ul class="menu__inner menu__inner--mobile">
-    
-      
-        <li><a href="/about">About</a></li>
-      
-    
-      
-        <li><a href="/bugs">Bugs</a></li>
-      
-    
     
   </ul>
 </nav>
@@ -138,247 +147,265 @@
     
 
     
-      <div class="post on-list">
+      <article class="post on-list">
         <h1 class="post-title">
-          <a href="https://bsdb0y.github.io/posts/tale_of_openbsd_memory_allocator_internals/">Tale of OpenBSD secure memory allocator internals - malloc(3)</a>
+          <a href="/posts/knightctf-2023-writeup-re-category/">Knightctf 2023 writeup RE Category</a>
         </h1>
+
         <div class="post-meta">
-          <span class="post-date">
-            2020-03-28
-          </span>
           
-            <span class="post-author">:: bsdb0y</span>
+            <time class="post-date">
+              2023-01-28 ::
+            </time>
+          
+          
+            <span class="post-author">bsdb0y</span>
           
         </div>
 
         
           <span class="post-tags">
             
-            #<a href="https://bsdb0y.github.io/tags/openbsd/">openbsd</a>&nbsp;
+            #<a href="/tags/ctf/">ctf</a>&nbsp;
             
-            #<a href="https://bsdb0y.github.io/tags/malloc/">malloc</a>&nbsp;
+            #<a href="/tags/reversing/">reversing</a>&nbsp;
             
-            #<a href="https://bsdb0y.github.io/tags/internals/">internals</a>&nbsp;
-            
-          </span>
-        
-
-
-        
-
-
-
-        <div class="post-content">
-          
-            Let&rsquo;s dive into the core internals through reading the code and debugging of one of the secure memory allocator - OpenBSD Memory allocator
-          
-        </div>
-
-        
-        <div>
-          <a class="read-more button"
-            href="/posts/tale_of_openbsd_memory_allocator_internals/">Read more →</a>
-        </div>
-        
-      </div>
-    
-      <div class="post on-list">
-        <h1 class="post-title">
-          <a href="https://bsdb0y.github.io/posts/openbsd-kernel-internals-creation-of-process-from-user-space-to-kernel-space/">OpenBSD Kernel Internals — Creation of process from user-space to kernel space</a>
-        </h1>
-        <div class="post-meta">
-          <span class="post-date">
-            2018-10-25
-          </span>
-          
-            <span class="post-author">:: bsdb0y</span>
-          
-        </div>
-
-        
-          <span class="post-tags">
-            
-            #<a href="https://bsdb0y.github.io/tags/openbsd/">openbsd</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/process/">process</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/kernel/">kernel</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/internals/">internals</a>&nbsp;
+            #<a href="/tags/knightctf/">knightctf</a>&nbsp;
             
           </span>
         
 
-
         
-
-
-
-        <div class="post-content">
-          
-            Have you ever thought of what is happening internally whenever we execute any command from the command line? In this post we will be looking in the internals of a process life phases
-          
-        </div>
-
-        
-        <div>
-          <a class="read-more button"
-            href="/posts/openbsd-kernel-internals-creation-of-process-from-user-space-to-kernel-space/">Read more →</a>
-        </div>
-        
-      </div>
-    
-      <div class="post on-list">
-        <h1 class="post-title">
-          <a href="https://bsdb0y.github.io/posts/openbsd-intro-to-update-on-pledge/">OpenBSD - short intro on &ldquo;execpromises&rdquo; in the pledge(2)</a>
-        </h1>
-        <div class="post-meta">
-          <span class="post-date">
-            2018-10-02
-          </span>
-          
-            <span class="post-author">:: bsdb0y</span>
-          
-        </div>
-
-        
-          <span class="post-tags">
-            
-            #<a href="https://bsdb0y.github.io/tags/openbsd/">openbsd</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/security/">security</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/kernel/">kernel</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/pledge/">pledge</a>&nbsp;
-            
-          </span>
-        
-
-
-        
-
-
-
-        <div class="post-content">
-          
-            Short intro post for recent update on pledge(2) on OpenBSD where we will see about integrating pledge(2) in C programs
-          
-        </div>
-
-        
-        <div>
-          <a class="read-more button"
-            href="/posts/openbsd-intro-to-update-on-pledge/">Read more →</a>
-        </div>
-        
-      </div>
-    
-      <div class="post on-list">
-        <h1 class="post-title">
-          <a href="https://bsdb0y.github.io/posts/pledge-a-openbsd-defensive-approach/">pledge(2): OpenBSD&rsquo;s defensive approach to OS Security</a>
-        </h1>
-        <div class="post-meta">
-          <span class="post-date">
-            2018-08-01
-          </span>
-          
-            <span class="post-author">:: bsdb0y</span>
-          
-        </div>
-
-        
-          <span class="post-tags">
-            
-            #<a href="https://bsdb0y.github.io/tags/openbsd/">openbsd</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/security/">security</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/kernel/">kernel</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/internals/">internals</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/pledge/">pledge</a>&nbsp;
-            
-          </span>
-        
-
-
-        
-
-
-
-        <div class="post-content">
-          
-            Hello there,
-I would like to introduce you all to the pledge(2) which is used to restrict the system operations and supported only on OpenBSD
-I am learning about OpenBSD kernel internals and development and would like to share some tips on how to learn about OpenBSD kernel internals and developmen.
-Let me first share with you all about our friends, they will be helping us in learning about BSD kernel internals:
-          
-        </div>
-
-        
-        <div>
-          <a class="read-more button"
-            href="/posts/pledge-a-openbsd-defensive-approach/">Read more →</a>
-        </div>
-        
-      </div>
-    
-      <div class="post on-list">
-        <h1 class="post-title">
-          <a href="https://bsdb0y.github.io/posts/install-hugo-hosting-on-openbsd/">Installing Hugo and publishing Hugo web-pages on OpenBSD server</a>
-        </h1>
-        <div class="post-meta">
-          <span class="post-date">
-            2018-07-20
-          </span>
-          
-            <span class="post-author">:: bsdb0y</span>
-          
-        </div>
-
-        
-          <span class="post-tags">
-            
-            #<a href="https://bsdb0y.github.io/tags/openbsd/">openbsd</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/hugo/">hugo</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/static-site/">static-site</a>&nbsp;
-            
-            #<a href="https://bsdb0y.github.io/tags/server/">server</a>&nbsp;
-            
-          </span>
-        
-
-
-        
-
 
 
         <div class="post-content">
           
             Hi there,
-Today, we will looking at installation of hugo - a static site generator and deployment on OpenBSD server
-Installing hugo
-Tested and deployed hugo generated site pages on OpenBSD 6.3-stable and at the time of writing this blog, hugo is not available in the ports on OpenBSD 6.3, so, we will be proceeding with installation from source.
-Dependencies
-go mage (make alternative for go)    Following are the steps to install mage from the source on OpenBSD 6.
+Last weekend, I played a CTF for fun. Here are the writeups of the tasks that I solved (Reverse Engineering category)
+[RE 100] Help Jimmy [RE 150] The Activator [RE 150] The Defuser [RE 200] KrackMe 1.0 [RE 250] Fan [RE 250] Take RISC five times [RE 400] Stegorev [RE 100] Help Jimmy It was a 64-bit Linux elf binary having a simple implementation where the player has to choose between going to Jungle or Sea and regardless of any decision, it ended up being attacked by tigers or pirates or an invalid choice and resulting in not getting the flag.
           
         </div>
 
         
-        <div>
-          <a class="read-more button"
-            href="/posts/install-hugo-hosting-on-openbsd/">Read more →</a>
-        </div>
+          <div>
+            <a class="read-more button" href="/posts/knightctf-2023-writeup-re-category/">Read more →</a>
+          </div>
         
-      </div>
+      </article>
     
+      <article class="post on-list">
+        <h1 class="post-title">
+          <a href="/posts/tale_of_openbsd_memory_allocator_internals/">Tale of OpenBSD secure memory allocator internals - malloc(3)</a>
+        </h1>
+
+        <div class="post-meta">
+          
+            <time class="post-date">
+              2020-03-28 ::
+            </time>
+          
+          
+            <span class="post-author">bsdb0y</span>
+          
+        </div>
+
+        
+          <span class="post-tags">
+            
+            #<a href="/tags/openbsd/">openbsd</a>&nbsp;
+            
+            #<a href="/tags/operating-system/">operating system</a>&nbsp;
+            
+            #<a href="/tags/memory/">memory</a>&nbsp;
+            
+            #<a href="/tags/malloc/">malloc</a>&nbsp;
+            
+            #<a href="/tags/security/">security</a>&nbsp;
+            
+            #<a href="/tags/systems/">systems</a>&nbsp;
+            
+          </span>
+        
+
+        
+
+
+        <div class="post-content">
+          
+            Hi there,
+It’s been a long time since I have written anything, so, continuing with the journey of reading and exloring the OpenBSD source codes with my friend debugger. This time it is about OpenBSD malloc(3), secure memory allocator
+I will try to keep it as n part series due to length of the blog post and this series will be mostly focussed on user-space code of malloc(3) and friends
+          
+        </div>
+
+        
+          <div>
+            <a class="read-more button" href="/posts/tale_of_openbsd_memory_allocator_internals/">Read more →</a>
+          </div>
+        
+      </article>
+    
+      <article class="post on-list">
+        <h1 class="post-title">
+          <a href="/posts/openbsd-kernel-internals-creation-of-process-from-user-space-to-kernel-space/">OpenBSD kernel internals - Lifecycle of process from user-space to kernel space :: creation</a>
+        </h1>
+
+        <div class="post-meta">
+          
+            <time class="post-date">
+              2018-10-25 ::
+            </time>
+          
+          
+            <span class="post-author">bsdb0y</span>
+          
+        </div>
+
+        
+          <span class="post-tags">
+            
+            #<a href="/tags/openbsd/">openbsd</a>&nbsp;
+            
+            #<a href="/tags/kernel/">kernel</a>&nbsp;
+            
+            #<a href="/tags/internals/">internals</a>&nbsp;
+            
+            #<a href="/tags/process/">process</a>&nbsp;
+            
+            #<a href="/tags/operating-systems/">operating systems</a>&nbsp;
+            
+          </span>
+        
+
+        
+
+
+        <div class="post-content">
+          
+            Hi there,
+Have you ever thought what happens internally when we execute any command/executable from the command line? We will be diving in to the ocean of kernel code internals and working of the process lifecycle (creation) in OpenBSD operating system from user-space to kernel space.
+We will execute the ls command from the command line then trace it through the debugger to see the magic.
+Following are the basic lifecycle of a process,
+          
+        </div>
+
+        
+          <div>
+            <a class="read-more button" href="/posts/openbsd-kernel-internals-creation-of-process-from-user-space-to-kernel-space/">Read more →</a>
+          </div>
+        
+      </article>
+    
+      <article class="post on-list">
+        <h1 class="post-title">
+          <a href="/posts/openbsd-intro-to-update-on-pledge/">OpenBSD - short intro on “execpromises” in the pledge(2)</a>
+        </h1>
+
+        <div class="post-meta">
+          
+            <time class="post-date">
+              2018-10-02 ::
+            </time>
+          
+          
+            <span class="post-author">bsdb0y</span>
+          
+        </div>
+
+        
+          <span class="post-tags">
+            
+            #<a href="/tags/kernel/">kernel</a>&nbsp;
+            
+            #<a href="/tags/openbsd/">openbsd</a>&nbsp;
+            
+            #<a href="/tags/security/">security</a>&nbsp;
+            
+            #<a href="/tags/pledge/">pledge</a>&nbsp;
+            
+          </span>
+        
+
+        
+
+
+        <div class="post-content">
+          
+            Hi there,
+Today, we will be looking at the update for pledge(2) on OpenBSD and also about howto and usecase.
+In the previous post about pledge(2), we understood the implementation and some internal working of pledge(2)
+On 11 December 2017, **Theo de Raadt** said: List: openbsd-tech Subject: pledge execpromises From: Theo de Raadt Date: 2017-12-11 21:20:51 Message-ID: 6735.1513027251 () cvs ! openbsd ! org This will probably be committed in the next day or so.
+          
+        </div>
+
+        
+          <div>
+            <a class="read-more button" href="/posts/openbsd-intro-to-update-on-pledge/">Read more →</a>
+          </div>
+        
+      </article>
+    
+      <article class="post on-list">
+        <h1 class="post-title">
+          <a href="/posts/pledge-a-openbsd-defensive-approach/">pledge(2): OpenBSD’s defensive approach to OS Security</a>
+        </h1>
+
+        <div class="post-meta">
+          
+            <time class="post-date">
+              2018-08-01 ::
+            </time>
+          
+          
+            <span class="post-author">bsdb0y</span>
+          
+        </div>
+
+        
+          <span class="post-tags">
+            
+            #<a href="/tags/openbsd/">openbsd</a>&nbsp;
+            
+            #<a href="/tags/kernel/">kernel</a>&nbsp;
+            
+            #<a href="/tags/security/">security</a>&nbsp;
+            
+            #<a href="/tags/internals/">internals</a>&nbsp;
+            
+            #<a href="/tags/pledge/">pledge</a>&nbsp;
+            
+          </span>
+        
+
+        
+
+
+        <div class="post-content">
+          
+            Hello there,
+I would like to introduce you all to the pledge(2) which is used to restrict the system operations and supported only on OpenBSD at the time of writing the blog.
+I am learning about OpenBSD kernel internals and development and would like to share some tips on how to learn about OpenBSD kernel internals and development.
+Following materials I followed while learning about BSD kernel internals:
+the book “The design and implementation of the BSD operating system” by Kirk McKusick OpenBSD source code man pages and few presentations-papers on OpenBSD ask in mailing lists and OpenBSD Facebook group.
+          
+        </div>
+
+        
+          <div>
+            <a class="read-more button" href="/posts/pledge-a-openbsd-defensive-approach/">Read more →</a>
+          </div>
+        
+      </article>
+    
+
     <div class="pagination">
   <div class="pagination__buttons">
     
+    
+      <a href="/page/2/" class="button next">
+        <span class="button__text">Older posts</span>
+        <span class="button__icon">→</span>
+      </a>
     
   </div>
 </div>
@@ -392,17 +419,19 @@ go mage (make alternative for go)    Following are the steps to install mage fro
   <div class="footer__inner">
     
       <div class="copyright">
-        <span>Neeraj Pal</span>
+        <span>© 2023 Powered by <a href="http://gohugo.io">Hugo</a></span>
     
-        <span>:: Theme made by <a href="https://twitter.com/panr">panr</a></span>
+      <span>:: <a href="https://github.com/panr/hugo-theme-terminal" target="_blank">Theme</a> made by <a href="https://github.com/panr" target="_blank">panr</a></span>
       </div>
   </div>
 </footer>
 
-<script src="https://bsdb0y.github.io/assets/main.js"></script>
-<script src="https://bsdb0y.github.io/assets/prism.js"></script>
 
 
+
+
+
+<script type="text/javascript" src="/bundle.min.js"></script>
 
 
 
